@@ -1,0 +1,5 @@
+*
+!/.gitignore
+!/*.cc
+!/*.hpp
+!/build.sh
