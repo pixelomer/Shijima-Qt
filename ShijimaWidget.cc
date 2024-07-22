@@ -39,11 +39,10 @@ ShijimaWidget::ShijimaWidget(std::shared_ptr<shijima::mascot::environment> env,
     m_mascot->reset_position();
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_ShowWithoutActivating);
-    setAttribute(Qt::WA_MacNoShadow);
     setAttribute(Qt::WA_MacShowFocusRect, false);
     setFixedSize(kShijimaWidth, kShijimaHeight);
     setWindowFlags(Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint
-        | Qt::WindowDoesNotAcceptFocus);
+        | Qt::WindowDoesNotAcceptFocus | Qt::NoDropShadowWindowHint);
 }
 
 void ShijimaWidget::paintEvent(QPaintEvent *event) {

@@ -1,3 +1,5 @@
+QT_VERSION := 6
+
 PLATFORM :=
 PLATFORM_CFLAGS :=
 PLATFORM_CXXFLAGS :=
@@ -42,12 +44,12 @@ ifeq ($(PLATFORM),macOS)
 endif
 
 ifeq ($(PLATFORM),macOS)
-	QT_MACOS_PATH := /opt/local/libexec/qt5/lib
+	QT_MACOS_PATH := /opt/local/libexec/qt$(QT_VERSION)/lib
 	QT_FRAMEWORKS = $(addsuffix .framework,$(addprefix -I$(QT_MACOS_PATH)/Qt,$(QT_LIBS)))
 	QT_CFLAGS = -F$(QT_MACOS_PATH) $(addsuffix /Versions/Current/Headers,$(QT_FRAMEWORKS))
 	QT_LDFLAGS = -F$(QT_MACOS_PATH) $(addprefix -framework Qt,$(QT_LIBS))
 else
-	PREFIXED_QT_LIBS = $(addprefix Qt5,$(QT_LIBS))
+	PREFIXED_QT_LIBS = $(addprefix Qt$(QT_VERSION),$(QT_LIBS))
 	QT_CFLAGS = $(shell [ -z "$(QT_LIBS)" ] || pkg-config --cflags $(PREFIXED_QT_LIBS))
 	QT_LDFLAGS = $(shell [ -z "$(QT_LIBS)" ] || pkg-config --libs $(PREFIXED_QT_LIBS))
 endif
@@ -61,7 +63,7 @@ else
 endif
 
 STD_CFLAGS := -Wall
-STD_CXXFLAGS := -Wall -std=c++14
+STD_CXXFLAGS := -Wall -std=c++17
 
 PKG_CFLAGS = $(shell [ -z "$(PKG_LIBS)" ] || pkg-config --cflags $(PKG_LIBS))
 PKG_LDFLAGS = $(shell [ -z "$(PKG_LIBS)" ] || pkg-config --libs $(PKG_LIBS))

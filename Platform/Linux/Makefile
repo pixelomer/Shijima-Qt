@@ -1,7 +1,7 @@
 include ../../common.mk
 
 SOURCES = ActiveWindowObserver.cc KWin.cc PrivateActiveWindowObserver.cc
-PKG_LIBS = Qt6Core Qt6DBus
+QT_LIBS = Core DBus
 
 all: Linux.a
 
