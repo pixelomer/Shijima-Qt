@@ -2,4 +2,14 @@
 !/.gitignore
 !/*.cc
 !/*.hpp
-!/build.sh
+!/.gitattributes
+!/Makefile
+!/common.mk
+!/Platform/
+!/Platform/*.hpp
+!/Platform/Makefile
+!/Platform/Linux/
+!/Platform/Linux/*.cc
+!/Platform/Linux/*.hpp
+!/Platform/Linux/kwin_script.js
+!/Platform/Linux/Makefile

@@ -1,4 +1,5 @@
 #include <QApplication>
+#include "Platform/Platform.hpp"
 #include "ShijimaManager.hpp"
 
 int main(int argc, char **argv) {

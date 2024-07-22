@@ -27,14 +27,24 @@ ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent) {
     widget->setLayout(layout);
     setCentralWidget(widget);
     m_env = std::make_shared<mascot::environment>();
-    m_timer = startTimer(40);
+    m_mascotTimer = startTimer(40);
+    if (m_windowObserver.tickFrequency() > 0) {
+        m_windowObserverTimer = startTimer(m_windowObserver.tickFrequency());
+    }
 }
 
 void ShijimaManager::timerEvent(QTimerEvent *event) {
-    tick();
+    int timerId = event->timerId();
+    if (timerId == m_mascotTimer) {
+        tick();
+    }
+    else if (timerId == m_windowObserverTimer) {
+        m_windowObserver.tick();
+    }
 }
 
 void ShijimaManager::updateEnvironment() {
+    m_activeWindow = m_windowObserver.getActiveWindow();
     auto cursor = QCursor::pos();
     auto screen = QGuiApplication::primaryScreen();
     auto geometry = screen->geometry();
@@ -47,7 +57,17 @@ void ShijimaManager::updateEnvironment() {
     m_env->floor = { geometry.height() - taskbarHeight, 0, geometry.width() };
     m_env->work_area = { 0, geometry.width(), geometry.height() - taskbarHeight, 0 };
     m_env->ceiling = { 0, 0, geometry.width() };
-    m_env->active_ie = { -50, 50, -50, 50 };
+    if (m_activeWindow.available && m_activeWindow.x != 0
+        && m_activeWindow.y != 0)
+    {
+        m_env->active_ie = { m_activeWindow.y,
+            m_activeWindow.x + m_activeWindow.width,
+            m_activeWindow.y + m_activeWindow.height,
+            m_activeWindow.x };
+    }
+    else {
+        m_env->active_ie = { -50, -50, -50, -50 };
+    }
     int x = cursor.x(), y = cursor.y();
     m_env->cursor = { (double)x, (double)y, x - m_env->cursor.x, y - m_env->cursor.y };
 }

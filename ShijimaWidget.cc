@@ -16,7 +16,7 @@
 using namespace shijima;
 
 static QString readFile(QString const& file) {
-    QFile f(file);
+    QFile f { file };
     if (!f.open(QFile::ReadOnly | QFile::Text)) return "";
     QTextStream in(&f);
     return in.readAll();
@@ -30,8 +30,6 @@ ShijimaWidget::ShijimaWidget(std::shared_ptr<shijima::mascot::environment> env,
         + "behaviors.xml");
     auto actionsPath = QDir::cleanPath(QString("test") + QDir::separator()
         + "actions.xml");
-    std::cout << behaviorsPath.toStdString() << std::endl;
-    std::cout << actionsPath.toStdString() << std::endl;
     auto behaviors = readFile(behaviorsPath);
     auto actions = readFile(actionsPath);
     m_mascot = std::make_unique<mascot::manager>(actions.toStdString(),
