@@ -2,7 +2,7 @@ include ../../common.mk
 
 SOURCES = ActiveWindowObserver.cc PrivateActiveWindowObserver.mm
 QT_LIBS = Core
-CXXFLAGS += -x objective-c++
+CXXFLAGS += -x objective-c++ -fobjc-arc
 
 all: macOS.a
 

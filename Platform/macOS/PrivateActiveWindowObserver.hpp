@@ -1,13 +1,12 @@
 #pragma once
 #include "../ActiveWindow.hpp"
 
-@class SHJActiveWindowObserver;
-
 namespace Platform {
 
 class PrivateActiveWindowObserver {
 private:
-    SHJActiveWindowObserver *m_observer;
+    pid_t m_activePid;
+    ActiveWindow m_activeWindow;
 public:
     PrivateActiveWindowObserver();
     ActiveWindow getActiveWindow();
