@@ -7,6 +7,7 @@
 #include <QMouseEvent>
 #include <QMenu>
 #include <QGuiApplication>
+#include <QTextStream>
 #include <shijima/shijima.hpp>
 #include "ShijimaContextMenu.hpp"
 
@@ -36,10 +37,13 @@ ShijimaWidget::ShijimaWidget(std::shared_ptr<shijima::mascot::environment> env,
         behaviors.toStdString());
     m_mascot->state->env = m_env;
     m_mascot->reset_position();
-    setFixedSize(kShijimaWidth, kShijimaHeight);
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_ShowWithoutActivating);
-    setWindowFlags(Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint);
+    setAttribute(Qt::WA_MacNoShadow);
+    setAttribute(Qt::WA_MacShowFocusRect, false);
+    setFixedSize(kShijimaWidth, kShijimaHeight);
+    setWindowFlags(Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint
+        | Qt::WindowDoesNotAcceptFocus);
 }
 
 void ShijimaWidget::paintEvent(QPaintEvent *event) {
@@ -52,7 +56,7 @@ void ShijimaWidget::paintEvent(QPaintEvent *event) {
         QString(frame.name.c_str()));
     QImage image(imagePath);
     if (m_mascot->state->looking_right) {
-        image.mirror(true, false);
+        image = image.mirrored(true, false);
     }
     QPoint dest = { 0, 0 };
     QRect source = image.rect();

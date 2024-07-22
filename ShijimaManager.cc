@@ -60,10 +60,10 @@ void ShijimaManager::updateEnvironment() {
     if (m_activeWindow.available && m_activeWindow.x != 0
         && m_activeWindow.y != 0)
     {
-        m_env->active_ie = { m_activeWindow.y,
-            m_activeWindow.x + m_activeWindow.width,
-            m_activeWindow.y + m_activeWindow.height,
-            m_activeWindow.x };
+        m_env->active_ie = { static_cast<int>(m_activeWindow.y),
+            static_cast<int>(m_activeWindow.x + m_activeWindow.width),
+            static_cast<int>(m_activeWindow.y + m_activeWindow.height),
+            static_cast<int>(m_activeWindow.x) };
     }
     else {
         m_env->active_ie = { -50, -50, -50, -50 };

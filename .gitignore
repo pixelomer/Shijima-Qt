@@ -13,3 +13,10 @@
 !/Platform/Linux/*.hpp
 !/Platform/Linux/kwin_script.js
 !/Platform/Linux/Makefile
+!/Platform/Linux/*.cc
+!/Platform/Linux/*.hpp
+!/Platform/macOS/
+!/Platform/macOS/Makefile
+!/Platform/macOS/*.cc
+!/Platform/macOS/*.mm
+!/Platform/macOS/*.hpp
