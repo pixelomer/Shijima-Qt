@@ -20,3 +20,4 @@
 !/Platform/macOS/*.cc
 !/Platform/macOS/*.mm
 !/Platform/macOS/*.hpp
+!/find_dlls.sh

@@ -1,13 +1,13 @@
 include ../../common.mk
 
-SOURCES = ActiveWindowObserver.cc KWin.cc PrivateActiveWindowObserver.cc
+SOURCES = Platform.cc ActiveWindowObserver.cc KWin.cc PrivateActiveWindowObserver.cc
 QT_LIBS = Core DBus
 
 all: Linux.a
 
 Linux.a: kwin_script.c $(OBJECTS)
 	rm -f $@
-	ar rcs $@ $(OBJECTS)
+	$(AR) rcs $@ $(OBJECTS)
 
 .work/node_modules/.bin/minify:
 	rm -rf .work
