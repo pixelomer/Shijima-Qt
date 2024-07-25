@@ -16,9 +16,8 @@ all: publish/$(PLATFORM)/$(CONFIG)
 publish/Windows/$(CONFIG): shijima-qt$(EXE) FORCE
 	mkdir -p $@
 	cp $< $@
-	@cp -uv $(call exe_dlls,$<) $@
-	@mkdir -p $@/platforms
-	@cp -uv $(WINDLL_PATH)/../lib/qt6/plugins/platforms/*.dll $@/platforms/
+	@$(call copy_exe_dlls,$<,$@)
+	@$(call copy_qt_plugin_dlls,$@)
 
 publish/macOS/$(CONFIG): shijima-qt$(EXE)
 	mkdir -p $@

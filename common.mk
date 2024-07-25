@@ -3,9 +3,6 @@ QT_VERSION := 6
 STRIP ?= strip
 PKG_CONFIG ?= pkg-config
 AR ?= ar
-ifneq ($(QT6_CMAKE),)
-CMAKE := $(QT6_CMAKE)
-endif
 CMAKE ?= cmake
 
 PLATFORM :=
@@ -89,6 +86,14 @@ ifeq ($(PLATFORM),Windows)
 	export OBJDUMP
 define exe_dlls
 $(shell ./find_dlls.sh "$(1)" "$(WINDLL_PATH)")
+endef
+define copy_exe_dlls
+cp -uv $(call exe_dlls,"$(1)") "$(2)"
+endef
+define copy_qt_plugin_dlls
+mkdir -p "$(1)/platforms" "$(1)/styles"
+cp -uv $(WINDLL_PATH)/../lib/qt6/plugins/platforms/*.dll "$(1)/platforms/"
+cp -uv $(WINDLL_PATH)/../lib/qt6/plugins/styles/*.dll "$(1)/styles/"
 endef
 	EXE := .exe
 endif
