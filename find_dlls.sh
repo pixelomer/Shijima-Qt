@@ -1,8 +1,23 @@
 #!/usr/bin/env bash
 
-if [[ ! -f "$1" ]]; then
-    echo "ERROR: $1 does not exist." >&2
+fail() {
+    [[ ! -z "$@" ]] && echo "$@" >&2
+    echo "Usage: $0 <program.exe> <dll_root>" >&2
+    echo "  Finds the absolute paths to all DLLs required by the program"
+    echo "  and prints them as a space-separated list."
     exit 1
+}
+
+if [[ $# -ne 2 ]]; then
+    fail "ERROR: Invalid arguments"
+fi
+
+if [[ ! -f "$1" ]]; then
+    fail "ERROR: $1 does not exist."
+fi
+
+if [[ ! -d "$2" ]]; then
+    fail "ERROR: $2 is not a directory."
 fi
 
 if [[ -z "$OBJDUMP" ]]; then
