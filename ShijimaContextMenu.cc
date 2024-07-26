@@ -1,5 +1,6 @@
 #include "ShijimaContextMenu.hpp"
 #include "ShijimaWidget.hpp"
+#include "ShijimaManager.hpp"
 
 ShijimaContextMenu::ShijimaContextMenu(ShijimaWidget *parent)
     : QMenu("Context menu", parent)
@@ -33,8 +34,26 @@ ShijimaContextMenu::ShijimaContextMenu(ShijimaWidget *parent)
         shijimaParent()->m_paused = action->isChecked();
     });
 
-    // Close button
-    action = addAction("Kill");
+    // Call another
+    action = addAction("Call another");
+    connect(action, &QAction::triggered, [this](){
+        ShijimaManager::defaultManager()->spawn(this->shijimaParent()->mascotName());
+    });
+
+    // Dismiss all but one
+    action = addAction("Dismiss all but one");
+    connect(action, &QAction::triggered, [this](){
+        ShijimaManager::defaultManager()->killAllButOne(this->shijimaParent());
+    });
+
+    // Dismiss all
+    action = addAction("Dismiss all");
+    connect(action, &QAction::triggered, [](){
+        ShijimaManager::defaultManager()->killAll();
+    });
+
+    // Dismiss
+    action = addAction("Dismiss");
     connect(action, &QAction::triggered, parent, &ShijimaWidget::closeAction);
 }
 

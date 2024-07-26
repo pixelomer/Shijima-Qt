@@ -64,6 +64,10 @@ void ShijimaWidget::paintEvent(QPaintEvent *event) {
 }
 
 void ShijimaWidget::tick() {
+    if (m_markedForDeletion) {
+        close();
+        return;
+    }
     if (paused()) {
         return;
     }

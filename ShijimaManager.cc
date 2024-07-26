@@ -26,6 +26,21 @@ ShijimaManager *ShijimaManager::defaultManager() {
     return m_defaultManager;
 }
 
+void ShijimaManager::killAll() {
+    for (auto mascot : m_mascots) {
+        mascot->markForDeletion();
+    }
+}
+
+void ShijimaManager::killAllButOne(ShijimaWidget *widget) {
+    for (auto mascot : m_mascots) {
+        if (widget == mascot) {
+            continue;
+        }
+        mascot->markForDeletion();
+    }
+}
+
 ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent) {
     QVBoxLayout *layout = new QVBoxLayout;
     QPushButton *spawnButton = new QPushButton("Spawn");
@@ -119,12 +134,16 @@ void ShijimaManager::tick() {
     }
 }
 
-void ShijimaManager::spawnClicked() {
+void ShijimaManager::spawn(std::string const& name) {
     updateEnvironment();
-    auto product = m_factory.spawn("test", {});
+    auto product = m_factory.spawn(name, {});
     product.manager->reset_position();
-    ShijimaWidget *shimeji = new ShijimaWidget("test",
+    ShijimaWidget *shimeji = new ShijimaWidget(name,
         std::move(product.manager));
     shimeji->show();
     m_mascots.push_back(shimeji);
+}
+
+void ShijimaManager::spawnClicked() {
+    spawn("test");
 }

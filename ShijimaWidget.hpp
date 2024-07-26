@@ -19,6 +19,7 @@ public:
         std::unique_ptr<shijima::mascot::manager> mascot,
         QWidget *parent = nullptr);
     void tick();
+    void markForDeletion() { m_markedForDeletion = true; }
     bool paused() const { return m_paused || m_contextMenuVisible; }
     shijima::mascot::manager &mascot() {
         return *m_mascot;
@@ -47,4 +48,5 @@ private:
     bool m_visible;
     bool m_contextMenuVisible = false;
     bool m_paused = false;
+    bool m_markedForDeletion = false;
 };

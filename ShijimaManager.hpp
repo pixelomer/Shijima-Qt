@@ -15,6 +15,9 @@ class ShijimaManager : public QMainWindow
 public:
     static ShijimaManager *defaultManager();
     void updateEnvironment();
+    void spawn(std::string const& name);
+    void killAll();
+    void killAllButOne(ShijimaWidget *widget);
 protected:
     void timerEvent(QTimerEvent *event) override;
 private:
