@@ -9,6 +9,7 @@
 #include <QGuiApplication>
 #include <QTextStream>
 #include <shijima/shijima.hpp>
+#include "AssetLoader.hpp"
 #include "ShijimaContextMenu.hpp"
 
 #define kShijimaWidth 128
@@ -53,10 +54,8 @@ void ShijimaWidget::paintEvent(QPaintEvent *event) {
     auto &frame = m_mascot->state->active_frame;
     auto imagePath = QDir::cleanPath(QString("test/img") + QDir::separator() +
         QString(frame.name.c_str()));
-    QImage image(imagePath);
-    if (m_mascot->state->looking_right) {
-        image = image.mirrored(true, false);
-    }
+    QImage const& image = AssetLoader::defaultLoader()
+        ->loadImage(imagePath, m_mascot->state->looking_right);
     QPoint dest = { 0, 0 };
     QRect source = image.rect();
     if (m_offsetX < 0) {
