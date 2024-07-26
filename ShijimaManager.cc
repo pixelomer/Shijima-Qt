@@ -4,12 +4,20 @@
 #include <QWidget>
 #include <QPushButton>
 #include <QGuiApplication>
+#include <QFile>
 #include <QScreen>
 #include "ShijimaWidget.hpp"
 
 using namespace shijima;
 
 static ShijimaManager *m_defaultManager;
+
+static QString readFile(QString const& file) {
+    QFile f { file };
+    if (!f.open(QFile::ReadOnly | QFile::Text)) return "";
+    QTextStream in(&f);
+    return in.readAll(); 
+}
 
 ShijimaManager *ShijimaManager::defaultManager() {
     if (m_defaultManager == nullptr) {
@@ -21,12 +29,20 @@ ShijimaManager *ShijimaManager::defaultManager() {
 ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent) {
     QVBoxLayout *layout = new QVBoxLayout;
     QPushButton *spawnButton = new QPushButton("Spawn");
+    
+    mascot::factory::tmpl tmpl;
+    tmpl.actions_xml = readFile("test/actions.xml").toStdString();
+    tmpl.behaviors_xml = readFile("test/behaviors.xml").toStdString();
+    tmpl.name = "test";
+    tmpl.path = "test";
+    m_factory.register_template(tmpl);
+    m_env = m_factory.env = std::make_shared<mascot::environment>();
+
     connect(spawnButton, &QPushButton::clicked, this, &ShijimaManager::spawnClicked);
     layout->addWidget(spawnButton);
     QWidget *widget = new QWidget;
     widget->setLayout(layout);
     setCentralWidget(widget);
-    m_env = std::make_shared<mascot::environment>();
     m_mascotTimer = startTimer(40);
     if (m_windowObserver.tickFrequency() > 0) {
         m_windowObserverTimer = startTimer(m_windowObserver.tickFrequency());
@@ -82,12 +98,26 @@ void ShijimaManager::tick() {
     std::vector<ShijimaWidget *> newShimeji;
     for (ShijimaWidget *shimeji : m_mascots) {
         shimeji->tick();
+        auto &mascot = shimeji->mascot();
+        auto &breedRequest = mascot.state->breed_request;
+        if (breedRequest.available) {
+            auto product = m_factory.spawn("test", breedRequest);
+            ShijimaWidget *shimeji = new ShijimaWidget(std::move(product.manager));
+            shimeji->show();
+            newShimeji.push_back(shimeji);
+            breedRequest.available = false;
+        }
+    }
+    for (ShijimaWidget *spawned : newShimeji) {
+        m_mascots.push_back(spawned);
     }
 }
 
 void ShijimaManager::spawnClicked() {
     updateEnvironment();
-    ShijimaWidget *shimeji = new ShijimaWidget(m_env);
+    auto product = m_factory.spawn("test", {});
+    product.manager->reset_position();
+    ShijimaWidget *shimeji = new ShijimaWidget(std::move(product.manager));
     shimeji->show();
     m_mascots.push_back(shimeji);
 }

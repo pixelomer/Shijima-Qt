@@ -17,26 +17,10 @@
 
 using namespace shijima;
 
-static QString readFile(QString const& file) {
-    QFile f { file };
-    if (!f.open(QFile::ReadOnly | QFile::Text)) return "";
-    QTextStream in(&f);
-    return in.readAll();
-}
-
-
-ShijimaWidget::ShijimaWidget(std::shared_ptr<shijima::mascot::environment> env,
-    QWidget *parent) : QWidget(parent), m_env(env)
+ShijimaWidget::ShijimaWidget(std::unique_ptr<shijima::mascot::manager> mascot,
+    QWidget *parent) : QWidget(parent)
 {
-    auto behaviorsPath = QDir::cleanPath(QString("test") + QDir::separator()
-        + "behaviors.xml");
-    auto actionsPath = QDir::cleanPath(QString("test") + QDir::separator()
-        + "actions.xml");
-    auto behaviors = readFile(behaviorsPath);
-    auto actions = readFile(actionsPath);
-    m_mascot = std::make_unique<mascot::manager>(actions.toStdString(),
-        behaviors.toStdString());
-    m_mascot->state->env = m_env;
+    m_mascot = std::move(mascot);
     m_mascot->reset_position();
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_ShowWithoutActivating);
@@ -89,7 +73,7 @@ void ShijimaWidget::tick() {
 
     // Update draw offsets depending on the new position
     //raise();
-    auto envWidth = m_env->screen.width();
+    auto envWidth = env()->screen.width();
     //auto envHeight = m_env->screen.height();
     auto anchor = m_mascot->state->anchor;
     auto &frame = m_mascot->state->active_frame;

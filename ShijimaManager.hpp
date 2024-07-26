@@ -2,6 +2,7 @@
 
 #include <QMainWindow>
 #include <shijima/mascot/manager.hpp>
+#include <shijima/mascot/factory.hpp>
 #include <vector>
 #include "Platform/Platform.hpp"
 #include "ShijimaWidget.hpp"
@@ -25,5 +26,6 @@ private:
     int m_mascotTimer = -1;
     int m_windowObserverTimer = -1;
     std::shared_ptr<shijima::mascot::environment> m_env;
+    shijima::mascot::factory m_factory;
     std::vector<ShijimaWidget *> m_mascots;
 };
