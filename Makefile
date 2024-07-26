@@ -21,11 +21,11 @@ publish/Windows/$(CONFIG): shijima-qt$(EXE) FORCE
 
 publish/macOS/$(CONFIG): shijima-qt$(EXE)
 	mkdir -p $@
-	cp -uv $< $@
+	$(call copy_changed,$<,$@)
 
 publish/Linux/$(CONFIG): shijima-qt$(EXE)
 	mkdir -p $@
-	cp -uv $< $@
+	$(call copy_changed,$<,$@)
 
 shijima-qt$(EXE): Platform/Platform.a libshijima/build/libshijima.a shijima-qt.a
 	$(CXX) $(LDFLAGS) -o $@ $(LD_WHOLE_ARCHIVE) $^ $(LD_NO_WHOLE_ARCHIVE)

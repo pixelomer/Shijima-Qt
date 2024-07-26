@@ -72,6 +72,24 @@ else
 	LD_NO_WHOLE_ARCHIVE := -Wl,--no-whole-archive
 endif
 
+ifeq ($(PLATFORM),macOS)
+define copy_changed
+set -e; \
+if [[ -d $(2) ]]; then \
+	for file in $(1); do \
+		out="$(2)/$$(basename $${file})"; \
+		if [[ ! -f "$${out}" || "$${file}" -nt "$${out}" ]]; then cp -v $${file} $${out}; fi; \
+	done; \
+else \
+	if [[ ! -f "$(2)" || "$(1)" -nt "$(2)" ]]; then cp -v "$(1)" "$(2)"; fi; \
+fi
+endef
+else
+define copy_changed
+cp -uv $(1) $(2)
+endef
+endif
+
 EXE := 
 ifeq ($(PLATFORM),Windows)
 	#FIXME: --allow-multiple-definition should not be necessary
@@ -88,12 +106,12 @@ define exe_dlls
 $(shell ./find_dlls.sh "$(1)" "$(WINDLL_PATH)")
 endef
 define copy_exe_dlls
-cp -uv $(call exe_dlls,"$(1)") "$(2)"
+$(call copy_changed,$(call exe_dlls,"$(1)"),$(2))
 endef
 define copy_qt_plugin_dlls
 mkdir -p "$(1)/platforms" "$(1)/styles"
-cp -uv $(WINDLL_PATH)/../lib/qt6/plugins/platforms/*.dll "$(1)/platforms/"
-cp -uv $(WINDLL_PATH)/../lib/qt6/plugins/styles/*.dll "$(1)/styles/"
+$(call copy_changed,$(WINDLL_PATH)/../lib/qt6/plugins/platforms/*.dll,$(1)/platforms/)
+$(call copy_changed,$(WINDLL_PATH)/../lib/qt6/plugins/styles/*.dll,$(1)/styles/)
 endef
 	EXE := .exe
 endif

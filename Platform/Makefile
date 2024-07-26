@@ -2,7 +2,7 @@ include ../common.mk
 
 all:
 	$(MAKE) -C $(PLATFORM) || { rm -f Platform.a && false; }
-	cp -u $(PLATFORM)/$(PLATFORM).a Platform.a
+	$(call copy_changed,$(PLATFORM)/$(PLATFORM).a,Platform.a)
 
 clean:
 	$(MAKE) -C $(PLATFORM) clean
