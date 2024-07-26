@@ -21,7 +21,6 @@ ShijimaWidget::ShijimaWidget(std::unique_ptr<shijima::mascot::manager> mascot,
     QWidget *parent) : QWidget(parent)
 {
     m_mascot = std::move(mascot);
-    m_mascot->reset_position();
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_ShowWithoutActivating);
     setAttribute(Qt::WA_MacShowFocusRect, false);
