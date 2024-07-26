@@ -15,7 +15,8 @@ class ShijimaWidget : public QWidget
 {
 public:
     friend class ShijimaContextMenu;
-    explicit ShijimaWidget(std::unique_ptr<shijima::mascot::manager> mascot,
+    explicit ShijimaWidget(std::string const& mascotName,
+        std::unique_ptr<shijima::mascot::manager> mascot,
         QWidget *parent = nullptr);
     void tick();
     bool paused() const { return m_paused || m_contextMenuVisible; }
@@ -28,6 +29,9 @@ public:
     std::shared_ptr<shijima::mascot::environment> env() {
         return m_mascot->state->env; 
     }
+    std::string const& mascotName() {
+        return m_mascotName;
+    }
 protected:
     void paintEvent(QPaintEvent *) override;
     void mousePressEvent(QMouseEvent *) override;
@@ -37,6 +41,7 @@ private:
     void contextMenuClosed(QCloseEvent *);
     void showContextMenu(QPoint const&);
     std::unique_ptr<shijima::mascot::manager> m_mascot;
+    std::string m_mascotName;
     int m_offsetX;
     int m_offsetY;
     bool m_visible;

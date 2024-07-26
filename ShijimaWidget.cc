@@ -17,9 +17,11 @@
 
 using namespace shijima;
 
-ShijimaWidget::ShijimaWidget(std::unique_ptr<shijima::mascot::manager> mascot,
+ShijimaWidget::ShijimaWidget(std::string const& mascotName,
+    std::unique_ptr<shijima::mascot::manager> mascot,
     QWidget *parent) : QWidget(parent)
 {
+    m_mascotName = mascotName;
     m_mascot = std::move(mascot);
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_ShowWithoutActivating);

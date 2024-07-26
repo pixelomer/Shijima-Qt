@@ -95,21 +95,27 @@ void ShijimaManager::tick() {
 
     updateEnvironment();
 
-    std::vector<ShijimaWidget *> newShimeji;
-    for (ShijimaWidget *shimeji : m_mascots) {
+    for (int i=m_mascots.size()-1; i>=0; --i) {
+        ShijimaWidget *shimeji = m_mascots[i];
+        if (!shimeji->isVisible()) {
+            delete shimeji;
+            m_mascots.erase(m_mascots.begin() + i);
+            break;
+        }
         shimeji->tick();
         auto &mascot = shimeji->mascot();
         auto &breedRequest = mascot.state->breed_request;
         if (breedRequest.available) {
-            auto product = m_factory.spawn("test", breedRequest);
-            ShijimaWidget *shimeji = new ShijimaWidget(std::move(product.manager));
+            if (breedRequest.name == "") {
+                breedRequest.name = shimeji->mascotName();
+            }
+            auto product = m_factory.spawn(breedRequest);
+            ShijimaWidget *shimeji = new ShijimaWidget(breedRequest.name,
+                std::move(product.manager));
             shimeji->show();
-            newShimeji.push_back(shimeji);
+            m_mascots.push_back(shimeji);
             breedRequest.available = false;
         }
-    }
-    for (ShijimaWidget *spawned : newShimeji) {
-        m_mascots.push_back(spawned);
     }
 }
 
@@ -117,7 +123,8 @@ void ShijimaManager::spawnClicked() {
     updateEnvironment();
     auto product = m_factory.spawn("test", {});
     product.manager->reset_position();
-    ShijimaWidget *shimeji = new ShijimaWidget(std::move(product.manager));
+    ShijimaWidget *shimeji = new ShijimaWidget("test",
+        std::move(product.manager));
     shimeji->show();
     m_mascots.push_back(shimeji);
 }
