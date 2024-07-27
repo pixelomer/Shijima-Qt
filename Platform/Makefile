@@ -1,9 +1,9 @@
 include ../common.mk
 
 all:
-	$(MAKE) -C $(PLATFORM) || { rm -f Platform.a && false; }
-	$(call copy_changed,$(PLATFORM)/$(PLATFORM).a,Platform.a)
+	$(MAKE) -C $(BUILD_PLATFORM) || { rm -f Platform.a && false; }
+	$(call copy_changed,$(BUILD_PLATFORM)/$(BUILD_PLATFORM).a,Platform.a)
 
 clean:
-	$(MAKE) -C $(PLATFORM) clean
+	$(MAKE) -C $(BUILD_PLATFORM) clean
 	rm -f Platform.a

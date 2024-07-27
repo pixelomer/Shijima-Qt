@@ -3,11 +3,11 @@ include ../../common.mk
 SOURCES = Platform.cc ActiveWindowObserver.cc
 QT_LIBS = Core
 
-all: Windows.a
+all: Stub.a
 
-Windows.a: $(OBJECTS)
+Stub.a: $(OBJECTS)
 	rm -f $@
 	$(AR) rcs $@ $(OBJECTS)
 
 clean:
-	rm -f $(OBJECTS) Windows.a
+	rm -f $(OBJECTS) Stub.a

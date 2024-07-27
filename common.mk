@@ -10,17 +10,21 @@ PLATFORM_CFLAGS :=
 PLATFORM_CXXFLAGS :=
 PLATFORM_LDFLAGS :=
 ifeq ($(OS),Windows_NT)
-	Platform := Windows
+	PLATFORM := Windows
+	BUILD_PLATFORM := Stub
 else
 	ifeq ($(shell echo $(CC) | grep mingw >/dev/null && echo 1),1)
 		PLATFORM := Windows
+		BUILD_PLATFORM := Stub
 	else
 		UNAME_S := $(shell uname -s)
 		ifeq ($(UNAME_S),Linux)
 			PLATFORM := Linux
+			BUILD_PLATFORM := Linux
 		endif
 		ifeq ($(UNAME_S),Darwin)
 			PLATFORM := macOS
+			BUILD_PLATFORM := macOS
 		endif
 		ifeq ($(PLATFORM),)
 			$(error Unsupported platform)

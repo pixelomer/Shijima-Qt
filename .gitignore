@@ -20,8 +20,8 @@
 !/Platform/macOS/*.cc
 !/Platform/macOS/*.mm
 !/Platform/macOS/*.hpp
-!/Platform/Windows/
-!/Platform/Windows/Makefile
-!/Platform/Windows/*.cc
-!/Platform/Windows/*.hpp
+!/Platform/Stub/
+!/Platform/Stub/Makefile
+!/Platform/Stub/*.cc
+!/Platform/Stub/*.hpp
 !/find_dlls.sh
