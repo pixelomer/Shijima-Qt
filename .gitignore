@@ -25,3 +25,4 @@
 !/Platform/Stub/*.cc
 !/Platform/Stub/*.hpp
 !/find_dlls.sh
+!/README.md
