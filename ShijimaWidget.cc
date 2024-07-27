@@ -24,6 +24,7 @@ ShijimaWidget::ShijimaWidget(std::string const& mascotName,
     m_mascotName = mascotName;
     m_mascot = std::move(mascot);
     setAttribute(Qt::WA_TranslucentBackground);
+    setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_ShowWithoutActivating);
     setAttribute(Qt::WA_MacShowFocusRect, false);
     setFixedSize(kShijimaWidth, kShijimaHeight);
@@ -31,11 +32,10 @@ ShijimaWidget::ShijimaWidget(std::string const& mascotName,
         | Qt::WindowDoesNotAcceptFocus | Qt::NoDropShadowWindowHint);
 }
 
-void ShijimaWidget::paintEvent(QPaintEvent *event) {
-    if (!m_visible) {
-        return;
+ShijimaWidget::ActiveImage const& ShijimaWidget::getActiveImage() {
+    if (m_activeImage.available) {
+        return m_activeImage;
     }
-    QPainter painter(this);
     auto &frame = m_mascot->state->active_frame;
     auto imagePath = QDir::cleanPath(QString("test/img") + QDir::separator() +
         QString(frame.name.c_str()));
@@ -60,7 +60,17 @@ void ShijimaWidget::paintEvent(QPaintEvent *event) {
         // Mascot Y is greater than screen height
         source.setHeight(source.height() - m_offsetY);
     }
-    painter.drawImage(dest, image, source);
+
+    return m_activeImage = { &image, dest, source };
+}
+
+void ShijimaWidget::paintEvent(QPaintEvent *event) {
+    if (!m_visible) {
+        return;
+    }
+    QPainter painter(this);
+    auto &active = getActiveImage();
+    painter.drawImage(active.drawOrigin, *active.image, active.sourceRect);
 }
 
 void ShijimaWidget::tick() {
@@ -119,6 +129,7 @@ void ShijimaWidget::tick() {
 
     // Repaint if needed
     if (needsRepaint) {
+        m_activeImage = {};
         repaint();
         update();
     }
@@ -136,6 +147,26 @@ void ShijimaWidget::showContextMenu(QPoint const& pos) {
 }
 
 void ShijimaWidget::mousePressEvent(QMouseEvent *event) {
+    // Ignore presses to transparent areas
+    {
+        auto &active = getActiveImage();
+        auto image = active.image;
+        auto source = active.sourceRect;
+        auto pos = event->pos();
+        auto imagePos = pos + source.topLeft() - active.drawOrigin;
+        if (imagePos.x() < 0 || imagePos.y() < 0 ||
+            imagePos.x() > image->width() || imagePos.y() > image->height())
+        {
+            event->ignore();
+            return;
+        }
+        auto color = image->pixelColor(imagePos);
+        if (color.alpha() == 0) {
+            event->ignore();
+            return;
+        }
+    }
+
     if (event->button() == Qt::MouseButton::LeftButton) {
         m_mascot->state->dragging = true;
     }
