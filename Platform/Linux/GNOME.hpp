@@ -6,12 +6,12 @@
 namespace Platform {
 namespace GNOME {
 
-QMap<QString, QVariant> getExtensionInfo(QString uuid);
-bool isExtensionInstalled(QString uuid);
-bool isExtensionEnabled(QString uuid);
-void installExtension(QString path);
-void enableExtension(QString uuid);
-void disableExtension(QString uuid);
+QMap<QString, QVariant> getExtensionInfo(QString const& uuid);
+bool isExtensionInstalled(QString const& uuid);
+bool isExtensionEnabled(QString const& uuid);
+void installExtension(QString const& path);
+void enableExtension(QString const& uuid);
+void disableExtension(QString const& uuid);
 bool userExtensionsEnabled();
 void setUserExtensionsEnabled(bool enabled);
 bool running();

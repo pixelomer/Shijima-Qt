@@ -9,7 +9,7 @@ using namespace Platform::DBus;
 namespace Platform {
 namespace GNOME {
 
-QMap<QString, QVariant> getExtensionInfo(QString uuid) {
+QMap<QString, QVariant> getExtensionInfo(QString const& uuid) {
     auto msg = QDBusMessage::createMethodCall("org.gnome.Shell",
         "/org/gnome/Shell", "org.gnome.Shell.Extensions", 
         "GetExtensionInfo");
@@ -21,19 +21,19 @@ QMap<QString, QVariant> getExtensionInfo(QString uuid) {
     return map;
 }
 
-bool isExtensionInstalled(QString uuid) {
+bool isExtensionInstalled(QString const& uuid) {
     auto map = getExtensionInfo(uuid);
     return map.size() > 0;
 }
 
-bool isExtensionEnabled(QString uuid) {
+bool isExtensionEnabled(QString const& uuid) {
     auto map = getExtensionInfo(uuid);
     return map.contains("enabled") &&
         map["enabled"].canConvert<bool>() &&
         map["enabled"].toBool();
 }
 
-void installExtension(QString path) {
+void installExtension(QString const& path) {
     auto stdPath = path.toStdString();
 
     // Filter: [a-zA-Z0-9\-./]+
@@ -57,7 +57,7 @@ void installExtension(QString path) {
     }
 }
 
-void enableExtension(QString uuid) {
+void enableExtension(QString const& uuid) {
     auto msg = QDBusMessage::createMethodCall("org.gnome.Shell",
         "/org/gnome/Shell", "org.gnome.Shell.Extensions", 
         "EnableExtension");
@@ -68,7 +68,7 @@ void enableExtension(QString uuid) {
     }
 }
 
-void disableExtension(QString uuid) {
+void disableExtension(QString const& uuid) {
     auto msg = QDBusMessage::createMethodCall("org.gnome.Shell",
         "/org/gnome/Shell", "org.gnome.Shell.Extensions", 
         "DisableExtension");
