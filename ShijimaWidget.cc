@@ -90,7 +90,6 @@ void ShijimaWidget::tick() {
     //raise();
     auto envWidth = env()->screen.width();
     //auto envHeight = m_env->screen.height();
-    auto anchor = m_mascot->state->anchor;
     auto &frame = m_mascot->state->active_frame;
     bool needsRepaint = prev_frame.name != frame.name;
     int winX = (int)m_mascot->state->anchor.x;
