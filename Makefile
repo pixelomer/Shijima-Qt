@@ -34,7 +34,7 @@ shijima-qt$(EXE): Platform/Platform.a libshijima/build/libshijima.a shijima-qt.a
 libshijima/build/libshijima.a: libshijima/build/Makefile
 	$(MAKE) -C libshijima/build
 
-libshijima/build/Makefile: FORCE
+libshijima/build/Makefile: libshijima/CMakeLists.txt FORCE
 	mkdir -p libshijima/build && cd libshijima/build && $(CMAKE) $(CMAKEFLAGS) ..
 
 clean:
