@@ -6,7 +6,6 @@ namespace Platform {
 
 ActiveWindowObserver::ActiveWindowObserver(): QObject() {
     m_private = new PrivateActiveWindowObserver { this };
-    m_private->startKWinScript();
 }
 
 int ActiveWindowObserver::tickFrequency() {
@@ -14,8 +13,8 @@ int ActiveWindowObserver::tickFrequency() {
 }
 
 void ActiveWindowObserver::tick() {
-    if (!m_private->isKWinScriptLoaded()) {
-        throw std::runtime_error("KWin script died");
+    if (!m_private->alive()) {
+        throw std::runtime_error("Active window observer died");
     }
 }
 

@@ -32,14 +32,16 @@ else
 	endif
 endif
 
-CONFIG ?= release
+CONFIG_VALID := 0
 ifeq ($(CONFIG),release)
+	CONFIG_VALID := 1
 	CONFIG_CFLAGS := -O3 -flto -DNDEBUG
 	CONFIG_CXXFLAGS := -O3 -flto -DNDEBUG
 	CONFIG_LDFLAGS := -flto
 	CONFIG_CMAKEFLAGS := -DCMAKE_BUILD_TYPE=Release
 endif
 ifeq ($(CONFIG),debug)
+	CONFIG_VALID := 1
 	CONFIG_CFLAGS := -g -O0
 	CONFIG_CXXFLAGS := -g -O0
 	CONFIG_LDFLAGS :=
@@ -51,6 +53,9 @@ ifeq ($(CONFIG),debug)
 		CONFIG_CXXFLAGS += -flto
 		CONFIG_LDFLAGS += -flto
 	endif
+endif
+ifeq ($(CONFIG_VALID),0)
+$(error Invalid CONFIG. Try CONFIG=debug or CONFIG=release)
 endif
 
 ifeq ($(PLATFORM),macOS)
@@ -126,7 +131,7 @@ STD_CXXFLAGS := -Wall -std=c++17
 PKG_CFLAGS = $(shell [ -z "$(PKG_LIBS)" ] || $(PKG_CONFIG) --cflags $(PKG_LIBS))
 PKG_LDFLAGS = $(shell [ -z "$(PKG_LIBS)" ] || $(PKG_CONFIG) --libs $(PKG_LIBS))
 
-OBJECTS = $(patsubst %.mm,%.o,$(patsubst %.cc,%.o,$(SOURCES)))
+OBJECTS = $(patsubst %.c,%.o,$(patsubst %.mm,%.o,$(patsubst %.cc,%.o,$(SOURCES))))
 CFLAGS = $(STD_CFLAGS) $(CONFIG_CFLAGS) $(PLATFORM_CFLAGS) $(QT_CFLAGS) $(PKG_CFLAGS)
 CXXFLAGS = $(STD_CXXFLAGS) $(CONFIG_CXXFLAGS) $(PLATFORM_CXXFLAGS) $(QT_CFLAGS) $(PKG_CFLAGS)
 LDFLAGS = $(CONFIG_LDFLAGS) $(PLATFORM_LDFLAGS) $(QT_LDFLAGS) $(PKG_LDFLAGS)

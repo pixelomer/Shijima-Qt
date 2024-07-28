@@ -12,6 +12,9 @@
 !/Platform/Linux/*.cc
 !/Platform/Linux/*.hpp
 !/Platform/Linux/kwin_script.js
+!/Platform/Linux/gnome_script/
+!/Platform/Linux/gnome_script/extension.js
+!/Platform/Linux/gnome_script/metadata.json
 !/Platform/Linux/Makefile
 !/Platform/Linux/*.cc
 !/Platform/Linux/*.hpp

@@ -1,18 +1,17 @@
 #include "PrivateActiveWindowObserver.hpp"
 #include "KWin.hpp"
+#include "GNOME.hpp"
+#include "KWin.hpp"
+#include "KDEWindowObserverBackend.hpp"
+#include "GNOMEWindowObserverBackend.hpp"
 #include <QDBusConnection>
 #include <QTextStream>
 #include <iostream>
 #include <QFile>
 #include <unistd.h>
 
-// static const char kwin_script[] = { ... };
-#include "kwin_script.c"
-
 namespace Platform {
 
-const QString PrivateActiveWindowObserver::m_kwinScriptName = "ShijimaScript";
-const QString PrivateActiveWindowObserver::m_kwinScriptPath = "/tmp/shijima_get_active_window.js";
 const QString PrivateActiveWindowObserver::m_dbusInterfaceName = "com.pixelomer.ShijimaQT";
 const QString PrivateActiveWindowObserver::m_dbusServiceName = "com.pixelomer.ShijimaQT";
 const QString PrivateActiveWindowObserver::m_dbusMethodName = "updateActiveWindow";
@@ -20,6 +19,17 @@ const QString PrivateActiveWindowObserver::m_dbusMethodName = "updateActiveWindo
 PrivateActiveWindowObserver::PrivateActiveWindowObserver(QObject *obj)
     : QDBusVirtualObject(obj) 
 {
+    if (KWin::running()) {
+        std::cout << "Detected KDE" << std::endl;
+        m_backend = std::make_unique<KDEWindowObserverBackend>();
+    }
+    else if (GNOME::running()) {
+        std::cout << "Detected GNOME" << std::endl;
+        m_backend = std::make_unique<GNOMEWindowObserverBackend>();
+    }
+    else {
+        throw std::runtime_error("No window observer backend available");
+    }
     auto bus = QDBusConnection::sessionBus();
     if (!bus.isConnected()) {
         throw std::runtime_error("could not connect to DBus");
@@ -101,6 +111,7 @@ bool PrivateActiveWindowObserver::handleMessage(const QDBusMessage &message,
 void PrivateActiveWindowObserver::updateActiveWindow(int pid, double x,
     double y, double width, double height)
 {
+    //std::cerr << pid << ", " << x << ", " << y << std::endl;
     if (getpid() == pid) {
         if (!m_activeWindow.available && m_previousActiveWindow.available) {
             m_activeWindow = m_previousActiveWindow;
@@ -117,41 +128,5 @@ void PrivateActiveWindowObserver::updateActiveWindow(int pid, double x,
     }
 }
 
-bool PrivateActiveWindowObserver::isKWinScriptLoaded() {
-    return KWin::isScriptLoaded(m_kwinScriptName);
-}
-
-void PrivateActiveWindowObserver::stopKWinScript() {
-    if (KWin::isScriptLoaded(m_kwinScriptName)) {
-        KWin::unloadScript(m_kwinScriptName);
-    }
-    m_kwinScriptID = -1;
-}
-
-void PrivateActiveWindowObserver::createKWinScript() {
-    QFile file { m_kwinScriptPath };
-    if (!file.open(QFile::WriteOnly | QFile::Text)) {
-        throw std::runtime_error("could not open file for writing: "
-            + m_kwinScriptPath.toStdString());
-    }
-    QTextStream stream { &file };
-    stream << QByteArray(kwin_script, kwin_script_len);
-    stream.flush();
-    file.flush();
-    file.close();
-}
-
-void PrivateActiveWindowObserver::startKWinScript() {
-    stopKWinScript();
-    createKWinScript();
-    m_kwinScriptID = KWin::loadScript(m_kwinScriptPath, m_kwinScriptName);
-    KWin::runScript(m_kwinScriptID);
-}
-
-PrivateActiveWindowObserver::~PrivateActiveWindowObserver() {
-    if (m_kwinScriptID != -1) {
-        KWin::stopScript(m_kwinScriptID);
-    }
-}
 
 }
