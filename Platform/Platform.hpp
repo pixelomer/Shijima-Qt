@@ -4,6 +4,6 @@
 
 namespace Platform {
 
-void initialize();
+void initialize(int argc, char **argv);
 
 }

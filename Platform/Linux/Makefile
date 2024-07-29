@@ -2,7 +2,7 @@ include ../../common.mk
 
 SOURCES = Platform.cc ActiveWindowObserver.cc KWin.cc PrivateActiveWindowObserver.cc \
 	DBus.cc GNOME.cc GNOMEWindowObserverBackend.cc KDEWindowObserverBackend.cc
-QT_LIBS = Core DBus
+QT_LIBS = Core DBus Widgets
 
 define bin2c
 echo "#include <stddef.h>" > $(2)
