@@ -3,6 +3,7 @@
 #include <QVBoxLayout>
 #include <QWidget>
 #include <QPushButton>
+#include <QTextStream>
 #include <QGuiApplication>
 #include <QFile>
 #include <QScreen>

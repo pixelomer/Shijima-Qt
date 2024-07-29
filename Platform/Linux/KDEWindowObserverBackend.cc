@@ -1,6 +1,7 @@
 #include "KDEWindowObserverBackend.hpp"
 #include "KWin.hpp"
 #include <QFile>
+#include <QTextStream>
 
 #include "kwin_script.c"
 

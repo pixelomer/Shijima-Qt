@@ -1,6 +1,7 @@
 #include "GNOMEWindowObserverBackend.hpp"
 #include "GNOME.hpp"
 #include <QFile>
+#include <QDataStream>
 
 #include "gnome_script.c"
 
