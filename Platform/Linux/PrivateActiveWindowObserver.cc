@@ -80,7 +80,7 @@ bool PrivateActiveWindowObserver::handleMessage(const QDBusMessage &message,
         connection.send(reply);
         return true;
     }
-    if (args[0].typeId() != QVariant::Int) {
+    if (args[0].type() != QVariant::Int) {
         auto reply = message.createErrorReply(QDBusError::InvalidArgs,
             "Expected args[0] to be an Int");
         connection.send(reply);
