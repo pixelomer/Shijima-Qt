@@ -85,17 +85,19 @@ void ShijimaManager::updateEnvironment() {
     if (taskbarHeight < 0) {
         taskbarHeight = 0;
     }
-    m_env->screen = { 0, geometry.width(), geometry.height(), 0 };
-    m_env->floor = { geometry.height() - taskbarHeight, 0, geometry.width() };
-    m_env->work_area = { 0, geometry.width(), geometry.height() - taskbarHeight, 0 };
-    m_env->ceiling = { 0, 0, geometry.width() };
+    double gwidth = (double)geometry.width();
+    double gheight = (double)geometry.height();
+    m_env->screen = { 0, gwidth, gheight, 0 };
+    m_env->floor = { gheight - taskbarHeight, 0, gwidth };
+    m_env->work_area = { 0, gwidth, gheight - taskbarHeight, 0 };
+    m_env->ceiling = { 0, 0, gwidth };
     if (m_activeWindow.available && m_activeWindow.x != 0
         && m_activeWindow.y != 0)
     {
-        m_env->active_ie = { static_cast<int>(m_activeWindow.y),
-            static_cast<int>(m_activeWindow.x + m_activeWindow.width),
-            static_cast<int>(m_activeWindow.y + m_activeWindow.height),
-            static_cast<int>(m_activeWindow.x) };
+        m_env->active_ie = { m_activeWindow.y,
+            m_activeWindow.x + m_activeWindow.width,
+            m_activeWindow.y + m_activeWindow.height,
+            m_activeWindow.x };
     }
     else {
         m_env->active_ie = { -50, -50, -50, -50 };
