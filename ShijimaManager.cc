@@ -76,7 +76,7 @@ void ShijimaManager::timerEvent(QTimerEvent *event) {
 }
 
 void ShijimaManager::updateEnvironment() {
-    m_activeWindow = m_windowObserver.getActiveWindow();
+    m_currentWindow = m_windowObserver.getActiveWindow();
     auto cursor = QCursor::pos();
     auto screen = QGuiApplication::primaryScreen();
     auto geometry = screen->geometry();
@@ -91,19 +91,26 @@ void ShijimaManager::updateEnvironment() {
     m_env->floor = { gheight - taskbarHeight, 0, gwidth };
     m_env->work_area = { 0, gwidth, gheight - taskbarHeight, 0 };
     m_env->ceiling = { 0, 0, gwidth };
-    if (m_activeWindow.available && m_activeWindow.x != 0
-        && m_activeWindow.y != 0)
+    if (m_currentWindow.available && m_currentWindow.x != 0
+        && m_currentWindow.y != 0)
     {
-        m_env->active_ie = { m_activeWindow.y,
-            m_activeWindow.x + m_activeWindow.width,
-            m_activeWindow.y + m_activeWindow.height,
-            m_activeWindow.x };
+        m_env->active_ie = { m_currentWindow.y,
+            m_currentWindow.x + m_currentWindow.width,
+            m_currentWindow.y + m_currentWindow.height,
+            m_currentWindow.x };
+        if (m_previousWindow.available &&
+            m_previousWindow.pid == m_currentWindow.pid)
+        {
+            m_env->active_ie.dy = m_currentWindow.y - m_previousWindow.y;
+            m_env->active_ie.dx = m_currentWindow.x - m_previousWindow.x;
+        }
     }
     else {
         m_env->active_ie = { -50, -50, -50, -50 };
     }
     int x = cursor.x(), y = cursor.y();
     m_env->cursor = { (double)x, (double)y, x - m_env->cursor.x, y - m_env->cursor.y };
+    m_previousWindow = m_currentWindow;
 }
 
 void ShijimaManager::tick() {

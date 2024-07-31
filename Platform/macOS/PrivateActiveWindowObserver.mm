@@ -65,8 +65,8 @@ ActiveWindow PrivateActiveWindowObserver::getActiveWindow() {
     pid_t pid;
     GetDataFromUIElement(focusedWindowRef, &rect, &pid);
     m_activePid = pid;
-    return m_activeWindow = { rect.origin.x, rect.origin.y, rect.size.width,
-        rect.size.height };
+    return m_activeWindow = { (long)pid, rect.origin.x, rect.origin.y,
+        rect.size.width, rect.size.height };
 }
 
 }

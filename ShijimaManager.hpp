@@ -24,7 +24,8 @@ private:
     explicit ShijimaManager(QWidget *parent = nullptr);
     void spawnClicked();
     void tick();
-    Platform::ActiveWindow m_activeWindow;
+    Platform::ActiveWindow m_previousWindow;
+    Platform::ActiveWindow m_currentWindow;
     Platform::ActiveWindowObserver m_windowObserver;
     int m_mascotTimer = -1;
     int m_windowObserverTimer = -1;

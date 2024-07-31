@@ -123,7 +123,7 @@ void PrivateActiveWindowObserver::updateActiveWindow(int pid, double x,
         m_activeWindow = {};
     }
     else {
-        m_activeWindow = { x, y, width, height };
+        m_activeWindow = { pid, x, y, width, height };
         m_previousActiveWindow = {};
     }
 }
