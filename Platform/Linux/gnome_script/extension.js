@@ -5,7 +5,7 @@ import Shell from 'gi://Shell';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 
 class ActiveIE {
-    constructor(rect, pid, scale) {
+    constructor(rect, uid, pid, scale) {
         if (rect == null) {
             this.visible = false;
         }
@@ -14,6 +14,7 @@ class ActiveIE {
                 scale = 1;
             }
             this.visible = true;
+            this.uid = uid;
             this.pid = pid;
             this.x = rect.x / scale;
             this.y = rect.y / scale;
@@ -22,11 +23,14 @@ class ActiveIE {
         }
     }
 
+    /** @param {ActiveIE} other */
     isEqual(other) {
         if (other == null) {
             return false;
         }
-        return this.visible === other.visible &&
+        return this.pid === other.pid &&
+            this.uid === other.uid &&
+            this.visible === other.visible &&
             this.x === other.x &&
             this.y === other.y &&
             this.width === other.width &&
@@ -34,8 +38,8 @@ class ActiveIE {
     }
 
     toString() {
-        return `[ActiveIE visible:${this.visible} origin:${this.x},${this.y} `
-            + `size:${this.width},${this.height}]`;
+        return `[ActiveIE uid:${this.uid} pid:${this.pid} visible:${this.visible} ` +
+            `origin:${this.x},${this.y} size:${this.width},${this.height}]`;
     }
 }
 
@@ -81,7 +85,7 @@ export default class ShijimaExtension extends Extension {
         }
         const rect = focused.get_frame_rect();
         const scale = global.display.get_monitor_scale(global.display.get_primary_monitor());
-        return new ActiveIE(rect, focused.get_pid(), scale);
+        return new ActiveIE(rect, focused.get_id(), focused.get_pid(), scale);
     }
 
     _notifyShijima(ignoreHidden = false) {
@@ -91,7 +95,8 @@ export default class ShijimaExtension extends Extension {
             console.log("activeIE=" + this._activeIE.toString());
             let variant;
             if (this._activeIE.visible) {
-                variant = new GLib.Variant('(idddd)', [
+                variant = new GLib.Variant('(sidddd)', [
+                    this._activeIE.uid.toString(),
                     this._activeIE.pid,
                     this._activeIE.x,
                     this._activeIE.y,
@@ -100,7 +105,7 @@ export default class ShijimaExtension extends Extension {
                 ]);
             }
             else {
-                variant = new GLib.Variant('(idddd)', [ -1, 0, 0, 0, 0 ])
+                variant = new GLib.Variant('(sidddd)', [ "", -1, -1, -1, -1, -1 ])
             }
             Gio.DBus.session.call(
                 'com.pixelomer.ShijimaQT',

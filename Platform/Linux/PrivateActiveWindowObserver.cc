@@ -48,6 +48,7 @@ QString PrivateActiveWindowObserver::introspect(QString const& path) const {
     const QString interfaceXML =
         "<interface name=\"" + m_dbusInterfaceName + "\">"
         "  <method name=\"" + m_dbusMethodName + "\">"
+        "    <arg name=\"uid\" type=\"s\" direction=\"in\"/>"
         "    <arg name=\"pid\" type=\"i\" direction=\"in\"/>"
         "    <arg name=\"x\" type=\"d\" direction=\"in\"/>"
         "    <arg name=\"y\" type=\"d\" direction=\"in\"/>"
@@ -74,19 +75,25 @@ bool PrivateActiveWindowObserver::handleMessage(const QDBusMessage &message,
         return false;
     }
     auto args = message.arguments();
-    if (args.size() != 5) {
+    if (args.size() != 6) {
         auto reply = message.createErrorReply(QDBusError::InvalidArgs,
-            "Expected 5 arguments");
+            "Expected 6 arguments");
         connection.send(reply);
         return true;
     }
-    if (args[0].type() != QVariant::Int) {
+    if (args[0].type() != QVariant::String) {
         auto reply = message.createErrorReply(QDBusError::InvalidArgs,
-            "Expected args[0] to be an Int");
+            "Expected args[0] to be an String");
         connection.send(reply);
         return true;
     }
-    for (int i=1; i<=4; ++i) {
+    if (args[1].type() != QVariant::Int) {
+        auto reply = message.createErrorReply(QDBusError::InvalidArgs,
+            "Expected args[1] to be an Int");
+        connection.send(reply);
+        return true;
+    }
+    for (int i=2; i<=5; ++i) {
         if (args[i].canConvert<double>()) {
             continue;
         }
@@ -96,22 +103,28 @@ bool PrivateActiveWindowObserver::handleMessage(const QDBusMessage &message,
         connection.send(reply);
         return true;
     }
-    int pid = args[0].toInt();
-    double x = args[1].toDouble();
-    double y = args[2].toDouble();
-    double width = args[3].toDouble();
-    double height = args[4].toDouble();
-    updateActiveWindow(pid, x, y, width, height);
+    QString uid = args[0].toString();
+    int pid = args[1].toInt();
+    double x = args[2].toDouble();
+    double y = args[3].toDouble();
+    double width = args[4].toDouble();
+    double height = args[5].toDouble();
+    updateActiveWindow(uid, pid, x, y, width, height);
 
     auto reply = message.createReply();
     connection.send(reply);
     return true;
 }
 
-void PrivateActiveWindowObserver::updateActiveWindow(int pid, double x,
-    double y, double width, double height)
+void PrivateActiveWindowObserver::updateActiveWindow(QString const& uid, int pid,
+    double x, double y, double width, double height)
 {
-    //std::cerr << pid << ", " << x << ", " << y << std::endl;
+    /* std::cerr << "uid=" << uid.toStdString() << ", "
+        << "pid=" << pid << ", "
+        << "x=" << x << ", "
+        << "y=" << y << ", "
+        << "width=" << width << ", "
+        << "height=" << height << ", " << std::endl; */
     if (getpid() == pid) {
         if (!m_activeWindow.available && m_previousActiveWindow.available) {
             m_activeWindow = m_previousActiveWindow;
@@ -123,7 +136,7 @@ void PrivateActiveWindowObserver::updateActiveWindow(int pid, double x,
         m_activeWindow = {};
     }
     else {
-        m_activeWindow = { pid, x, y, width, height };
+        m_activeWindow = { uid, pid, x, y, width, height };
         m_previousActiveWindow = {};
     }
 }

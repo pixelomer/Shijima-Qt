@@ -9,6 +9,7 @@ namespace Platform {
 
 const QString GNOMEWindowObserverBackend::m_gnomeScriptUUID = "shijima-helper@pixelomer.github.io";
 const QString GNOMEWindowObserverBackend::m_gnomeScriptPath = "/tmp/gnome-shijima-helper.zip";
+const QString GNOMEWindowObserverBackend::m_gnomeScriptVersion = "1.1";
 
 GNOMEWindowObserverBackend::GNOMEWindowObserverBackend() {
     if (!GNOME::userExtensionsEnabled()) {
@@ -16,13 +17,25 @@ GNOMEWindowObserverBackend::GNOMEWindowObserverBackend() {
     }
     writeExtensionToDisk();
     GNOME::installExtension(m_gnomeScriptPath);
-    if (GNOME::isExtensionInstalled(m_gnomeScriptUUID)) {
-        GNOME::enableExtension(m_gnomeScriptUUID);
+    auto extensionInfo = GNOME::getExtensionInfo(m_gnomeScriptUUID);
+    static const QString kVersionName = "version-name";
+    std::string restartReason;
+    if (!extensionInfo.contains(kVersionName)) {
+        restartReason = "Extension was installed for the first time.";
     }
-    else {
+    else if (extensionInfo[kVersionName].type() != QVariant::String) {
+        restartReason = "Active extension contains malformed metadata.";
+    }
+    else if (extensionInfo[kVersionName].toString() != m_gnomeScriptVersion) {
+        restartReason = "Active extension is outdated.";
+    }
+    if (restartReason != "") {
+        // Shell needs to be restarted
         throw std::runtime_error("Shijima GNOME Helper has been installed. "
-            "To use Shijima-Qt, log out and log back in.");
+            "To use Shijima-Qt, log out and log back in. (Restart reason: "
+            + restartReason + ")");
     }
+    GNOME::enableExtension(m_gnomeScriptUUID);
 }
 
 void GNOMEWindowObserverBackend::writeExtensionToDisk() {

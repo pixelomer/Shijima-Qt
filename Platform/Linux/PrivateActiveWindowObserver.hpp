@@ -11,8 +11,8 @@ private:
     ActiveWindow m_activeWindow;
     ActiveWindow m_previousActiveWindow;
     std::unique_ptr<WindowObserverBackend> m_backend;
-    void updateActiveWindow(int pid, double x, double y, double width,
-        double height);
+    void updateActiveWindow(QString const& uid, int pid, double x, double y,
+        double width, double height);
 public:
     static const QString m_dbusServiceName;
     static const QString m_dbusInterfaceName;

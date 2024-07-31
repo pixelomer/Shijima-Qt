@@ -99,7 +99,7 @@ void ShijimaManager::updateEnvironment() {
             m_currentWindow.y + m_currentWindow.height,
             m_currentWindow.x };
         if (m_previousWindow.available &&
-            m_previousWindow.pid == m_currentWindow.pid)
+            m_previousWindow.uid == m_currentWindow.uid)
         {
             m_env->active_ie.dy = m_currentWindow.y - m_previousWindow.y;
             m_env->active_ie.dx = m_currentWindow.x - m_previousWindow.x;

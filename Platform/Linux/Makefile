@@ -16,7 +16,7 @@ endef
 
 all: Linux.a
 
-Linux.a: kwin_script.c gnome_script.c $(OBJECTS)
+Linux.a: $(OBJECTS)
 	rm -f $@
 	$(AR) rcs $@ $(OBJECTS)
 
@@ -29,6 +29,12 @@ Linux.a: kwin_script.c gnome_script.c $(OBJECTS)
 
 gnome_script.zip: .work/gnome_script
 	zip -jr $@ $</*
+
+GNOMEWindowObserverBackend.cc: gnome_script.c
+	touch $@
+
+KDEWindowObserverBackend.cc: kwin_script.c
+	touch $@
 
 .work/gnome_script: gnome_script/metadata.json gnome_script/extension_minified.js
 	rm -rf "$@"

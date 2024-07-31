@@ -27,12 +27,13 @@
         if (frame != null) {
             callDBus(serviceName, methodPath,
                 interfaceName, methodName,
-                window.pid, frame.x, frame.y, frame.width, frame.height, ()=>{});
+                window.internalId.toString(), window.pid, frame.x, frame.y, frame.width, frame.height,
+                ()=>{});
         }
         else {
             callDBus(serviceName, methodPath,
                 interfaceName, methodName,
-                window?.pid ?? -1, -1, -1, -1, -1, ()=>{});
+                "", window?.pid ?? -1, -1, -1, -1, -1, ()=>{});
         }
     };
     const geometryChangedCallback = (window) => {
