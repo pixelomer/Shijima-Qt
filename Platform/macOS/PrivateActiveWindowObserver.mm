@@ -3,31 +3,38 @@
 #import <ApplicationServices/ApplicationServices.h>
 #include "PrivateActiveWindowObserver.hpp"
 
-static void GetDataFromUIElement(AXUIElementRef element, CGRect *outRect,
-    pid_t *outPid)
+// Private API
+extern "C" AXError _AXUIElementGetWindow(AXUIElementRef, CGWindowID *out);
+
+static BOOL GetDataFromUIElement(AXUIElementRef element, CGRect *outRect,
+    pid_t *outPid, CGWindowID *outWindowID)
 {
-    pid_t pid;
-    CGRect rect;
-    {
-        CGPoint point;
-        CGSize size;
-        AXError err;
-        BOOL success;
-        AXValueRef ret;
-        err = AXUIElementGetPid(element, &pid);
-        if (err != kAXErrorSuccess) return;
-        err = AXUIElementCopyAttributeValue(element, kAXPositionAttribute, (CFTypeRef *)&ret);
-        if (err != kAXErrorSuccess) return;
-        success = AXValueGetValue(ret, (AXValueType)kAXValueCGPointType, &point);
-        if (!success) return;
-        err = AXUIElementCopyAttributeValue(element, kAXSizeAttribute, (CFTypeRef *)&ret);
-        if (err != kAXErrorSuccess) return;
-        success = AXValueGetValue(ret, (AXValueType)kAXValueCGSizeType, &size);
-        if (!success) return;
-        rect = { .size = size, .origin = point };
+    AXError err;
+    BOOL success;
+    if (outPid != NULL) {
+        err = AXUIElementGetPid(element, outPid);
+        if (err != kAXErrorSuccess) return NO;
     }
-    if (outRect != NULL) *outRect = rect;
-    if (outPid != NULL) *outPid = pid;
+    if (outRect != NULL) {
+        AXValueRef ret;
+        err = AXUIElementCopyAttributeValue(element, kAXPositionAttribute,
+            (CFTypeRef *)&ret);
+        if (err != kAXErrorSuccess) return NO;
+        success = AXValueGetValue(ret, (AXValueType)kAXValueCGPointType,
+            &outRect->origin);
+        if (!success) return NO;
+        err = AXUIElementCopyAttributeValue(element, kAXSizeAttribute,
+            (CFTypeRef *)&ret);
+        if (err != kAXErrorSuccess) return NO;
+        success = AXValueGetValue(ret, (AXValueType)kAXValueCGSizeType,
+            &outRect->size);
+        if (!success) return NO;
+    }
+    if (outWindowID != NULL) {
+        err = _AXUIElementGetWindow(element, outWindowID);
+        if (err != kAXErrorSuccess) return NO;
+    }
+    return YES;
 }
 
 namespace Platform {
@@ -63,10 +70,16 @@ ActiveWindow PrivateActiveWindowObserver::getActiveWindow() {
     }
     CGRect rect;
     pid_t pid;
-    GetDataFromUIElement(focusedWindowRef, &rect, &pid);
+    CGWindowID windowID;
+    BOOL gotData = GetDataFromUIElement(focusedWindowRef, &rect, &pid, &windowID);
+    if (!gotData) {
+        NSLog(@"Failed to get window data");
+        return m_activeWindow = {};
+    }
     m_activePid = pid;
-    return m_activeWindow = { (long)pid, rect.origin.x, rect.origin.y,
-        rect.size.width, rect.size.height };
+    QString uid = QString::fromStdString(std::to_string(windowID));
+    return m_activeWindow = { uid, (long)pid, rect.origin.x,
+        rect.origin.y, rect.size.width, rect.size.height };
 }
 
 }
