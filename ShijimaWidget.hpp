@@ -59,6 +59,7 @@ private:
     std::string m_imgRoot;
     int m_offsetX;
     int m_offsetY;
+    int m_windowHeight;
     bool m_visible;
     bool m_contextMenuVisible = false;
     bool m_paused = false;

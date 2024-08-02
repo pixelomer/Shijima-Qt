@@ -23,6 +23,7 @@ ShijimaWidget::ShijimaWidget(std::string const& mascotName,
     QWidget *parent) : QWidget(parent)
 {
     m_mascotName = mascotName;
+    m_windowHeight = kShijimaHeight;
     m_imgRoot = imgRoot;
     m_mascot = std::move(mascot);
     setAttribute(Qt::WA_TranslucentBackground);
@@ -62,7 +63,14 @@ ShijimaWidget::ActiveImage const& ShijimaWidget::getActiveImage() {
         // Mascot Y is greater than screen height
         source.setHeight(source.height() - m_offsetY);
     }
-
+    int finalHeight = dest.y() + source.height();
+    if (finalHeight != m_windowHeight) {
+        if (finalHeight < kShijimaHeight) {
+            finalHeight = kShijimaHeight;
+        }
+        m_windowHeight = finalHeight;
+        setFixedHeight(finalHeight);
+    }
     return m_activeImage = { &image, dest, source };
 }
 
@@ -131,6 +139,7 @@ void ShijimaWidget::tick() {
     // Repaint if needed
     if (needsRepaint) {
         m_activeImage = {};
+        getActiveImage();
         repaint();
         update();
     }
