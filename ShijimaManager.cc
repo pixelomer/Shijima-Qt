@@ -7,6 +7,7 @@
 #include <QGuiApplication>
 #include <QFile>
 #include <QScreen>
+#include <QRandomGenerator>
 #include "ShijimaWidget.hpp"
 #include "MascotFinder.hpp"
 
@@ -153,7 +154,7 @@ void ShijimaManager::spawn(std::string const& name) {
 
 void ShijimaManager::spawnClicked() {
     auto &allTemplates = m_factory.get_all_templates();
-    int target = random() % allTemplates.size();
+    int target = QRandomGenerator::global()->bounded((int)allTemplates.size());
     int i = 0;
     for (auto &pair : allTemplates) {
         if (i++ != target) continue;
