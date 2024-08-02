@@ -77,7 +77,8 @@ ActiveWindow PrivateActiveWindowObserver::getActiveWindow() {
         return m_activeWindow = {};
     }
     m_activePid = pid;
-    QString uid = QString::fromStdString(std::to_string(windowID));
+    QString uid = QString::fromStdString(std::to_string(pid) + 
+        "-" + std::to_string(windowID));
     return m_activeWindow = { uid, (long)pid, rect.origin.x,
         rect.origin.y, rect.size.width, rect.size.height };
 }
