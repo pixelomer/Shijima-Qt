@@ -8,17 +8,11 @@
 #include <QFile>
 #include <QScreen>
 #include "ShijimaWidget.hpp"
+#include "MascotFinder.hpp"
 
 using namespace shijima;
 
 static ShijimaManager *m_defaultManager;
-
-static QString readFile(QString const& file) {
-    QFile f { file };
-    if (!f.open(QFile::ReadOnly | QFile::Text)) return "";
-    QTextStream in(&f);
-    return in.readAll(); 
-}
 
 ShijimaManager *ShijimaManager::defaultManager() {
     if (m_defaultManager == nullptr) {
@@ -46,14 +40,17 @@ ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent) {
     QVBoxLayout *layout = new QVBoxLayout;
     QPushButton *spawnButton = new QPushButton("Spawn");
     
-    mascot::factory::tmpl tmpl;
-    tmpl.actions_xml = readFile("test/actions.xml").toStdString();
-    tmpl.behaviors_xml = readFile("test/behaviors.xml").toStdString();
-    tmpl.name = "test";
-    tmpl.path = "test";
-    m_factory.register_template(tmpl);
-    m_env = m_factory.env = std::make_shared<mascot::environment>();
+    MascotFinder mascotFinder;
+    int found = mascotFinder.findAll(m_factory);
+    if (found == 0) {
+        throw std::runtime_error("Could not find any mascots");
+    }
+    auto &allTemplates = m_factory.get_all_templates();
+    for (auto &pair : allTemplates) {
+        std::cout << "Loaded mascot: " << pair.first << std::endl;
+    }
 
+    m_env = m_factory.env = std::make_shared<mascot::environment>();
     connect(spawnButton, &QPushButton::clicked, this, &ShijimaManager::spawnClicked);
     layout->addWidget(spawnButton);
     QWidget *widget = new QWidget;
@@ -135,8 +132,8 @@ void ShijimaManager::tick() {
                 breedRequest.name = shimeji->mascotName();
             }
             auto product = m_factory.spawn(breedRequest);
-            ShijimaWidget *shimeji = new ShijimaWidget(breedRequest.name,
-                std::move(product.manager));
+            ShijimaWidget *shimeji = new ShijimaWidget(product.tmpl->name,
+                product.tmpl->path, std::move(product.manager));
             shimeji->show();
             m_mascots.push_back(shimeji);
             breedRequest.available = false;
@@ -149,11 +146,18 @@ void ShijimaManager::spawn(std::string const& name) {
     auto product = m_factory.spawn(name, {});
     product.manager->reset_position();
     ShijimaWidget *shimeji = new ShijimaWidget(name,
-        std::move(product.manager));
+        product.tmpl->path, std::move(product.manager));
     shimeji->show();
     m_mascots.push_back(shimeji);
 }
 
 void ShijimaManager::spawnClicked() {
-    spawn("test");
+    auto &allTemplates = m_factory.get_all_templates();
+    int target = random() % allTemplates.size();
+    int i = 0;
+    for (auto &pair : allTemplates) {
+        if (i++ != target) continue;
+        spawn(pair.first);
+        break;
+    }
 }

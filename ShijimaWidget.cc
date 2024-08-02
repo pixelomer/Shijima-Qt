@@ -18,10 +18,12 @@
 using namespace shijima;
 
 ShijimaWidget::ShijimaWidget(std::string const& mascotName,
+    std::string const& imgRoot,
     std::unique_ptr<shijima::mascot::manager> mascot,
     QWidget *parent) : QWidget(parent)
 {
     m_mascotName = mascotName;
+    m_imgRoot = imgRoot;
     m_mascot = std::move(mascot);
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_NoSystemBackground);
@@ -37,8 +39,8 @@ ShijimaWidget::ActiveImage const& ShijimaWidget::getActiveImage() {
         return m_activeImage;
     }
     auto &frame = m_mascot->state->active_frame;
-    auto imagePath = QDir::cleanPath(QString("test/img") + QDir::separator() +
-        QString(frame.name.c_str()));
+    auto imagePath = QDir::cleanPath(QString::fromStdString(m_imgRoot)
+        + QDir::separator() + QString(frame.name.c_str()));
     QImage const& image = AssetLoader::defaultLoader()
         ->loadImage(imagePath, m_mascot->state->looking_right);
     QPoint dest = { 0, 0 };

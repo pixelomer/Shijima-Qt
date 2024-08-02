@@ -1,6 +1,6 @@
 include common.mk
 
-SOURCES = main.cc AssetLoader.cc ShijimaContextMenu.cc ShijimaManager.cc ShijimaWidget.cc
+SOURCES = main.cc MascotFinder.cc AssetLoader.cc ShijimaContextMenu.cc ShijimaManager.cc ShijimaWidget.cc
 QT_LIBS = Widgets Core Gui
 
 ifeq ($(PLATFORM),Linux)

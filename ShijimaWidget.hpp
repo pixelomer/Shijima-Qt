@@ -16,6 +16,7 @@ class ShijimaWidget : public QWidget
 public:
     friend class ShijimaContextMenu;
     explicit ShijimaWidget(std::string const& mascotName,
+        std::string const& imgRoot,
         std::unique_ptr<shijima::mascot::manager> mascot,
         QWidget *parent = nullptr);
     void tick();
@@ -55,6 +56,7 @@ private:
     ActiveImage const& getActiveImage();
     std::unique_ptr<shijima::mascot::manager> m_mascot;
     std::string m_mascotName;
+    std::string m_imgRoot;
     int m_offsetX;
     int m_offsetY;
     bool m_visible;
