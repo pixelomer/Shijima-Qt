@@ -30,8 +30,8 @@ ShijimaContextMenu::ShijimaContextMenu(ShijimaWidget *parent)
     action = addAction("Pause");
     action->setCheckable(true);
     action->setChecked(parent->m_paused);
-    connect(action, &QAction::triggered, [this, action](){
-        shijimaParent()->m_paused = action->isChecked();
+    connect(action, &QAction::triggered, [this](bool checked){
+        shijimaParent()->m_paused = checked;
     });
 
     // Call another
