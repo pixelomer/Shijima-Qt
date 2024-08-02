@@ -13,5 +13,7 @@ int main(int argc, char **argv) {
     }
     QApplication app(argc, argv);
     ShijimaManager::defaultManager()->show();
-    return app.exec();
+    int ret = app.exec();
+    delete ShijimaManager::defaultManager();
+    return ret;
 }

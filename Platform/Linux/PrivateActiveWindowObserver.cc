@@ -4,9 +4,11 @@
 #include "KWin.hpp"
 #include "KDEWindowObserverBackend.hpp"
 #include "GNOMEWindowObserverBackend.hpp"
+#include "Platform-Linux.hpp"
 #include <QDBusConnection>
 #include <QTextStream>
 #include <iostream>
+#include <QGuiApplication>
 #include <QFile>
 #include <unistd.h>
 
@@ -19,6 +21,11 @@ const QString PrivateActiveWindowObserver::m_dbusMethodName = "updateActiveWindo
 PrivateActiveWindowObserver::PrivateActiveWindowObserver(QObject *obj)
     : QDBusVirtualObject(obj) 
 {
+    m_signalNotifier = new QSocketNotifier(Platform::terminateClientFd,
+        QSocketNotifier::Read, this);
+    connect(m_signalNotifier, &QSocketNotifier::activated, []{
+        QGuiApplication::exit(0);
+    });
     if (KWin::running()) {
         std::cout << "Detected KDE" << std::endl;
         m_backend = std::make_unique<KDEWindowObserverBackend>();

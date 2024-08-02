@@ -9,8 +9,17 @@
 #endif
 #include "../Platform.hpp"
 #include <stdlib.h>
+#include <signal.h>
+#include <sys/socket.h>
 
 namespace Platform {
+
+int terminateServerFd = -1;
+int terminateClientFd = -1;
+
+void handleSignal(int sig) {
+    write(terminateServerFd, "\x01", 1);
+}
 
 #ifdef QT5_MANUALLY_DETERMINE_SCALE
 void determineScale(int argc, char **argv) {
@@ -72,6 +81,21 @@ void initialize(int argc, char **argv) {
     #ifdef QT5_MANUALLY_DETERMINE_SCALE
     determineScale(argc, argv);
     #endif
+
+    // Create sockets for notifying signals
+    int fds[2];
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) == -1) {
+        throw std::system_error({ errno, std::generic_category() }, strerror(errno));
+    }
+    terminateServerFd = fds[0];
+    terminateClientFd = fds[1];
+
+    // Install signal handlers
+    struct sigaction action = {0};
+    action.sa_handler = handleSignal;
+    sigaction(SIGINT, &action, NULL);
+    sigaction(SIGTERM, &action, NULL);
+    sigaction(SIGHUP, &action, NULL);
 
     // Wayland does not allow windows to reposition themselves.
     // Set WAYLAND_DISPLAY to an invalid value to prevent its use.

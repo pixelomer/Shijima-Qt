@@ -52,7 +52,8 @@ void KDEWindowObserverBackend::startKWinScript() {
 
 KDEWindowObserverBackend::~KDEWindowObserverBackend() {
     if (alive()) {
-        //KWin::stopScript(m_kwinScriptID);
+        KWin::stopScript(m_kwinScriptID);
+        KWin::unloadScript(m_kwinScriptName);
     }
 }
 

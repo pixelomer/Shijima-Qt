@@ -1,6 +1,7 @@
 #pragma once
 #include <QString>
 #include <QDBusVirtualObject>
+#include <QSocketNotifier>
 #include "WindowObserverBackend.hpp"
 #include "../ActiveWindow.hpp"
 
@@ -11,6 +12,7 @@ private:
     ActiveWindow m_activeWindow;
     ActiveWindow m_previousActiveWindow;
     std::unique_ptr<WindowObserverBackend> m_backend;
+    QSocketNotifier *m_signalNotifier;
     void updateActiveWindow(QString const& uid, int pid, double x, double y,
         double width, double height);
 public:

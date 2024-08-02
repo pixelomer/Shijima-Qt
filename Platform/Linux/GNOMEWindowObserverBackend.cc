@@ -52,7 +52,7 @@ void GNOMEWindowObserverBackend::writeExtensionToDisk() {
 
 GNOMEWindowObserverBackend::~GNOMEWindowObserverBackend() {
     if (alive()) {
-        //GNOME::disableExtension(m_gnomeScriptUUID);
+        GNOME::disableExtension(m_gnomeScriptUUID);
     }
 }
 
