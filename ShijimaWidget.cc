@@ -39,6 +39,9 @@ ShijimaWidget::ActiveImage const& ShijimaWidget::getActiveImage() {
     if (m_activeImage.available) {
         return m_activeImage;
     }
+    if (!m_visible) {
+        return {};
+    }
     auto &frame = m_mascot->state->active_frame;
     auto imagePath = QDir::cleanPath(QString::fromStdString(m_imgRoot)
         + QDir::separator() + QString(frame.name.c_str()));
@@ -130,8 +133,13 @@ void ShijimaWidget::tick() {
     }
     m_offsetX = offX;
     m_offsetY = offY;
-    m_visible = !(m_offsetX <= -kShijimaWidth || m_offsetX >= kShijimaWidth ||
-        m_offsetY <= -kShijimaHeight || m_offsetY >= kShijimaHeight);
+    bool new_visible = !(m_offsetX <= -kShijimaWidth || m_offsetX >= kShijimaWidth ||
+        m_offsetY <= -kShijimaHeight || m_offsetY >= kShijimaHeight)
+        && frame.name != "";
+    if (new_visible != m_visible) {
+        m_visible = new_visible;
+        needsRepaint = true;
+    }
     if (m_visible) {
         move(winX, winY);
     }
