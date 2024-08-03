@@ -13,13 +13,20 @@
 
 using namespace shijima;
 
-static ShijimaManager *m_defaultManager;
+static ShijimaManager *m_defaultManager = nullptr;
 
 ShijimaManager *ShijimaManager::defaultManager() {
     if (m_defaultManager == nullptr) {
         m_defaultManager = new ShijimaManager;
     }
     return m_defaultManager;
+}
+
+void ShijimaManager::finalize() {
+    if (m_defaultManager != nullptr) {
+        delete m_defaultManager;
+        m_defaultManager = nullptr;
+    }
 }
 
 void ShijimaManager::killAll() {

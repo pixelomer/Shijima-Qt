@@ -2,6 +2,7 @@
 #include <QDir>
 #include "Platform/Platform.hpp"
 #include "ShijimaManager.hpp"
+#include "AssetLoader.hpp"
 
 int main(int argc, char **argv) {
     Platform::initialize(argc, argv);
@@ -14,6 +15,7 @@ int main(int argc, char **argv) {
     QApplication app(argc, argv);
     ShijimaManager::defaultManager()->show();
     int ret = app.exec();
-    delete ShijimaManager::defaultManager();
+    ShijimaManager::finalize();
+    AssetLoader::finalize();
     return ret;
 }

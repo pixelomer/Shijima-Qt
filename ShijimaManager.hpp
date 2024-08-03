@@ -14,6 +14,7 @@ class ShijimaManager : public QMainWindow
 {
 public:
     static ShijimaManager *defaultManager();
+    static void finalize();
     void updateEnvironment();
     void spawn(std::string const& name);
     void killAll();

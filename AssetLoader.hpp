@@ -11,5 +11,6 @@ private:
     AssetLoader();
 public:
     static AssetLoader *defaultLoader();
+    static void finalize();
     QImage const& loadImage(QString const& path, bool mirrorX);
 };

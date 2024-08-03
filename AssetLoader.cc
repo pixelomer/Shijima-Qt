@@ -2,12 +2,20 @@
 
 AssetLoader::AssetLoader() {}
 
+static AssetLoader *m_defaultLoader = nullptr;
+
 AssetLoader *AssetLoader::defaultLoader() {
-    static AssetLoader *instance = nullptr;
-    if (instance == nullptr) {
-        instance = new AssetLoader;
+    if (m_defaultLoader == nullptr) {
+        m_defaultLoader = new AssetLoader;
     }
-    return instance;
+    return m_defaultLoader;
+}
+
+void AssetLoader::finalize() {
+    if (m_defaultLoader != nullptr) {
+        delete m_defaultLoader;
+        m_defaultLoader = nullptr;
+    }
 }
 
 QImage const& AssetLoader::loadImage(QString const& path, bool mirrorX) {
