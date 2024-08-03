@@ -40,7 +40,7 @@ ShijimaWidget::ActiveImage const& ShijimaWidget::getActiveImage() {
         return m_activeImage;
     }
     if (!m_visible) {
-        return {};
+        return m_activeImage = {};
     }
     auto &frame = m_mascot->state->active_frame;
     auto imagePath = QDir::cleanPath(QString::fromStdString(m_imgRoot)
@@ -167,6 +167,10 @@ void ShijimaWidget::showContextMenu(QPoint const& pos) {
 void ShijimaWidget::mousePressEvent(QMouseEvent *event) {
     // Ignore presses to transparent areas
     {
+        if (!m_visible) {
+            event->ignore();
+            return;
+        }
         auto &active = getActiveImage();
         auto image = active.image;
         auto source = active.sourceRect;
