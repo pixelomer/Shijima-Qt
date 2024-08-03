@@ -17,5 +17,6 @@ int main(int argc, char **argv) {
     int ret = app.exec();
     ShijimaManager::finalize();
     AssetLoader::finalize();
+    std::cout << std::endl;
     return ret;
 }
