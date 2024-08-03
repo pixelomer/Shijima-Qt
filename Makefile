@@ -15,7 +15,7 @@ all:: publish/$(PLATFORM)/$(CONFIG)
 
 publish/Windows/$(CONFIG): shijima-qt$(EXE) FORCE
 	mkdir -p $@
-	cp $< $@
+	@$(call copy_changed,$<,$@)
 	@$(call copy_exe_dlls,$<,$@)
 	@$(call copy_qt_plugin_dlls,$@)
 
