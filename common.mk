@@ -87,7 +87,7 @@ set -e; \
 if [[ -d $(2) ]]; then \
 	for file in $(1); do \
 		out="$(2)/$$(basename $${file})"; \
-		if [[ ! -f "$${out}" || "$${file}" -nt "$${out}" ]]; then cp -v $${file} $${out}; fi; \
+		if [[ ! -f "$${out}" || "$${file}" -nt "$${out}" ]]; then cp -v "$${file}" "$${out}"; fi; \
 	done; \
 else \
 	if [[ ! -f "$(2)" || "$(1)" -nt "$(2)" ]]; then cp -v "$(1)" "$(2)"; fi; \
