@@ -4,11 +4,11 @@ SOURCES = Platform.cc ActiveWindowObserver.cc PrivateActiveWindowObserver.mm
 QT_LIBS = Core
 CXXFLAGS += -x objective-c++ -fobjc-arc
 
-all: macOS.a
+all:: macOS.a
 
 macOS.a: $(OBJECTS)
 	rm -f $@
 	$(AR) rcs $@ $(OBJECTS)
 
-clean:
+clean::
 	rm -f $(OBJECTS) macOS.a

@@ -11,7 +11,7 @@ CXXFLAGS += -Ilibshijima
 CMAKEFLAGS += -DSHIJIMA_BUILD_EXAMPLES=NO
 PUBLISH_DLL = $(addprefix Qt6,$(QT_LIBS)) 
 
-all: publish/$(PLATFORM)/$(CONFIG)
+all:: publish/$(PLATFORM)/$(CONFIG)
 
 publish/Windows/$(CONFIG): shijima-qt$(EXE) FORCE
 	mkdir -p $@
@@ -37,7 +37,7 @@ libshijima/build/libshijima.a: libshijima/build/Makefile
 libshijima/build/Makefile: libshijima/CMakeLists.txt FORCE
 	mkdir -p libshijima/build && cd libshijima/build && $(CMAKE) $(CMAKEFLAGS) ..
 
-clean:
+clean::
 	rm -rf publish/$(PLATFORM)/$(CONFIG) libshijima/build
 	rm -f $(OBJECTS) shijima-qt.a shijima-qt$(EXE)
 	$(MAKE) -C Platform clean

@@ -138,16 +138,23 @@ LDFLAGS = $(CONFIG_LDFLAGS) $(PLATFORM_LDFLAGS) $(QT_LDFLAGS) $(PKG_LDFLAGS)
 CMAKEFLAGS = $(CONFIG_CMAKEFLAGS)
 
 %.o: %.c
-	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+	$(CC) -MMD -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 %.o: %.cc
-	$(CC) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
+	$(CC) -MMD -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
 
 %.o: %.cpp
-	$(CC) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
+	$(CC) -MMD -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
 
 %.o: %.m
-	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+	$(CC) -MMD -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 %.o: %.mm
-	$(CC) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
+	$(CC) -MMD -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
+
+all::
+
+clean::
+	rm -f *.d
+
+-include *.d

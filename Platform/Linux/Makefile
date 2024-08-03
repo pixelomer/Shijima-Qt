@@ -14,7 +14,7 @@ wc -c < $(1) >> $(2)
 echo ";" >> $(2)
 endef
 
-all: Linux.a
+all:: Linux.a
 
 Linux.a: $(OBJECTS)
 	rm -f $@
@@ -51,7 +51,7 @@ KDEWindowObserverBackend.cc: kwin_script.c
 %.c: %.zip
 	$(call bin2c,$<,$@)
 
-clean:
+clean::
 	rm -rf .work/gnome_script
 	rm -f $(OBJECTS) Linux.a gnome_script.zip kwin_script.c \
 		kwin_script_minified.js gnome_script/extension_minified.js \
