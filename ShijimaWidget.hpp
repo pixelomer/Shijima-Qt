@@ -2,6 +2,7 @@
 
 #include <QWidget>
 #include <memory>
+#include "Asset.hpp"
 #include <shijima/mascot/manager.hpp>
 #include <shijima/mascot/environment.hpp>
 
@@ -39,30 +40,21 @@ protected:
     void mousePressEvent(QMouseEvent *) override;
     void mouseReleaseEvent(QMouseEvent *) override;
 private:
-    struct ActiveImage {
-    public:
-        QImage const* image;
-        QPoint drawOrigin;
-        QRect sourceRect;
-        bool available;
-        ActiveImage(): available(false) {}
-        ActiveImage(QImage const* image, QPoint const& origin,
-            QRect const& rect): image(image), drawOrigin(origin),
-            sourceRect(rect), available(true) {}
-    };
     void closeAction();
     void contextMenuClosed(QCloseEvent *);
     void showContextMenu(QPoint const&);
-    ActiveImage const& getActiveImage();
+    bool updateOffsets();
+    Asset const& getActiveAsset();
     std::unique_ptr<shijima::mascot::manager> m_mascot;
     std::string m_mascotName;
     std::string m_imgRoot;
-    int m_offsetX;
-    int m_offsetY;
+    QRect m_imageRect;
+    QPoint m_anchorInWindow;
+    QPoint m_drawOffset;
     int m_windowHeight;
+    int m_windowWidth;
     bool m_visible;
     bool m_contextMenuVisible = false;
     bool m_paused = false;
     bool m_markedForDeletion = false;
-    ActiveImage m_activeImage;
 };

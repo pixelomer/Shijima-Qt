@@ -12,8 +12,8 @@
 #include "AssetLoader.hpp"
 #include "ShijimaContextMenu.hpp"
 
-#define kShijimaWidth 128
-#define kShijimaHeight kShijimaWidth
+#define kMinimumWidth 128
+#define kMinimumHeight kMinimumWidth
 
 using namespace shijima;
 
@@ -23,58 +23,24 @@ ShijimaWidget::ShijimaWidget(std::string const& mascotName,
     QWidget *parent) : QWidget(parent)
 {
     m_mascotName = mascotName;
-    m_windowHeight = kShijimaHeight;
+    m_windowHeight = kMinimumHeight;
+    m_windowWidth = kMinimumWidth;
     m_imgRoot = imgRoot;
     m_mascot = std::move(mascot);
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_ShowWithoutActivating);
     setAttribute(Qt::WA_MacShowFocusRect, false);
-    setFixedSize(kShijimaWidth, kShijimaHeight);
+    setFixedSize(m_windowWidth, m_windowHeight);
     setWindowFlags(Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint
         | Qt::WindowDoesNotAcceptFocus | Qt::NoDropShadowWindowHint);
 }
 
-ShijimaWidget::ActiveImage const& ShijimaWidget::getActiveImage() {
-    if (m_activeImage.available) {
-        return m_activeImage;
-    }
-    if (!m_visible) {
-        return m_activeImage = {};
-    }
+Asset const& ShijimaWidget::getActiveAsset() {
     auto &frame = m_mascot->state->active_frame;
     auto imagePath = QDir::cleanPath(QString::fromStdString(m_imgRoot)
         + QDir::separator() + QString(frame.name.c_str()));
-    QImage const& image = AssetLoader::defaultLoader()
-        ->loadImage(imagePath, m_mascot->state->looking_right);
-    QPoint dest = { 0, 0 };
-    QRect source = image.rect();
-    if (m_offsetX < 0) {
-        // Mascot X is less than 0
-        source.setX(-m_offsetX);
-    }
-    else if (m_offsetX > 0) {
-        // Mascot X is greater than screen width
-        source.setWidth(source.width() - m_offsetX);
-        dest.setX(m_offsetX);
-    }
-    if (m_offsetY < 0) {
-        // Mascot Y is less than 0
-        source.setY(-m_offsetY);
-    }
-    else if (m_offsetY > 0) {
-        // Mascot Y is greater than screen height
-        source.setHeight(source.height() - m_offsetY);
-    }
-    int finalHeight = dest.y() + source.height();
-    if (finalHeight != m_windowHeight) {
-        if (finalHeight < kShijimaHeight) {
-            finalHeight = kShijimaHeight;
-        }
-        m_windowHeight = finalHeight;
-        setFixedHeight(finalHeight);
-    }
-    return m_activeImage = { &image, dest, source };
+    return AssetLoader::defaultLoader()->loadAsset(imagePath);
 }
 
 void ShijimaWidget::paintEvent(QPaintEvent *event) {
@@ -82,8 +48,80 @@ void ShijimaWidget::paintEvent(QPaintEvent *event) {
         return;
     }
     QPainter painter(this);
-    auto &active = getActiveImage();
-    painter.drawImage(active.drawOrigin, *active.image, active.sourceRect);
+    auto &asset = getActiveAsset();
+    auto &image = asset.image(m_mascot->state->looking_right);
+    painter.drawImage(asset.offset().topLeft() + m_drawOffset, image);
+}
+
+bool ShijimaWidget::updateOffsets() {
+    bool needsRepaint = false;
+    auto &frame = m_mascot->state->active_frame;
+    auto &asset = getActiveAsset();
+    auto &image = asset.image(m_mascot->state->looking_right);
+    auto assetOffset = asset.offset();
+
+    // Determine the minimum space required for the image
+    QPoint imageOrigin = assetOffset.topLeft();
+    QPoint imageBottomRight = imageOrigin +
+        QPoint{ (int)image.width(), (int)image.height() };
+    
+    // Does the image go outside of the minimum boundary? If so,
+    // extend the window boundary
+    int windowWidth = (imageBottomRight.x() >= kMinimumWidth)
+        ? kMinimumWidth * 2 : kMinimumWidth;
+    int windowHeight = (imageBottomRight.y() >= kMinimumHeight)
+        ? kMinimumHeight * 2 : kMinimumHeight;
+    int screenWidth = m_mascot->state->env->screen.width();
+    int screenHeight = m_mascot->state->env->screen.height();
+    if (windowWidth != m_windowWidth) {
+        m_windowWidth = windowWidth;
+        setFixedWidth(m_windowWidth);
+        needsRepaint = true;
+    }
+    if (windowHeight != m_windowHeight) {
+        m_windowHeight = windowHeight;
+        setFixedHeight(m_windowHeight);
+        needsRepaint = true;
+    }
+
+    // Determine the frame anchor within the window
+    if (m_mascot->state->looking_right) {
+        m_anchorInWindow = {
+            2 * asset.offset().x() + image.width() - (int)frame.anchor.x - 1,
+            (int)frame.anchor.y };
+    }
+    else {
+        m_anchorInWindow = { (int)frame.anchor.x, (int)frame.anchor.y };
+    }
+
+    // Detemine draw offsets and window positions
+    QPoint drawOffset;
+    m_visible = true;
+    int winX = (int)m_mascot->state->anchor.x - m_anchorInWindow.x();
+    int winY = (int)m_mascot->state->anchor.y - m_anchorInWindow.y();
+    if (winX < 0) {
+        drawOffset.setX(winX);
+        winX = 0;
+    }
+    else if (winX + windowWidth > screenWidth) {
+        drawOffset.setX(winX - screenWidth + windowWidth);
+        winX = screenWidth - windowWidth;
+    }
+    if (winY < 0) {
+        drawOffset.setY(winY);
+        winY = 0;
+    }
+    else if (winY + windowHeight > screenHeight) {
+        drawOffset.setY(winY - screenHeight + windowHeight);
+        winY = screenHeight - windowHeight;
+    }
+    if (drawOffset != m_drawOffset) {
+        needsRepaint = true;
+        m_drawOffset = drawOffset;
+    }
+    move(winX, winY);
+
+    return needsRepaint;
 }
 
 void ShijimaWidget::tick() {
@@ -98,58 +136,11 @@ void ShijimaWidget::tick() {
     // Tick
     auto prev_frame = m_mascot->state->active_frame;
     m_mascot->tick();
-
-    // Update draw offsets depending on the new position
-    //raise();
-    auto envWidth = env()->screen.width();
-    //auto envHeight = m_env->screen.height();
-    auto &frame = m_mascot->state->active_frame;
-    bool needsRepaint = prev_frame.name != frame.name;
-    int winX = (int)m_mascot->state->anchor.x;
-    if (m_mascot->state->looking_right) {
-        winX -= kShijimaWidth - (int)frame.anchor.x;
-    }
-    else {
-        winX -= (int)frame.anchor.x;
-    }
-    int winY = (int)m_mascot->state->anchor.y - (int)frame.anchor.y;
-    int offX=0, offY=0;
-    if (winX < 0) {
-        offX = winX;
-        winX = 0;
-        needsRepaint = true;
-    }
-    else if ((winX + kShijimaWidth) > envWidth) {
-        offX = winX + kShijimaWidth - envWidth;
-        winX = envWidth - kShijimaWidth;
-        needsRepaint = true;
-    }
-    if (winY < 0) {
-        offY = winY;
-        winY = 0;
-    }
-    if (offX != m_offsetX || offY != m_offsetY) {
-        needsRepaint = true;
-    }
-    m_offsetX = offX;
-    m_offsetY = offY;
-    bool new_visible = !(m_offsetX <= -kShijimaWidth || m_offsetX >= kShijimaWidth ||
-        m_offsetY <= -kShijimaHeight || m_offsetY >= kShijimaHeight)
-        && frame.name != "";
-    if (new_visible != m_visible) {
-        m_visible = new_visible;
-        needsRepaint = true;
-    }
-    if (m_visible) {
-        move(winX, winY);
-    }
-
-    // Repaint if needed
-    if (needsRepaint) {
-        m_activeImage = {};
-        getActiveImage();
-        repaint();
+    bool forceRepaint = prev_frame.name != m_mascot->state->active_frame.name;
+    bool offsetsChanged = updateOffsets();
+    if (offsetsChanged || forceRepaint) {
         update();
+        repaint();
     }
 }
 
@@ -171,18 +162,17 @@ void ShijimaWidget::mousePressEvent(QMouseEvent *event) {
             event->ignore();
             return;
         }
-        auto &active = getActiveImage();
-        auto image = active.image;
-        auto source = active.sourceRect;
+        auto &asset = getActiveAsset();
+        auto image = asset.image(m_mascot->state->looking_right);
         auto pos = event->pos();
-        auto imagePos = pos + source.topLeft() - active.drawOrigin;
+        auto imagePos = pos - m_drawOffset - asset.offset().topLeft();
         if (imagePos.x() < 0 || imagePos.y() < 0 ||
-            imagePos.x() > image->width() || imagePos.y() > image->height())
+            imagePos.x() > image.width() || imagePos.y() > image.height())
         {
             event->ignore();
             return;
         }
-        auto color = image->pixelColor(imagePos);
+        auto color = image.pixelColor(imagePos);
         if (color.alpha() == 0) {
             event->ignore();
             return;
