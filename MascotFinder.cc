@@ -1,6 +1,7 @@
 #include "MascotFinder.hpp"
 #include <QDirIterator>
 #include <iostream>
+#include <QTextStream>
 #include <optional>
 
 using namespace shijima;
