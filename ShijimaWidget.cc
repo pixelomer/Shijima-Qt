@@ -54,8 +54,6 @@ bool ShijimaWidget::updateOffsets() {
     bool needsRepaint = false;
     auto &frame = m_mascot->state->active_frame;
     auto &asset = getActiveAsset();
-    auto &image = asset.image(m_mascot->state->looking_right);
-    auto assetOffset = asset.offset();
     
     // Does the image go outside of the minimum boundary? If so,
     // extend the window boundary
