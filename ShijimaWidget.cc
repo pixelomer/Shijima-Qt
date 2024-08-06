@@ -12,9 +12,6 @@
 #include "AssetLoader.hpp"
 #include "ShijimaContextMenu.hpp"
 
-#define kMinimumWidth 128
-#define kMinimumHeight kMinimumWidth
-
 using namespace shijima;
 
 ShijimaWidget::ShijimaWidget(std::string const& mascotName,
@@ -23,8 +20,8 @@ ShijimaWidget::ShijimaWidget(std::string const& mascotName,
     QWidget *parent) : QWidget(parent)
 {
     m_mascotName = mascotName;
-    m_windowHeight = kMinimumHeight;
-    m_windowWidth = kMinimumWidth;
+    m_windowHeight = 128;
+    m_windowWidth = 128;
     m_imgRoot = imgRoot;
     m_mascot = std::move(mascot);
     setAttribute(Qt::WA_TranslucentBackground);
@@ -50,7 +47,7 @@ void ShijimaWidget::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
     auto &asset = getActiveAsset();
     auto &image = asset.image(m_mascot->state->looking_right);
-    painter.drawImage(asset.offset().topLeft() + m_drawOffset, image);
+    painter.drawImage(m_drawOrigin, image);
 }
 
 bool ShijimaWidget::updateOffsets() {
@@ -59,18 +56,11 @@ bool ShijimaWidget::updateOffsets() {
     auto &asset = getActiveAsset();
     auto &image = asset.image(m_mascot->state->looking_right);
     auto assetOffset = asset.offset();
-
-    // Determine the minimum space required for the image
-    QPoint imageOrigin = assetOffset.topLeft();
-    QPoint imageBottomRight = imageOrigin +
-        QPoint{ (int)image.width(), (int)image.height() };
     
     // Does the image go outside of the minimum boundary? If so,
     // extend the window boundary
-    int windowWidth = (imageBottomRight.x() >= kMinimumWidth)
-        ? kMinimumWidth * 2 : kMinimumWidth;
-    int windowHeight = (imageBottomRight.y() >= kMinimumHeight)
-        ? kMinimumHeight * 2 : kMinimumHeight;
+    int windowWidth = asset.originalSize().width();
+    int windowHeight = asset.originalSize().height();
     int screenWidth = m_mascot->state->env->screen.width();
     int screenHeight = m_mascot->state->env->screen.height();
     if (windowWidth != m_windowWidth) {
@@ -87,7 +77,7 @@ bool ShijimaWidget::updateOffsets() {
     // Determine the frame anchor within the window
     if (m_mascot->state->looking_right) {
         m_anchorInWindow = {
-            2 * asset.offset().x() + image.width() - (int)frame.anchor.x - 1,
+            asset.originalSize().width() - (int)frame.anchor.x,
             (int)frame.anchor.y };
     }
     else {
@@ -115,9 +105,18 @@ bool ShijimaWidget::updateOffsets() {
         drawOffset.setY(winY - screenHeight + windowHeight);
         winY = screenHeight - windowHeight;
     }
-    if (drawOffset != m_drawOffset) {
+    QPoint drawOrigin = drawOffset;
+    if (m_mascot->state->looking_right) {
+        drawOrigin += QPoint {
+            asset.originalSize().width() - asset.offset().topRight().x(),
+            asset.offset().topLeft().y() };
+    }
+    else {
+        drawOrigin += asset.offset().topLeft();
+    }
+    if (drawOrigin != m_drawOrigin) {
         needsRepaint = true;
-        m_drawOffset = drawOffset;
+        m_drawOrigin = drawOrigin;
     }
     move(winX, winY);
 
@@ -139,8 +138,8 @@ void ShijimaWidget::tick() {
     bool forceRepaint = prev_frame.name != m_mascot->state->active_frame.name;
     bool offsetsChanged = updateOffsets();
     if (offsetsChanged || forceRepaint) {
-        update();
         repaint();
+        update();
     }
 }
 
@@ -165,7 +164,7 @@ void ShijimaWidget::mousePressEvent(QMouseEvent *event) {
         auto &asset = getActiveAsset();
         auto image = asset.image(m_mascot->state->looking_right);
         auto pos = event->pos();
-        auto imagePos = pos - m_drawOffset - asset.offset().topLeft();
+        auto imagePos = pos - m_drawOrigin;
         if (imagePos.x() < 0 || imagePos.y() < 0 ||
             imagePos.x() > image.width() || imagePos.y() > image.height())
         {

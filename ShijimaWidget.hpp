@@ -50,7 +50,7 @@ private:
     std::string m_imgRoot;
     QRect m_imageRect;
     QPoint m_anchorInWindow;
-    QPoint m_drawOffset;
+    QPoint m_drawOrigin;
     int m_windowHeight;
     int m_windowWidth;
     bool m_visible;
