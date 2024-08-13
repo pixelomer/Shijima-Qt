@@ -22,14 +22,30 @@ int MascotFinder::findAll(mascot::factory &factory) {
         return 0;
     }
     std::optional<QString> defaultBehaviors, defaultActions;
+    bool isJapanese = false;
     if (conf.cd("conf")) {
-        defaultBehaviors = readFile(conf.absoluteFilePath("behaviors.xml"));
-        defaultActions = readFile(conf.absoluteFilePath("actions.xml"));
+        if (conf.exists("behaviors.xml")) {
+            defaultBehaviors = readFile(conf.absoluteFilePath("behaviors.xml"));
+        }
+        else if (conf.exists("行動.xml")) {
+            isJapanese = true;
+            defaultBehaviors = readFile(conf.absoluteFilePath("行動.xml"));
+        }
+        if (conf.exists("actions.xml")) {
+            defaultActions = readFile(conf.absoluteFilePath("actions.xml"));
+        }
+        else if (conf.exists("動作.xml")) {
+            isJapanese = true;
+            defaultActions = readFile(conf.absoluteFilePath("動作.xml"));
+        }
     }
     QDirIterator iter { img.absolutePath(), QDir::Dirs | QDir::NoDotAndDotDot,
         QDirIterator::NoIteratorFlags };
-    while (iter.hasNext()) {
-        QDir dir { iter.next() };
+    QDir dir = img;
+    do {
+        if (dir == img && !isJapanese) {
+            continue;
+        }
         if (!dir.exists()) {
             continue;
         }
@@ -39,8 +55,18 @@ int MascotFinder::findAll(mascot::factory &factory) {
         conf = dir;
         std::optional<QString> behaviors, actions;
         if (conf.cd("conf")) {
-            behaviors = readFile(conf.absoluteFilePath("behaviors.xml"));
-            actions = readFile(conf.absoluteFilePath("actions.xml"));
+            if (conf.exists("behaviors.xml")) {
+                defaultBehaviors = readFile(conf.absoluteFilePath("behaviors.xml"));
+            }
+            else if (conf.exists("行動.xml")) {
+                defaultBehaviors = readFile(conf.absoluteFilePath("行動.xml"));
+            }
+            if (conf.exists("actions.xml")) {
+                defaultActions = readFile(conf.absoluteFilePath("actions.xml"));
+            }
+            else if (conf.exists("動作.xml")) {
+                defaultActions = readFile(conf.absoluteFilePath("動作.xml"));
+            }
         }
         if (!behaviors) {
             behaviors = defaultBehaviors;
@@ -61,5 +87,6 @@ int MascotFinder::findAll(mascot::factory &factory) {
         factory.register_template(tmpl);
         ++found;
     }
+    while (iter.hasNext() && (dir = { iter.next() }).exists());
     return found;
 }
