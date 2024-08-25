@@ -3,6 +3,7 @@
 #include <QWidget>
 #include <memory>
 #include "Asset.hpp"
+#include "SoundEffectManager.hpp"
 #include <shijima/mascot/manager.hpp>
 #include <shijima/mascot/environment.hpp>
 
@@ -44,6 +45,7 @@ private:
     void contextMenuClosed(QCloseEvent *);
     void showContextMenu(QPoint const&);
     bool updateOffsets();
+    SoundEffectManager m_sounds;
     Asset const& getActiveAsset();
     std::unique_ptr<shijima::mascot::manager> m_mascot;
     std::string m_mascotName;

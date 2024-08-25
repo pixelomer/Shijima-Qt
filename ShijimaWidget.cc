@@ -24,6 +24,23 @@ ShijimaWidget::ShijimaWidget(std::string const& mascotName,
     m_windowWidth = 128;
     m_imgRoot = imgRoot;
     m_mascot = std::move(mascot);
+
+    QString qImgRoot = QString::fromStdString(imgRoot);
+    m_sounds.searchPaths.push_back(qImgRoot);
+    QDir dir { qImgRoot };
+    if (dir.exists() && dir.cdUp() && dir.cdUp() && dir.cd("sound")) {
+        m_sounds.searchPaths.push_back(dir.path());
+    }
+    dir = { qImgRoot };
+    if (dir.exists() && dir.cdUp() && dir.cd("sound")) {
+        m_sounds.searchPaths.push_back(dir.path());
+    }
+    dir = { qImgRoot };
+    if (dir.exists() && dir.cd("sound")) {
+        m_sounds.searchPaths.push_back(dir.path());
+    }
+    qInfo() << m_sounds.searchPaths;
+    
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_ShowWithoutActivating);
@@ -133,11 +150,19 @@ void ShijimaWidget::tick() {
     // Tick
     auto prev_frame = m_mascot->state->active_frame;
     m_mascot->tick();
-    bool forceRepaint = prev_frame.name != m_mascot->state->active_frame.name;
+    auto &new_frame = m_mascot->state->active_frame;
+    auto &new_sound = m_mascot->state->active_sound;
+    bool forceRepaint = prev_frame.name != new_frame.name;
     bool offsetsChanged = updateOffsets();
     if (offsetsChanged || forceRepaint) {
         repaint();
         update();
+    }
+    if (m_mascot->state->active_sound_changed) {
+        m_sounds.stop();
+        if (!new_sound.empty()) {
+            m_sounds.play(QString::fromStdString(new_sound));
+        }
     }
 }
 
