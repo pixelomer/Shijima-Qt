@@ -165,6 +165,7 @@ void ShijimaManager::spawnClicked() {
     int i = 0;
     for (auto &pair : allTemplates) {
         if (i++ != target) continue;
+        std::cout << "Spawning: " << pair.first << std::endl;
         spawn(pair.first);
         break;
     }

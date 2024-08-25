@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QDir>
+#include <shijima/log.hpp>
 #include "Platform/Platform.hpp"
 #include "ShijimaManager.hpp"
 #include "AssetLoader.hpp"
@@ -12,6 +13,9 @@ int main(int argc, char **argv) {
             throw std::runtime_error("Could not change working directory");
         }
     }
+    #ifdef SHIJIMA_LOGGING_ENABLED
+        shijima::set_log_level(SHIJIMA_LOG_PARSER | SHIJIMA_LOG_WARNINGS);
+    #endif
     QApplication app(argc, argv);
     ShijimaManager::defaultManager()->show();
     int ret = app.exec();
