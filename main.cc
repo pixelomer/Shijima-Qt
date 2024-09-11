@@ -13,6 +13,10 @@ int main(int argc, char **argv) {
             throw std::runtime_error("Could not change working directory");
         }
     }
+    #ifdef _WIN32
+        freopen("shijima_stdout.txt", "a", stdout);
+        freopen("shijima_stderr.txt", "a", stderr);
+    #endif
     #ifdef SHIJIMA_LOGGING_ENABLED
         shijima::set_log_level(SHIJIMA_LOG_PARSER | SHIJIMA_LOG_WARNINGS);
     #endif
