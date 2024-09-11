@@ -107,9 +107,19 @@ ifeq ($(PLATFORM),Windows)
 	PLATFORM_CXXFLAGS := -mwindows -msse2
 	PLATFORM_LDFLAGS := -Wl,--allow-multiple-definition -mwindows -msse2
 	ifeq ($(bindir),)
-		$(error bindir is not set)
+		bindir := $(shell [ "$${PATH:0:6}" = /mingw ] && echo "$${PATH%%:*}")
+		ifeq ($(bindir),)
+$(error bindir is not set)
+		endif
 	endif
 	WINDLL_PATH := $(bindir)
+	QT_PLUGIN_PATH := $(WINDLL_PATH)/../lib/qt$(QT_VERSION)/plugins
+	ifeq ($(shell [ -d "$(QT_PLUGIN_PATH)" ] && echo 1 ]),)
+		QT_PLUGIN_PATH := $(WINDLL_PATH)/../share/qt$(QT_VERSION)/plugins
+		ifeq ($(shell [ -d "$(QT_PLUGIN_PATH)" ] && echo 1 ]),)
+$(error could not find Qt plugin path)
+		endif
+	endif
 	export OBJDUMP
 define exe_dlls
 $(shell ./find_dlls.sh "$(1)" "$(WINDLL_PATH)")
@@ -119,8 +129,8 @@ $(call copy_changed,$(call exe_dlls,"$(1)"),$(2))
 endef
 define copy_qt_plugin_dlls
 mkdir -p "$(1)/platforms" "$(1)/styles"
-$(call copy_changed,$(WINDLL_PATH)/../lib/qt6/plugins/platforms/*.dll,$(1)/platforms/)
-$(call copy_changed,$(WINDLL_PATH)/../lib/qt6/plugins/styles/*.dll,$(1)/styles/)
+$(call copy_changed,$(QT_PLUGIN_PATH)/platforms/*.dll,$(1)/platforms/)
+$(call copy_changed,$(QT_PLUGIN_PATH)/styles/*.dll,$(1)/styles/)
 endef
 	EXE := .exe
 endif
