@@ -164,6 +164,9 @@ void ShijimaWidget::tick() {
             m_sounds.play(QString::fromStdString(new_sound));
         }
     }
+    else if (!m_sounds.playing()) {
+        m_mascot->state->active_sound.clear();
+    }
 }
 
 void ShijimaWidget::contextMenuClosed(QCloseEvent *event) {

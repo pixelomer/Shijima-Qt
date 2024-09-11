@@ -23,14 +23,22 @@ void SoundEffectManager::play(QString const& name) {
         effect->setVolume(1.f);
     }
     stop();
-    m_loadedEffects[name]->play();
-    m_activeName = name;
+    QSoundEffect *effect = m_loadedEffects[name];
+    effect->play();
+    m_activeEffect = effect;
+}
+
+bool SoundEffectManager::playing() const {
+    if (m_activeEffect != nullptr) {
+        return m_activeEffect->isPlaying();
+    }
+    return false;
 }
 
 void SoundEffectManager::stop() {
-    if (!m_activeName.isEmpty()) {
-        m_loadedEffects[m_activeName]->stop();
-        m_activeName.clear();
+    if (m_activeEffect != nullptr) {
+        m_activeEffect->stop();
+        m_activeEffect = nullptr;
     }
 }
 
