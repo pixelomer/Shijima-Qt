@@ -22,6 +22,7 @@ public:
         std::unique_ptr<shijima::mascot::manager> mascot,
         QWidget *parent = nullptr);
     void tick();
+    bool pointInside(QPoint const& point);
     void markForDeletion() { m_markedForDeletion = true; }
     bool paused() const { return m_paused || m_contextMenuVisible; }
     shijima::mascot::manager &mascot() {
@@ -36,17 +37,21 @@ public:
     std::string const& mascotName() {
         return m_mascotName;
     }
+    ~ShijimaWidget();
 protected:
     void paintEvent(QPaintEvent *) override;
     void mousePressEvent(QMouseEvent *) override;
     void mouseReleaseEvent(QMouseEvent *) override;
 private:
+    void setDragTarget(ShijimaWidget *target);
     void closeAction();
     void contextMenuClosed(QCloseEvent *);
     void showContextMenu(QPoint const&);
     bool updateOffsets();
     SoundEffectManager m_sounds;
     Asset const& getActiveAsset();
+    ShijimaWidget *m_dragTarget = nullptr;
+    ShijimaWidget **m_dragTargetPt = nullptr;
     std::unique_ptr<shijima::mascot::manager> m_mascot;
     std::string m_mascotName;
     std::string m_imgRoot;

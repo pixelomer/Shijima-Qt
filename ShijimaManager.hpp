@@ -19,6 +19,7 @@ public:
     void spawn(std::string const& name);
     void killAll();
     void killAllButOne(ShijimaWidget *widget);
+    ShijimaWidget *hitTest(QPoint const& screenPos);
 protected:
     void timerEvent(QTimerEvent *event) override;
 private:

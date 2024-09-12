@@ -149,6 +149,17 @@ void ShijimaManager::tick() {
     }
 }
 
+ShijimaWidget *ShijimaManager::hitTest(QPoint const& screenPos) {
+    for (auto mascot : m_mascots) {
+        QPoint localPos = { screenPos.x() - mascot->x(),
+            screenPos.y() - mascot->y() };
+        if (mascot->pointInside(localPos)) {
+            return mascot;
+        }
+    }
+    return nullptr;
+}
+
 void ShijimaManager::spawn(std::string const& name) {
     updateEnvironment();
     auto product = m_factory.spawn(name, {});

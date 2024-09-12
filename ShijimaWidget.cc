@@ -11,6 +11,7 @@
 #include <shijima/shijima.hpp>
 #include "AssetLoader.hpp"
 #include "ShijimaContextMenu.hpp"
+#include "ShijimaManager.hpp"
 
 using namespace shijima;
 
@@ -138,6 +139,25 @@ bool ShijimaWidget::updateOffsets() {
     return needsRepaint;
 }
 
+bool ShijimaWidget::pointInside(QPoint const& point) {
+    if (!m_visible) {
+        return false;
+    }
+    auto &asset = getActiveAsset();
+    auto image = asset.image(m_mascot->state->looking_right);
+    auto imagePos = point - m_drawOrigin;
+    if (imagePos.x() < 0 || imagePos.y() < 0 ||
+        imagePos.x() > image.width() || imagePos.y() > image.height())
+    {
+        return false;
+    }
+    auto color = image.pixelColor(imagePos);
+    if (color.alpha() == 0) {
+        return false;
+    }
+    return true;
+}
+
 void ShijimaWidget::tick() {
     if (m_markedForDeletion) {
         close();
@@ -180,36 +200,53 @@ void ShijimaWidget::showContextMenu(QPoint const& pos) {
     menu->popup(pos);
 }
 
+ShijimaWidget::~ShijimaWidget() {
+    if (m_dragTargetPt != nullptr) {
+        *m_dragTargetPt = nullptr;
+        m_dragTargetPt = nullptr;
+    }
+    setDragTarget(nullptr);
+}
+
+void ShijimaWidget::setDragTarget(ShijimaWidget *target) {
+    if (m_dragTarget != nullptr) {
+        m_dragTarget->m_dragTargetPt = nullptr;
+    }
+    if (target != nullptr) {
+        if (target->m_dragTargetPt != nullptr) {
+            throw std::runtime_error("target widget being dragged by multiple widgets");
+        }
+        m_dragTarget = target;
+        m_dragTarget->m_dragTargetPt = &m_dragTarget;
+    }
+    else {
+        m_dragTarget = nullptr;
+    }
+}
+
 void ShijimaWidget::mousePressEvent(QMouseEvent *event) {
-    // Ignore presses to transparent areas
-    {
-        if (!m_visible) {
-            event->ignore();
-            return;
-        }
-        auto &asset = getActiveAsset();
-        auto image = asset.image(m_mascot->state->looking_right);
-        auto pos = event->pos();
-        auto imagePos = pos - m_drawOrigin;
-        if (imagePos.x() < 0 || imagePos.y() < 0 ||
-            imagePos.x() > image.width() || imagePos.y() > image.height())
-        {
-            event->ignore();
-            return;
-        }
-        auto color = image.pixelColor(imagePos);
-        if (color.alpha() == 0) {
+    auto pos = event->pos();
+    auto screenPos = mapToGlobal(pos);
+    if (m_dragTarget != nullptr) {
+        m_dragTarget->m_mascot->state->dragging = false;
+    }
+    if (pointInside(pos)) {
+        setDragTarget(this);
+    }
+    else {
+        ShijimaWidget *target = ShijimaManager::defaultManager()->hitTest(screenPos);
+        setDragTarget(target);
+        if (target == nullptr) {
             event->ignore();
             return;
         }
     }
-
     if (event->button() == Qt::MouseButton::LeftButton) {
-        m_mascot->state->dragging = true;
+        m_dragTarget->m_mascot->state->dragging = true;
     }
     else if (event->button() == Qt::MouseButton::RightButton) {
-        auto pos = event->pos();
-        showContextMenu(mapToGlobal(pos));
+        m_dragTarget->showContextMenu(screenPos);
+        setDragTarget(nullptr);
     }
 }
 
@@ -218,7 +255,11 @@ void ShijimaWidget::closeAction() {
 }
 
 void ShijimaWidget::mouseReleaseEvent(QMouseEvent *event) {
+    if (m_dragTarget == nullptr) {
+        return;
+    }
     if (event->button() == Qt::MouseButton::LeftButton) {
-        m_mascot->state->dragging = false;
+        m_dragTarget->m_mascot->state->dragging = false;
+        setDragTarget(nullptr);
     }
 }
