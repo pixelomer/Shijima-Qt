@@ -6,6 +6,7 @@
 #include <QScreen>
 #include <QMouseEvent>
 #include <QMenu>
+#include <QDebug>
 #include <QGuiApplication>
 #include <QTextStream>
 #include <shijima/shijima.hpp>
