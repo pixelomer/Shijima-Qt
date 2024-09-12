@@ -87,6 +87,6 @@ int MascotFinder::findAll(mascot::factory &factory) {
         factory.register_template(tmpl);
         ++found;
     }
-    while (iter.hasNext() && (dir = { iter.next() }).exists());
+    while (iter.hasNext() && (dir.setPath(iter.next()), dir).exists());
     return found;
 }

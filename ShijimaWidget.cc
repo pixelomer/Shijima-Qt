@@ -33,11 +33,11 @@ ShijimaWidget::ShijimaWidget(std::string const& mascotName,
     if (dir.exists() && dir.cdUp() && dir.cdUp() && dir.cd("sound")) {
         m_sounds.searchPaths.push_back(dir.path());
     }
-    dir = { qImgRoot };
+    dir.setPath(qImgRoot);
     if (dir.exists() && dir.cdUp() && dir.cd("sound")) {
         m_sounds.searchPaths.push_back(dir.path());
     }
-    dir = { qImgRoot };
+    dir.setPath(qImgRoot);
     if (dir.exists() && dir.cd("sound")) {
         m_sounds.searchPaths.push_back(dir.path());
     }
