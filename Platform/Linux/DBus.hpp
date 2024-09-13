@@ -26,11 +26,11 @@ public:
 
 /// @brief Calls a DBus method and returns its return value if successful.
 /// @param message Message to send to DBus.
-/// @param format Expected response signature.
+/// @param signature Expected response signature.
 /// @return Return value of the method.
 /// @throws Throws DBusCallError if the call failed. Throws DBusReturnError if
 ///         the call succeeded but the return value format does not match
-///         `format`.
+///         `signature`.
 QVariantList callDBus(QDBusMessage const& message, QString const& signature = "");
 
 QVariant getDBusProperty(QString const& service, QString const& path,
