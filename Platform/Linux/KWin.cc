@@ -33,14 +33,14 @@ void runScript(int id) {
     std::string path = "/Scripting/Script" + std::to_string(id);
     auto msg = QDBusMessage::createMethodCall("org.kde.KWin",
         QString::fromStdString(path), "org.kde.kwin.Script", "run");
-    callDBus(msg, NULL);
+    callDBus(msg);
 }
 
 void stopScript(int id) {
     std::string path = "/Scripting/Script" + std::to_string(id);
     auto msg = QDBusMessage::createMethodCall("org.kde.KWin",
         QString::fromStdString(path), "org.kde.kwin.Script", "stop");
-    callDBus(msg, NULL);
+    callDBus(msg);
 }
 
 bool unloadScript(QString const& pluginName) {

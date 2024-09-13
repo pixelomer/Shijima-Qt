@@ -43,7 +43,7 @@ void setDBusProperty(QString const& service, QString const& path,
     msg << interface;
     msg << property;
     msg << QVariant::fromValue(dbusVariant);
-    callDBus(msg, NULL);
+    callDBus(msg);
 }
 
 }
