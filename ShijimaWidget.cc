@@ -175,6 +175,13 @@ void ShijimaWidget::tick() {
     auto &new_sound = m_mascot->state->active_sound;
     bool forceRepaint = prev_frame.name != new_frame.name;
     bool offsetsChanged = updateOffsets();
+    if (m_mascot->state->dead) {
+        forceRepaint = true;
+        new_frame.name = "";
+        new_sound = "";
+        m_mascot->state->active_sound_changed = true;
+        markForDeletion();
+    }
     if (offsetsChanged || forceRepaint) {
         repaint();
         update();
