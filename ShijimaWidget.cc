@@ -66,7 +66,7 @@ void ShijimaWidget::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
     auto &asset = getActiveAsset();
     auto &image = asset.image(m_mascot->state->looking_right);
-    painter.drawImage(m_drawOrigin, image);
+    painter.drawImage(QRect { m_drawOrigin, image.size() / m_drawScale }, image);
 }
 
 bool ShijimaWidget::updateOffsets() {
@@ -76,10 +76,16 @@ bool ShijimaWidget::updateOffsets() {
     
     // Does the image go outside of the minimum boundary? If so,
     // extend the window boundary
-    int windowWidth = asset.originalSize().width();
-    int windowHeight = asset.originalSize().height();
-    int screenWidth = m_mascot->state->env->screen.width();
-    int screenHeight = m_mascot->state->env->screen.height();
+    int originalWidth = asset.originalSize().width();
+    int originalHeight = asset.originalSize().height();
+    double scale = m_mascot->state->env->get_scale();
+    int screenWidth = (int)(m_mascot->state->env->screen.width()
+        / scale);
+    int screenHeight = (int)(m_mascot->state->env->screen.height()
+        / scale);
+    int windowWidth = (int)(originalWidth / scale);
+    int windowHeight = (int)(originalHeight / scale);
+
     if (windowWidth != m_windowWidth) {
         m_windowWidth = windowWidth;
         setFixedWidth(m_windowWidth);
@@ -94,11 +100,12 @@ bool ShijimaWidget::updateOffsets() {
     // Determine the frame anchor within the window
     if (m_mascot->state->looking_right) {
         m_anchorInWindow = {
-            asset.originalSize().width() - (int)frame.anchor.x,
-            (int)frame.anchor.y };
+            (int)((originalWidth - frame.anchor.x) / scale),
+            (int)(frame.anchor.y / scale) };
     }
     else {
-        m_anchorInWindow = { (int)frame.anchor.x, (int)frame.anchor.y };
+        m_anchorInWindow = { (int)(frame.anchor.x / scale),
+            (int)(frame.anchor.y / scale) };
     }
 
     // Detemine draw offsets and window positions
@@ -122,18 +129,22 @@ bool ShijimaWidget::updateOffsets() {
         drawOffset.setY(winY - screenHeight + windowHeight);
         winY = screenHeight - windowHeight;
     }
-    QPoint drawOrigin = drawOffset;
+
     if (m_mascot->state->looking_right) {
-        drawOrigin += QPoint {
-            asset.originalSize().width() - asset.offset().topRight().x(),
-            asset.offset().topLeft().y() };
+        drawOffset += QPoint {
+            (int)((originalWidth - asset.offset().topRight().x()) / scale),
+            (int)(asset.offset().topLeft().y() / scale) };
     }
     else {
-        drawOrigin += asset.offset().topLeft();
+        drawOffset += asset.offset().topLeft() / scale;
     }
-    if (drawOrigin != m_drawOrigin) {
+    if (drawOffset != m_drawOrigin) {
         needsRepaint = true;
-        m_drawOrigin = drawOrigin;
+        m_drawOrigin = drawOffset;
+    }
+    if (scale != m_drawScale) {
+        needsRepaint = true;
+        m_drawScale = scale;
     }
     move(winX, winY);
 
@@ -146,13 +157,16 @@ bool ShijimaWidget::pointInside(QPoint const& point) {
     }
     auto &asset = getActiveAsset();
     auto image = asset.image(m_mascot->state->looking_right);
+    int drawnWidth = (int)(image.width() / m_drawScale);
+    int drawnHeight = (int)(image.height() / m_drawScale);
     auto imagePos = point - m_drawOrigin;
     if (imagePos.x() < 0 || imagePos.y() < 0 ||
-        imagePos.x() > image.width() || imagePos.y() > image.height())
+        imagePos.x() > drawnWidth || imagePos.y() > drawnHeight)
     {
         return false;
     }
-    auto color = image.pixelColor(imagePos);
+    //FIXME: is this position correct?
+    auto color = image.pixelColor(imagePos * m_drawScale);
     if (color.alpha() == 0) {
         return false;
     }

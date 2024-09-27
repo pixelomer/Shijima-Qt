@@ -116,6 +116,8 @@ void ShijimaManager::updateEnvironment() {
     int x = cursor.x(), y = cursor.y();
     m_env->cursor = { (double)x, (double)y, x - m_env->cursor.x, y - m_env->cursor.y };
     m_previousWindow = m_currentWindow;
+
+    m_env->set_scale(1.0);
 }
 
 void ShijimaManager::tick() {
@@ -147,6 +149,8 @@ void ShijimaManager::tick() {
             breedRequest.available = false;
         }
     }
+    
+    m_env->reset_scale();
 }
 
 ShijimaWidget *ShijimaManager::hitTest(QPoint const& screenPos) {
@@ -168,6 +172,7 @@ void ShijimaManager::spawn(std::string const& name) {
         product.tmpl->path, std::move(product.manager));
     shimeji->show();
     m_mascots.push_back(shimeji);
+    m_env->reset_scale();
 }
 
 void ShijimaManager::spawnClicked() {
