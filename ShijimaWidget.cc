@@ -53,10 +53,15 @@ ShijimaWidget::ShijimaWidget(std::string const& mascotName,
 }
 
 Asset const& ShijimaWidget::getActiveAsset() {
-    auto &frame = m_mascot->state->active_frame;
+    auto &name = m_mascot->state->active_frame.get_name(m_mascot->state->looking_right);
     auto imagePath = QDir::cleanPath(QString::fromStdString(m_imgRoot)
-        + QDir::separator() + QString(frame.name.c_str()));
+        + QDir::separator() + QString(name.c_str()));
     return AssetLoader::defaultLoader()->loadAsset(imagePath);
+}
+
+bool ShijimaWidget::isMirroredRender() const {
+    return m_mascot->state->active_frame.right_name.empty() &&
+        m_mascot->state->looking_right;
 }
 
 void ShijimaWidget::paintEvent(QPaintEvent *event) {
@@ -65,7 +70,7 @@ void ShijimaWidget::paintEvent(QPaintEvent *event) {
     }
     QPainter painter(this);
     auto &asset = getActiveAsset();
-    auto &image = asset.image(m_mascot->state->looking_right);
+    auto &image = asset.image(isMirroredRender());
     painter.drawImage(QRect { m_drawOrigin, image.size() / m_drawScale }, image);
 }
 
@@ -98,7 +103,7 @@ bool ShijimaWidget::updateOffsets() {
     }
 
     // Determine the frame anchor within the window
-    if (m_mascot->state->looking_right) {
+    if (isMirroredRender()) {
         m_anchorInWindow = {
             (int)((originalWidth - frame.anchor.x) / scale),
             (int)(frame.anchor.y / scale) };
@@ -130,7 +135,7 @@ bool ShijimaWidget::updateOffsets() {
         winY = screenHeight - windowHeight;
     }
 
-    if (m_mascot->state->looking_right) {
+    if (isMirroredRender()) {
         drawOffset += QPoint {
             (int)((originalWidth - asset.offset().topRight().x()) / scale),
             (int)(asset.offset().topLeft().y() / scale) };
@@ -156,7 +161,7 @@ bool ShijimaWidget::pointInside(QPoint const& point) {
         return false;
     }
     auto &asset = getActiveAsset();
-    auto image = asset.image(m_mascot->state->looking_right);
+    auto image = asset.image(isMirroredRender());
     int drawnWidth = (int)(image.width() / m_drawScale);
     int drawnHeight = (int)(image.height() / m_drawScale);
     auto imagePos = point - m_drawOrigin;

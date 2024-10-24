@@ -44,6 +44,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent *) override;
 private:
     void setDragTarget(ShijimaWidget *target);
+    bool isMirroredRender() const;
     void closeAction();
     void contextMenuClosed(QCloseEvent *);
     void showContextMenu(QPoint const&);
