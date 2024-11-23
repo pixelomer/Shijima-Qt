@@ -13,6 +13,46 @@ static std::optional<QString> readFile(QString const& file) {
     return in.readAll(); 
 }
 
+void MascotFinder::findXMLs(QDir conf, std::optional<QString> &behaviors,
+    std::optional<QString> &actions, bool &isJapanese)
+{
+    if (conf.cd("conf")) {
+        auto files = conf.entryList(QDir::Filter::Files);
+        for (auto &name : files) {
+            auto lowercase = name.toLower();
+            if (lowercase == "behaviors.xml") {
+                behaviors = readFile(conf.absoluteFilePath(name));
+            }
+            else if (lowercase == "behavior.xml") {
+                isJapanese = true;
+                behaviors = readFile(conf.absoluteFilePath(name));
+            }
+            else if (lowercase == "行動.xml") {
+                isJapanese = true;
+                behaviors = readFile(conf.absoluteFilePath(name));
+            }
+            if (lowercase == "actions.xml") {
+                actions = readFile(conf.absoluteFilePath(name));
+            }
+            else if (lowercase == "action.xml") {
+                isJapanese = true;
+                actions = readFile(conf.absoluteFilePath(name));
+            }
+            else if (lowercase == "動作.xml") {
+                isJapanese = true;
+                actions = readFile(conf.absoluteFilePath(name));
+            }
+        }
+    }
+}
+
+void MascotFinder::findXMLs(QDir conf, std::optional<QString> &behaviors,
+    std::optional<QString> &actions)
+{
+    bool isJapanese;
+    findXMLs(conf, behaviors, actions, isJapanese);
+}
+
 int MascotFinder::findAll(mascot::factory &factory) {
     int found = 0;
     QDir root { "." };
@@ -23,22 +63,7 @@ int MascotFinder::findAll(mascot::factory &factory) {
     }
     std::optional<QString> defaultBehaviors, defaultActions;
     bool isJapanese = false;
-    if (conf.cd("conf")) {
-        if (conf.exists("behaviors.xml")) {
-            defaultBehaviors = readFile(conf.absoluteFilePath("behaviors.xml"));
-        }
-        else if (conf.exists("行動.xml")) {
-            isJapanese = true;
-            defaultBehaviors = readFile(conf.absoluteFilePath("行動.xml"));
-        }
-        if (conf.exists("actions.xml")) {
-            defaultActions = readFile(conf.absoluteFilePath("actions.xml"));
-        }
-        else if (conf.exists("動作.xml")) {
-            isJapanese = true;
-            defaultActions = readFile(conf.absoluteFilePath("動作.xml"));
-        }
-    }
+    findXMLs(conf, defaultBehaviors, defaultActions, isJapanese);
     QDirIterator iter { img.absolutePath(), QDir::Dirs | QDir::NoDotAndDotDot,
         QDirIterator::NoIteratorFlags };
     QDir dir = img;
@@ -54,20 +79,7 @@ int MascotFinder::findAll(mascot::factory &factory) {
         }
         conf = dir;
         std::optional<QString> behaviors, actions;
-        if (conf.cd("conf")) {
-            if (conf.exists("behaviors.xml")) {
-                defaultBehaviors = readFile(conf.absoluteFilePath("behaviors.xml"));
-            }
-            else if (conf.exists("行動.xml")) {
-                defaultBehaviors = readFile(conf.absoluteFilePath("行動.xml"));
-            }
-            if (conf.exists("actions.xml")) {
-                defaultActions = readFile(conf.absoluteFilePath("actions.xml"));
-            }
-            else if (conf.exists("動作.xml")) {
-                defaultActions = readFile(conf.absoluteFilePath("動作.xml"));
-            }
-        }
+        findXMLs(conf, behaviors, actions);
         if (!behaviors) {
             behaviors = defaultBehaviors;
         }
