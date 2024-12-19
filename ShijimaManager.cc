@@ -64,7 +64,7 @@ ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent) {
     QWidget *widget = new QWidget;
     widget->setLayout(layout);
     setCentralWidget(widget);
-    m_mascotTimer = startTimer(40);
+    m_mascotTimer = startTimer(10);
     if (m_windowObserver.tickFrequency() > 0) {
         m_windowObserverTimer = startTimer(m_windowObserver.tickFrequency());
     }
@@ -115,6 +115,7 @@ void ShijimaManager::updateEnvironment() {
     }
     int x = cursor.x(), y = cursor.y();
     m_env->cursor = { (double)x, (double)y, x - m_env->cursor.x, y - m_env->cursor.y };
+    m_env->subtick_count = 4;
     m_previousWindow = m_currentWindow;
 
     m_env->set_scale(1.0);
