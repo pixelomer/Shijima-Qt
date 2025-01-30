@@ -88,6 +88,9 @@ bool PrivateActiveWindowObserver::handleMessage(const QDBusMessage &message,
         connection.send(reply);
         return true;
     }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    // type() is used here because it also works with Qt5
     if (args[0].type() != QVariant::String) {
         auto reply = message.createErrorReply(QDBusError::InvalidArgs,
             "Expected args[0] to be an String");
@@ -100,6 +103,7 @@ bool PrivateActiveWindowObserver::handleMessage(const QDBusMessage &message,
         connection.send(reply);
         return true;
     }
+#pragma GCC diagnostic pop
     for (int i=2; i<=5; ++i) {
         if (args[i].canConvert<double>()) {
             continue;

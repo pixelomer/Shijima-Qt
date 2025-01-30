@@ -1,0 +1,78 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-windows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PULL_TOKEN }}
+      - name: Fetch full history for Shijima submodules
+        env:
+          PULL_TOKEN: ${{ secrets.PULL_TOKEN }}
+        run: |
+          pushd libshijima
+          git remote set-url origin "https://${PULL_TOKEN}@github.com/pixelomer/libshijima.git"
+          git fetch --unshallow origin main
+          git remote set-url origin "git@github.com:pixelomer/libshijima"
+          echo "libshijima: $(git rev-list HEAD --count) commits"
+          popd
+      - name: Build Docker image
+        run: |
+          pushd dev-docker
+          docker build -t shijima-qt-dev .
+          popd
+      - name: Build Windows x86_64 debug build
+        run: |
+          docker run -e CONFIG=debug --rm -v "$(pwd)":/work shijima-qt-dev bash -c \
+            'mingw64-make clean && mingw64-make -j$(nproc)'
+      - name: Archive Windows x86_64 debug build
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-windows-x86_64
+          path: publish/Windows/debug/shijima-qt.exe
+          retention-days: 1
+  build-linux:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PULL_TOKEN }}
+      - name: Fetch full history for Shijima submodules
+        env:
+          PULL_TOKEN: ${{ secrets.PULL_TOKEN }}
+        run: |
+          pushd libshijima
+          git remote set-url origin "https://${PULL_TOKEN}@github.com/pixelomer/libshijima.git"
+          git fetch --unshallow origin main
+          git remote set-url origin "git@github.com:pixelomer/libshijima"
+          echo "libshijima: $(git rev-list HEAD --count) commits"
+          popd
+      - name: Install Qt6
+        uses: jurplel/install-qt-action@v3
+        with:
+          aqtversion: '==3.1.*'
+          version: '6.7.3'
+          host: 'linux'
+          target: 'desktop'
+          arch: 'linux_gcc_64'
+          modules: 'qtmultimedia'
+      - name: Build Linux x86_64 debug build
+        env:
+          CONFIG: debug
+        run: |
+          make clean
+          make -j$(nproc)
+      - name: Archive Linux x86_64 debug build
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-linux-x86_64
+          path: publish/Linux/debug/shijima-qt
+          retention-days: 1

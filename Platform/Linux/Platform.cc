@@ -2,13 +2,13 @@
 #if QT_VERSION < 0x060000
 #   define QT5_MANUALLY_DETERMINE_SCALE
 #   include <QDesktopWidget>
-#   include <unistd.h>
 #   include <cmath>
 #   include <charconv>
 #   include <QApplication>
 #endif
 #include "../Platform.hpp"
 #include <stdlib.h>
+#include <unistd.h>
 #include <signal.h>
 #include <sys/socket.h>
 

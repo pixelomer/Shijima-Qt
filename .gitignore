@@ -1,4 +1,7 @@
 *
+!/.github/
+!/.github/workflows/
+!/.github/workflows/*.yaml
 !/.gitignore
 !/.gitmodules
 !/*.cc
@@ -6,6 +9,8 @@
 !/.gitattributes
 !/Makefile
 !/common.mk
+!/dev-docker/
+!/dev-docker/Dockerfile
 !/Platform/
 !/Platform/*.hpp
 !/Platform/Makefile
