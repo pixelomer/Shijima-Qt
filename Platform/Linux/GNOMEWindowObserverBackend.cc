@@ -20,19 +20,19 @@ GNOMEWindowObserverBackend::GNOMEWindowObserverBackend() {
     auto extensionInfo = GNOME::getExtensionInfo(m_gnomeScriptUUID);
     static const QString kVersionName = "version-name";
     std::string restartReason;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     if (!extensionInfo.contains(kVersionName)) {
         restartReason = "Extension was installed for the first time.";
     }
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-    // type() is used here because it also works with Qt5
     else if (extensionInfo[kVersionName].type() != QVariant::String) {
+        // type() is used here because it also works with Qt5
         restartReason = "Active extension contains malformed metadata.";
     }
-#pragma GCC diagnostic pop
     else if (extensionInfo[kVersionName].toString() != m_gnomeScriptVersion) {
         restartReason = "Active extension is outdated.";
     }
+#pragma GCC diagnostic pop
     if (restartReason != "") {
         // Shell needs to be restarted
         throw std::runtime_error("Shijima GNOME Helper has been installed. "
