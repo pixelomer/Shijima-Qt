@@ -165,9 +165,4 @@ FORCE: ;
 
 .PHONY: all clean FORCE
 
-define check_system
-[ "$(PLATFORM)" == "$(2)" ] || { echo "expected $(1) $(2)"; exit 1; };
-[ "$$(uname -m)" == "$(1)" ] || { echo "expected $(1) $(2)"; exit 1; };
-endef
-
 -include *.d
