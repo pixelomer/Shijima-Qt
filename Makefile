@@ -28,7 +28,7 @@ publish/Linux/$(CONFIG): shijima-qt$(EXE)
 	$(call copy_changed,$<,$@)
 
 shijima-qt$(EXE): Platform/Platform.a libshijima/build/libshijima.a shijima-qt.a
-	$(CXX) $(LDFLAGS) -o $@ $(LD_WHOLE_ARCHIVE) $^ $(LD_NO_WHOLE_ARCHIVE)
+	$(CXX) $(LD_WHOLE_ARCHIVE) $^ $(LD_NO_WHOLE_ARCHIVE) -o $@ $(LDFLAGS)
 	if [ $(CONFIG) = "release" ]; then $(STRIP) $@; fi
 
 libshijima/build/libshijima.a: libshijima/build/Makefile
