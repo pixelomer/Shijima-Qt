@@ -47,13 +47,6 @@ ifeq ($(CONFIG),debug)
 	CONFIG_CXXFLAGS := -g -O0
 	CONFIG_LDFLAGS :=
 	CONFIG_CMAKEFLAGS := -DCMAKE_BUILD_TYPE=Debug
-
-	#FIXME: Qt6 doesn't link properly unless LTO is enabled ???
-	ifeq ($(PLATFORM),Windows)
-		CONFIG_CFLAGS += -flto
-		CONFIG_CXXFLAGS += -flto
-		CONFIG_LDFLAGS += -flto
-	endif
 endif
 ifeq ($(CONFIG_VALID),0)
 $(error Invalid CONFIG. Try CONFIG=debug or CONFIG=release)
