@@ -34,5 +34,7 @@
 !/Platform/Stub/*.cc
 !/Platform/Stub/*.hpp
 !/find_dlls.sh
+!/shijima-qt.png
+!/shijima-qt.desktop
 !/libshijima
 !/README.md

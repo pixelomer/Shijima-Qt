@@ -19,6 +19,24 @@ publish/Windows/$(CONFIG): shijima-qt$(EXE) FORCE
 	@$(call copy_exe_dlls,$<,$@)
 	@$(call copy_qt_plugin_dlls,$@)
 
+linuxdeploy-plugin-appimage-x86_64.AppImage:
+	@$(call check_system,x86_64,Linux)
+	wget -O $@ -c --no-verbose https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/1-alpha-20230713-1/linuxdeploy-plugin-appimage-x86_64.AppImage
+	touch $@
+	chmod +x linuxdeploy-plugin-appimage-x86_64.AppImage
+
+linuxdeploy-plugin-qt-x86_64.AppImage:
+	@$(call check_system,x86_64,Linux)
+	wget -O $@ -c --no-verbose https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/2.0.0-alpha-1-20250119/linuxdeploy-plugin-qt-x86_64.AppImage
+	touch $@
+	chmod +x linuxdeploy-plugin-qt-x86_64.AppImage
+
+linuxdeploy-x86_64.AppImage: linuxdeploy-plugin-qt-x86_64.AppImage linuxdeploy-plugin-appimage-x86_64.AppImage
+	@$(call check_system,x86_64,Linux)
+	wget -O $@ -c --no-verbose https://github.com/linuxdeploy/linuxdeploy/releases/download/2.0.0-alpha-1-20241106/linuxdeploy-x86_64.AppImage
+	touch $@
+	chmod +x linuxdeploy-x86_64.AppImage
+
 publish/macOS/$(CONFIG): shijima-qt$(EXE)
 	mkdir -p $@
 	$(call copy_changed,$<,$@)
@@ -26,6 +44,13 @@ publish/macOS/$(CONFIG): shijima-qt$(EXE)
 publish/Linux/$(CONFIG): shijima-qt$(EXE)
 	mkdir -p $@
 	$(call copy_changed,$<,$@)
+
+publish/Linux/$(CONFIG)/Shijima-Qt-x86_64.AppImage: publish/Linux/$(CONFIG) linuxdeploy-x86_64.AppImage
+	NO_STRIP=1 ./linuxdeploy-x86_64.AppImage --appdir AppDir --executable publish/Linux/$(CONFIG)/shijima-qt \
+		--desktop-file shijima-qt.desktop --output appimage --plugin qt --icon-file shijima-qt.png
+	mv Shijima-Qt-x86_64.AppImage publish/Linux/$(CONFIG)/
+
+appimage: publish/Linux/$(CONFIG)/Shijima-Qt-x86_64.AppImage
 
 shijima-qt$(EXE): Platform/Platform.a libshijima/build/libshijima.a shijima-qt.a
 	$(CXX) $(LD_WHOLE_ARCHIVE) $^ $(LD_NO_WHOLE_ARCHIVE) -o $@ $(LDFLAGS)
@@ -47,5 +72,3 @@ Platform/Platform.a: FORCE
 
 shijima-qt.a: $(OBJECTS)
 	ar rcs $@ $^
-
-FORCE: ;
