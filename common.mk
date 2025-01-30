@@ -1,5 +1,6 @@
 QT_VERSION := 6
 
+CONFIG ?= release
 STRIP ?= strip
 PKG_CONFIG ?= pkg-config
 AR ?= ar
