@@ -30,7 +30,7 @@ jobs:
           popd
       - name: Build Windows 64-bit debug build
         run: |
-          docker run -e CONFIG=debug --rm -v "$(pwd)":/work -it shijima-qt-dev bash -c \
+          docker run -e CONFIG=debug --rm -v "$(pwd)":/work shijima-qt-dev bash -c \
             'mingw64-make clean && mingw64-make -j$(nproc)'
       - name: Archive Windows 64-bit debug build
         uses: actions/upload-artifact@v4
@@ -39,7 +39,7 @@ jobs:
           path: publish/Windows/debug
       - name: Build Windows 32-bit debug build
         run: |
-          docker run -e CONFIG=debug --rm -v "$(pwd)":/work -it shijima-qt-dev bash -c \
+          docker run -e CONFIG=debug --rm -v "$(pwd)":/work shijima-qt-dev bash -c \
             'mingw32-make clean && mingw32-make -j$(nproc)'
       - name: Archive Windows 32-bit debug build
         uses: actions/upload-artifact@v4
@@ -48,7 +48,7 @@ jobs:
           path: publish/Windows/debug
       - name: Build Linux x86_64 debug build
         run: |
-          docker run -e CONFIG=debug --rm -v "$(pwd)":/work -it shijima-qt-dev bash -c \
+          docker run -e CONFIG=debug --rm -v "$(pwd)":/work shijima-qt-dev bash -c \
             'make clean && make -j$(nproc)'
       - name: Archive Linux x86_64 debug build
         uses: actions/upload-artifact@v4
