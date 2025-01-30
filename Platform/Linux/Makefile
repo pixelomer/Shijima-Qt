@@ -23,7 +23,6 @@ Linux.a: $(OBJECTS)
 .work/node_modules/.bin/minify:
 	rm -rf .work
 	mkdir -p .work/node_modules
-	cd .work && yes | yarn init
 	cd .work && yarn add --modules-folder node_modules minify
 	[ -f .work/node_modules/.bin/minify ]
 
