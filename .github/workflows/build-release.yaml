@@ -1,0 +1,84 @@
+name: Build release
+
+on: [workflow_dispatch]
+
+jobs:
+  build-windows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PULL_TOKEN }}
+      - name: Fetch full history for Shijima submodules
+        env:
+          PULL_TOKEN: ${{ secrets.PULL_TOKEN }}
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+        run: |
+          git remote set-url origin "https://${PULL_TOKEN}@github.com/pixelomer/Shijima-Qt.git"
+          git fetch --unshallow origin $BRANCH_NAME
+          git remote set-url origin "git@github.com:pixelomer/Shijima-Qt"
+          pushd libshijima
+          git remote set-url origin "https://${PULL_TOKEN}@github.com/pixelomer/libshijima.git"
+          git fetch --unshallow origin main
+          git remote set-url origin "git@github.com:pixelomer/libshijima"
+          echo "libshijima: $(git rev-list HEAD --count) commits"
+          popd
+      - name: Build Docker image
+        run: |
+          pushd dev-docker
+          docker build -t shijima-qt-dev .
+          popd
+      - name: Build Windows x86_64 release build
+        run: |
+          docker run -e CONFIG=release --rm -v "$(pwd)":/work shijima-qt-dev bash -c \
+            'mingw64-make clean && mingw64-make -j$(nproc)'
+      - name: Archive Windows x86_64 release build
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-windows-x86_64
+          path: publish/Windows/release
+          retention-days: 1
+  build-linux:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PULL_TOKEN }}
+      - name: Fetch full history for Shijima submodules
+        env:
+          PULL_TOKEN: ${{ secrets.PULL_TOKEN }}
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+        run: |
+          git remote set-url origin "https://${PULL_TOKEN}@github.com/pixelomer/Shijima-Qt.git"
+          git fetch --unshallow origin $BRANCH_NAME
+          git remote set-url origin "git@github.com:pixelomer/Shijima-Qt"
+          pushd libshijima
+          git remote set-url origin "https://${PULL_TOKEN}@github.com/pixelomer/libshijima.git"
+          git fetch --unshallow origin main
+          git remote set-url origin "git@github.com:pixelomer/libshijima"
+          echo "libshijima: $(git rev-list HEAD --count) commits"
+          popd
+      - name: Install Qt6
+        uses: jurplel/install-qt-action@v3
+        with:
+          aqtversion: '==3.1.*'
+          version: '6.7.3'
+          host: 'linux'
+          target: 'desktop'
+          arch: 'linux_gcc_64'
+          modules: 'qtmultimedia'
+      - name: Build Linux x86_64 release build
+        env:
+          CONFIG: release
+        run: |
+          make clean
+          make -j$(nproc)
+          make appimage
+      - name: Archive Linux x86_64 release build
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-linux-x86_64
+          path: publish/Linux/release
+          retention-days: 1
