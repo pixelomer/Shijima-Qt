@@ -36,7 +36,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: debug-windows-x86_64
-          path: publish/Windows/debug
+          path: publish/Windows/debug/shijima-qt.exe
           retention-days: 1
   build-linux:
     runs-on: ubuntu-20.04
@@ -74,5 +74,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: debug-linux-x86_64
-          path: publish/Linux/debug
+          path: publish/Linux/debug/shijima-qt
           retention-days: 1
