@@ -69,6 +69,9 @@ jobs:
           target: 'desktop'
           arch: 'linux_gcc_64'
           modules: 'qtmultimedia'
+      - name: Install Qt6 dependencies
+        run: |
+          sudo apt-get install -y libxcb-cursor0
       - name: Build Linux x86_64 release build
         env:
           CONFIG: release
