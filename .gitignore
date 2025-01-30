@@ -1,5 +1,6 @@
 *
 !/.gitignore
+!/.gitmodules
 !/*.cc
 !/*.hpp
 !/.gitattributes
@@ -28,4 +29,5 @@
 !/Platform/Stub/*.cc
 !/Platform/Stub/*.hpp
 !/find_dlls.sh
+!/libshijima
 !/README.md

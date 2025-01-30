@@ -1,0 +1,3 @@
+[submodule "libshijima"]
+	path = libshijima
+	url = git@github.com:pixelomer/libshijima
