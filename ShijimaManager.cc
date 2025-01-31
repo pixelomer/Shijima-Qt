@@ -4,6 +4,8 @@
 #include <QVBoxLayout>
 #include <QWidget>
 #include <QCloseEvent>
+#include <QMenuBar>
+#include <QFileDialog>
 #include <QPushButton>
 #include <QWindow>
 #include <QTextStream>
@@ -17,6 +19,7 @@
 #include <shimejifinder/analyze.hpp>
 #include <QStandardPaths>
 #include "ForcedProgressDialog.hpp"
+#include "qfiledialog.h"
 #include <QListWidget>
 #include <QtConcurrent>
 #include <QMessageBox>
@@ -117,6 +120,31 @@ void ShijimaManager::reloadMascot(QString const& name) {
         std::cout << "Loaded mascot: " << name.toStdString() << std::endl;
     }
     m_listItemsToRefresh.insert(name);
+}
+
+void ShijimaManager::importAction() {
+    auto path = QFileDialog::getOpenFileName(this, "Choose shimeji archive...");
+    if (path.isEmpty()) {
+        return;
+    }
+    importWithDialog(path);
+}
+
+void ShijimaManager::quitAction() {
+    m_allowClose = true;
+    close();
+}
+
+void ShijimaManager::buildToolbar() {
+    QAction *action;
+
+    QMenu *fileMenu = menuBar()->addMenu("File");
+    
+    action = fileMenu->addAction("Import shimeji...");
+    connect(action, &QAction::triggered, this, &ShijimaManager::importAction);
+
+    action = fileMenu->addAction("Quit");
+    connect(action, &QAction::triggered, this, &ShijimaManager::quitAction);
 }
 
 void ShijimaManager::refreshListWidget() {
@@ -238,7 +266,7 @@ ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent) {
         this, &ShijimaManager::itemDoubleClicked);
     m_listWidget.setIconSize({ 64, 64 });
     setCentralWidget(&m_listWidget);
-    //buildToolbar();
+    buildToolbar();
 }
 
 void ShijimaManager::itemDoubleClicked(QListWidgetItem *qItem) {

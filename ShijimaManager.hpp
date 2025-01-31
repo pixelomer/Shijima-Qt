@@ -45,6 +45,9 @@ private:
     void reloadMascots(std::set<std::string> const& mascots);
     void loadAllMascots();
     void refreshListWidget();
+    void buildToolbar();
+    void importAction();
+    void quitAction();
     std::set<std::string> import(QString const& path) noexcept;
     void importWithDialog(QString const& path);
     void tick();
