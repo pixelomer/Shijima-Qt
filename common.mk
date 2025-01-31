@@ -70,7 +70,9 @@ endif
 ifeq ($(PLATFORM),macOS)
 	LD_WHOLE_ARCHIVE :=
 	LD_NO_WHOLE_ARCHIVE :=
+	LD_COPY_NEEDED :=
 else
+	LD_COPY_NEEDED := -Wl,--copy-dt-needed-entries
 	LD_WHOLE_ARCHIVE := -Wl,--whole-archive
 	LD_NO_WHOLE_ARCHIVE := -Wl,--no-whole-archive
 endif

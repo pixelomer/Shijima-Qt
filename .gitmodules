@@ -1,3 +1,6 @@
 [submodule "libshijima"]
 	path = libshijima
 	url = git@github.com:pixelomer/libshijima
+[submodule "libshimejifinder"]
+	path = libshimejifinder
+	url = git@github.com:pixelomer/libshimejifinder
