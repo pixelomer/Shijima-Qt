@@ -7,7 +7,7 @@ ifeq ($(PLATFORM),Linux)
 QT_LIBS += DBus
 endif
 
-CXXFLAGS += -Ilibshijima
+CXXFLAGS += -Ilibshijima -Ilibshimejifinder
 PKG_LIBS = libarchive
 PUBLISH_DLL = $(addprefix Qt6,$(QT_LIBS)) 
 
