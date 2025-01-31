@@ -260,8 +260,8 @@ void ShijimaManager::updateEnvironment() {
     m_env->floor = { gheight - taskbarHeight, 0, gwidth };
     m_env->work_area = { 0, gwidth, gheight - taskbarHeight, 0 };
     m_env->ceiling = { 0, 0, gwidth };
-    if (m_currentWindow.available && m_currentWindow.x != 0
-        && m_currentWindow.y != 0)
+    if (m_currentWindow.available && std::fabs(m_currentWindow.x) > 1
+        && std::fabs(m_currentWindow.y) > 1)
     {
         m_env->active_ie = { m_currentWindow.y,
             m_currentWindow.x + m_currentWindow.width,
