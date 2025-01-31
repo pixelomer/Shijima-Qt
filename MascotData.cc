@@ -21,7 +21,7 @@ MascotData::MascotData(QString const& path): m_path(path), m_valid(true) {
     if (!dirname.endsWith(".mascot")) {
         throw std::invalid_argument("Mascot folder name must end with .mascot");
     }
-    m_name = dirname.slice(0, dirname.length() - 7);
+    m_name = dirname.sliced(0, dirname.length() - 7);
     m_behaviorsXML = readFile(dir.filePath("behaviors.xml"));
     m_actionsXML = readFile(dir.filePath("actions.xml"));
     {

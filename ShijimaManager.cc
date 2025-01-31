@@ -103,7 +103,7 @@ void ShijimaManager::loadAllMascots() {
         if (!name.endsWith(".mascot") || name.length() <= 7) {
             continue;
         }
-        reloadMascot(name.slice(0, name.length() - 7));
+        reloadMascot(name.sliced(0, name.length() - 7));
     }
 }
 
