@@ -17,6 +17,7 @@
 #include <shimejifinder/analyze.hpp>
 #include <QStandardPaths>
 #include "ForcedProgressDialog.hpp"
+#include <QListWidget>
 #include <QtConcurrent>
 #include <QMessageBox>
 #include <string>
@@ -115,6 +116,21 @@ void ShijimaManager::reloadMascot(QString const& name) {
         m_loadedMascots.insert(name, data);
         std::cout << "Loaded mascot: " << name.toStdString() << std::endl;
     }
+    m_listItemsToRefresh.insert(name);
+}
+
+void ShijimaManager::refreshListWidget() {
+    //FIXME: refresh only changed items
+    m_listWidget.clear();
+    auto names = m_loadedMascots.keys();
+    names.sort(Qt::CaseInsensitive);
+    for (auto &name : names) {
+        auto item = new QListWidgetItem;
+        item->setText(name);
+        item->setIcon(m_loadedMascots[name].preview());
+        m_listWidget.addItem(item);
+    }
+    m_listItemsToRefresh.clear();
 }
 
 void ShijimaManager::loadAllMascots() {
@@ -127,12 +143,14 @@ void ShijimaManager::loadAllMascots() {
         }
         reloadMascot(name.sliced(0, name.length() - 7));
     }
+    refreshListWidget();
 }
 
 void ShijimaManager::reloadMascots(std::set<std::string> const& mascots) {
     for (auto &mascot : mascots) {
         reloadMascot(QString::fromStdString(mascot));
     }
+    refreshListWidget();
 }
 
 std::set<std::string> ShijimaManager::import(QString const& path) noexcept {
@@ -196,9 +214,6 @@ void ShijimaManager::importOnShow(QString const& path) {
 }
 
 ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent) {
-    QVBoxLayout *layout = new QVBoxLayout;
-    QPushButton *spawnButton = new QPushButton("Spawn");
-
     QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
     QString mascotsPath = QDir::cleanPath(dataPath + QDir::separator() + "mascots");
     QDir mascotsDir(mascotsPath);
@@ -211,11 +226,6 @@ ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent) {
     loadAllMascots();
 
     m_env = m_factory.env = std::make_shared<mascot::environment>();
-    connect(spawnButton, &QPushButton::clicked, this, &ShijimaManager::spawnClicked);
-    layout->addWidget(spawnButton);
-    QWidget *widget = new QWidget;
-    widget->setLayout(layout);
-    setCentralWidget(widget);
     m_mascotTimer = startTimer(10);
     if (m_windowObserver.tickFrequency() > 0) {
         m_windowObserverTimer = startTimer(m_windowObserver.tickFrequency());
@@ -223,6 +233,16 @@ ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent) {
     setWindowFlags((windowFlags() | Qt::CustomizeWindowHint | Qt::MaximizeUsingFullscreenGeometryHint |
         Qt::WindowMinimizeButtonHint) & ~Qt::WindowMaximizeButtonHint);
     setManagerVisible(true);
+
+    connect(&m_listWidget, &QListWidget::itemDoubleClicked,
+        this, &ShijimaManager::itemDoubleClicked);
+    m_listWidget.setIconSize({ 64, 64 });
+    setCentralWidget(&m_listWidget);
+    //buildToolbar();
+}
+
+void ShijimaManager::itemDoubleClicked(QListWidgetItem *qItem) {
+    spawn(qItem->text().toStdString());
 }
 
 void ShijimaManager::closeEvent(QCloseEvent *event) {
@@ -310,8 +330,9 @@ void ShijimaManager::setManagerVisible(bool visible) {
     auto geometry = screen->geometry();
     if (visible) {
         setWindowState(windowState() | Qt::WindowActive);
-        setFixedSize(400, 300);
-        move(geometry.width() / 2 - 200, geometry.height() / 2 - 150);
+        setMinimumSize(480, 320);
+        setMaximumSize(999999, 999999);
+        move(geometry.width() / 2 - 240, geometry.height() / 2 - 160);
         m_wasVisible = true;
     }
     else if (m_mascots.size() == 0) {

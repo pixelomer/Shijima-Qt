@@ -1,4 +1,5 @@
 #pragma once
+#include <QIcon>
 #include <QImage>
 #include <QString>
 
@@ -8,8 +9,9 @@ private:
     QString m_actionsXML;
     QString m_path;
     QString m_name;
-    QImage m_preview;
+    QIcon m_preview;
     bool m_valid;
+    QImage renderPreview(QString const& path);
 public:
     MascotData();
     MascotData(QString const& path);
@@ -19,5 +21,5 @@ public:
     QString const &actionsXML() const;
     QString const &path() const;
     QString const &name() const;
-    QImage const &preview() const;
+    QIcon const &preview() const;
 };

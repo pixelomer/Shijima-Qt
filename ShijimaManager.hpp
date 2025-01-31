@@ -6,6 +6,8 @@
 #include <shijima/mascot/factory.hpp>
 #include <vector>
 #include <QMap>
+#include <QListWidgetItem>
+#include <QListWidget>
 #include "MascotData.hpp"
 #include <set>
 #include "Platform/ActiveWindowObserver.hpp"
@@ -39,8 +41,10 @@ private:
     void spawnClicked();
     void reloadMascot(QString const& name);
     void askClose();
+    void itemDoubleClicked(QListWidgetItem *qItem);
     void reloadMascots(std::set<std::string> const& mascots);
     void loadAllMascots();
+    void refreshListWidget();
     std::set<std::string> import(QString const& path) noexcept;
     void importWithDialog(QString const& path);
     void tick();
@@ -52,9 +56,11 @@ private:
     bool m_wasVisible;
     int m_windowObserverTimer = -1;
     QMap<QString, MascotData> m_loadedMascots;
+    QSet<QString> m_listItemsToRefresh;
     std::shared_ptr<shijima::mascot::environment> m_env;
     shijima::mascot::factory m_factory;
     QString m_importOnShowPath;
     std::vector<ShijimaWidget *> m_mascots;
     QString m_mascotsPath;
+    QListWidget m_listWidget;
 };

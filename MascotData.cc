@@ -1,6 +1,7 @@
 #include "MascotData.hpp"
 #include "AssetLoader.hpp"
 #include "qdiriterator.h"
+#include <QPainter>
 #include <QDir>
 #include <stdexcept>
 #include <shijima/parser.hpp>
@@ -40,8 +41,21 @@ MascotData::MascotData(QString const& path): m_path(path), m_valid(true) {
             images.append(basename);
         }
     }
-    images.sort();
-    m_preview.load(dir.absoluteFilePath(images[0]));
+    images.sort(Qt::CaseInsensitive);
+    QImage preview = renderPreview(dir.absoluteFilePath(images[0]));
+    m_preview = QPixmap::fromImage(preview);
+}
+
+QImage MascotData::renderPreview(QString const& path) {
+    QImage frame;
+    frame.load(path);
+    frame = frame.scaled({ 128, 128 }, Qt::KeepAspectRatio);
+    QImage preview { 128, 128, QImage::Format_ARGB32_Premultiplied };
+    preview.fill(Qt::transparent);
+    QPainter painter { &preview };
+    painter.setBackgroundMode(Qt::BGMode::TransparentMode);
+    painter.drawImage(QPoint{ (128 - frame.width()) / 2, 0 }, frame);
+    return preview;
 }
 
 void MascotData::unloadCache() const {
@@ -68,6 +82,6 @@ QString const &MascotData::name() const {
     return m_name;
 }
 
-QImage const &MascotData::preview() const {
+QIcon const &MascotData::preview() const {
     return m_preview;
 }
