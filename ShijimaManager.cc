@@ -309,7 +309,7 @@ void ShijimaManager::setManagerVisible(bool visible) {
     auto screen = QGuiApplication::primaryScreen();
     auto geometry = screen->geometry();
     if (visible) {
-        setWindowState((windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
+        setWindowState(windowState() | Qt::WindowActive);
         setFixedSize(400, 300);
         move(geometry.width() / 2 - 200, geometry.height() / 2 - 150);
         m_wasVisible = true;
@@ -327,6 +327,7 @@ void ShijimaManager::setManagerVisible(bool visible) {
 
 void ShijimaManager::tick() {
     if (isMinimized()) {
+        setWindowState(windowState() & ~Qt::WindowMinimized);
         setManagerVisible(!m_wasVisible);
     }
     else if (isMaximized()) {
