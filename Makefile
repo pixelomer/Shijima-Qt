@@ -1,7 +1,16 @@
 include common.mk
 
-SOURCES = main.cc Asset.cc MascotData.cc AssetLoader.cc ShijimaContextMenu.cc ShijimaManager.cc ShijimaWidget.cc SoundEffectManager.cc
-QT_LIBS = Widgets Core Gui Multimedia
+SOURCES = main.cc \
+	Asset.cc \
+	MascotData.cc \
+	AssetLoader.cc \
+	ForcedProgressDialog.cc \
+	ShijimaContextMenu.cc \
+	ShijimaManager.cc \
+	ShijimaWidget.cc \
+	SoundEffectManager.cc
+
+QT_LIBS = Widgets Core Gui Multimedia Concurrent
 
 ifeq ($(PLATFORM),Linux)
 QT_LIBS += DBus
@@ -43,6 +52,7 @@ publish/Linux/$(CONFIG): shijima-qt$(EXE)
 	$(call copy_changed,$<,$@)
 
 publish/Linux/$(CONFIG)/Shijima-Qt-x86_64.AppImage: publish/Linux/$(CONFIG) linuxdeploy-x86_64.AppImage
+	rm -rf AppDir
 	NO_STRIP=1 ./linuxdeploy-x86_64.AppImage --appdir AppDir --executable publish/Linux/$(CONFIG)/shijima-qt \
 		--desktop-file shijima-qt.desktop --output appimage --plugin qt --icon-file shijima-qt.png
 	mv Shijima-Qt-x86_64.AppImage publish/Linux/$(CONFIG)/
@@ -51,8 +61,7 @@ appimage: publish/Linux/$(CONFIG)/Shijima-Qt-x86_64.AppImage
 
 shijima-qt$(EXE): Platform/Platform.a libshimejifinder/build/libshimejifinder.a \
 	libshijima/build/libshijima.a shijima-qt.a
-	$(CXX) -o $@ -Llibshimejifinder/build/unarr $(LD_COPY_NEEDED) \
-		$(LD_WHOLE_ARCHIVE) $^ $(LD_NO_WHOLE_ARCHIVE) $(LDFLAGS)
+	$(CXX) -o $@ $(LD_COPY_NEEDED) $(LD_WHOLE_ARCHIVE) $^ $(LD_NO_WHOLE_ARCHIVE) $(LDFLAGS)
 	if [ $(CONFIG) = "release" ]; then $(STRIP) $@; fi
 
 libshijima/build/libshijima.a: libshijima/build/Makefile

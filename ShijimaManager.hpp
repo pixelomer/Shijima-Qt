@@ -7,6 +7,7 @@
 #include <vector>
 #include <QMap>
 #include "MascotData.hpp"
+#include <set>
 #include "Platform/ActiveWindowObserver.hpp"
 #include "ShijimaWidget.hpp"
 
@@ -25,14 +26,19 @@ public:
     void killAll(QString const& name);
     void killAllButOne(ShijimaWidget *widget);
     void killAllButOne(QString const& name);
+    void importOnShow(QString const& path);
     ShijimaWidget *hitTest(QPoint const& screenPos);
 protected:
     void timerEvent(QTimerEvent *event) override;
+    void showEvent(QShowEvent *event) override;
 private:
     explicit ShijimaManager(QWidget *parent = nullptr);
     void spawnClicked();
     void reloadMascot(QString const& name);
+    void reloadMascots(std::set<std::string> const& mascots);
     void loadAllMascots();
+    std::set<std::string> import(QString const& path) noexcept;
+    void importWithDialog(QString const& path);
     void tick();
     Platform::ActiveWindow m_previousWindow;
     Platform::ActiveWindow m_currentWindow;
@@ -42,6 +48,7 @@ private:
     QMap<QString, MascotData> m_loadedMascots;
     std::shared_ptr<shijima::mascot::environment> m_env;
     shijima::mascot::factory m_factory;
+    QString m_importOnShowPath;
     std::vector<ShijimaWidget *> m_mascots;
     QString m_mascotsPath;
 };

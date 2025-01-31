@@ -1,4 +1,5 @@
 #include "ShijimaManager.hpp"
+#include <exception>
 #include <iostream>
 #include <QVBoxLayout>
 #include <QWidget>
@@ -11,9 +12,24 @@
 #include "ShijimaWidget.hpp"
 #include <QDirIterator>
 #include <shijima/mascot/factory.hpp>
+#include <shimejifinder/analyze.hpp>
 #include <QStandardPaths>
+#include "ForcedProgressDialog.hpp"
+#include <QtConcurrent>
 
 using namespace shijima;
+
+// https://stackoverflow.com/questions/34135624/-/54029758#54029758
+static void dispatchToMainThread(std::function<void()> callback) {
+    QTimer *timer = new QTimer;
+    timer->moveToThread(qApp->thread());
+    timer->setSingleShot(true);
+    QObject::connect(timer, &QTimer::timeout, [timer, callback]() {
+        callback();
+        timer->deleteLater();
+    });
+    QMetaObject::invokeMethod(timer, "start", Qt::QueuedConnection, Q_ARG(int, 0));
+}
 
 static ShijimaManager *m_defaultManager = nullptr;
 
@@ -83,6 +99,7 @@ void ShijimaManager::reloadMascot(QString const& name) {
         m_loadedMascots[name].unloadCache();
         killAll(name);
         m_loadedMascots.remove(name);
+        std::cout << "Unloaded mascot: " << name.toStdString() << std::endl;
     }
     if (data.valid()) {
         shijima::mascot::factory::tmpl tmpl;
@@ -92,6 +109,7 @@ void ShijimaManager::reloadMascot(QString const& name) {
         tmpl.path = data.path().toStdString();
         m_factory.register_template(tmpl);
         m_loadedMascots.insert(name, data);
+        std::cout << "Loaded mascot: " << name.toStdString() << std::endl;
     }
 }
 
@@ -105,6 +123,58 @@ void ShijimaManager::loadAllMascots() {
         }
         reloadMascot(name.sliced(0, name.length() - 7));
     }
+}
+
+void ShijimaManager::reloadMascots(std::set<std::string> const& mascots) {
+    for (auto &mascot : mascots) {
+        reloadMascot(QString::fromStdString(mascot));
+    }
+}
+
+std::set<std::string> ShijimaManager::import(QString const& path) noexcept {
+    try {
+        auto ar = shimejifinder::analyze(path.toStdString());
+        ar->extract(m_mascotsPath.toStdString());
+        return ar->shimejis();
+    }
+    catch (std::exception &ex) {
+        std::cerr << "import failed: " << ex.what() << std::endl;
+        return {};
+    }
+}
+
+void ShijimaManager::importWithDialog(QString const& path) {
+    ForcedProgressDialog *dialog = new ForcedProgressDialog { this };
+    dialog->setRange(0, 0);
+    QPushButton *cancelButton = new QPushButton;
+    cancelButton->setEnabled(false);
+    cancelButton->setText("Cancel");
+    dialog->setModal(true);
+    dialog->setCancelButton(cancelButton);
+    dialog->setLabelText("Importing shimeji...");
+    dialog->show();
+    //hide();
+    QtConcurrent::run([this, path](){
+        return import(path);
+    }).then([this, dialog](std::set<std::string> changed){
+        dispatchToMainThread([this, changed, dialog](){
+            reloadMascots(changed);
+            this->show();
+            dialog->close();
+        });
+    });
+}
+
+void ShijimaManager::showEvent(QShowEvent *event) {
+    if (!m_importOnShowPath.isEmpty()) {
+        QString path = m_importOnShowPath;
+        m_importOnShowPath = {};
+        importWithDialog(path);
+    }
+}
+
+void ShijimaManager::importOnShow(QString const& path) {
+    m_importOnShowPath = path;
 }
 
 ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent) {
@@ -121,10 +191,6 @@ ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent) {
     std::cout << "Mascots path: " << m_mascotsPath.toStdString() << std::endl;
     
     loadAllMascots();
-    auto &allTemplates = m_factory.get_all_templates();
-    for (auto &pair : allTemplates) {
-        std::cout << "Loaded mascot: " << pair.first << std::endl;
-    }
 
     m_env = m_factory.env = std::make_shared<mascot::environment>();
     connect(spawnButton, &QPushButton::clicked, this, &ShijimaManager::spawnClicked);

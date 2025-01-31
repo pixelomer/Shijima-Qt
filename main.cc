@@ -18,6 +18,9 @@ int main(int argc, char **argv) {
     QApplication app(argc, argv);
     app.setApplicationName("Shijima-Qt");
     app.setApplicationDisplayName("Shijima-Qt");
+    if (argc == 2) {
+        ShijimaManager::defaultManager()->importOnShow(argv[1]);
+    }
     ShijimaManager::defaultManager()->show();
     int ret = app.exec();
     ShijimaManager::finalize();
