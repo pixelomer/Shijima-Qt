@@ -1,5 +1,8 @@
 #include "AssetLoader.hpp"
 #include "Asset.hpp"
+#include "qdir.h"
+#include "ShijimaManager.hpp"
+#include <QDir>
 
 AssetLoader::AssetLoader() {}
 
@@ -19,7 +22,8 @@ void AssetLoader::finalize() {
     }
 }
 
-Asset const& AssetLoader::loadAsset(QString const& path) {
+Asset const& AssetLoader::loadAsset(QString path) {
+    path = QDir::cleanPath(path);
     if (!m_assets.contains(path)) {
         Asset &asset = m_assets[path];
         QImage image;
@@ -27,4 +31,13 @@ Asset const& AssetLoader::loadAsset(QString const& path) {
         asset.setImage(image);
     }
     return m_assets[path];
+}
+
+void AssetLoader::unloadAssets(QString root) {
+    root = QDir::cleanPath(root);
+    for (auto &path : m_assets.keys()) {
+        if (path.startsWith(root)) {
+            m_assets.remove(path);
+        }
+    }
 }

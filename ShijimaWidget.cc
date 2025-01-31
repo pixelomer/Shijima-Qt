@@ -28,20 +28,10 @@ ShijimaWidget::ShijimaWidget(std::string const& mascotName,
     m_mascot = std::move(mascot);
 
     QString qImgRoot = QString::fromStdString(imgRoot);
-    m_sounds.searchPaths.push_back(qImgRoot);
     QDir dir { qImgRoot };
-    if (dir.exists() && dir.cdUp() && dir.cdUp() && dir.cd("sound")) {
-        m_sounds.searchPaths.push_back(dir.path());
-    }
-    dir.setPath(qImgRoot);
     if (dir.exists() && dir.cdUp() && dir.cd("sound")) {
         m_sounds.searchPaths.push_back(dir.path());
     }
-    dir.setPath(qImgRoot);
-    if (dir.exists() && dir.cd("sound")) {
-        m_sounds.searchPaths.push_back(dir.path());
-    }
-    qInfo() << m_sounds.searchPaths;
     
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_NoSystemBackground);

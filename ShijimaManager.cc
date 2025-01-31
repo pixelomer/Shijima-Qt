@@ -9,7 +9,9 @@
 #include <QScreen>
 #include <QRandomGenerator>
 #include "ShijimaWidget.hpp"
-#include "MascotFinder.hpp"
+#include <QDirIterator>
+#include <shijima/mascot/factory.hpp>
+#include <QStandardPaths>
 
 using namespace shijima;
 
@@ -35,6 +37,15 @@ void ShijimaManager::killAll() {
     }
 }
 
+void ShijimaManager::killAll(QString const& name) {
+    std::string stdName = name.toStdString();
+    for (auto mascot : m_mascots) {
+        if (mascot->mascotName() == stdName) {
+            mascot->markForDeletion();
+        }
+    }
+}
+
 void ShijimaManager::killAllButOne(ShijimaWidget *widget) {
     for (auto mascot : m_mascots) {
         if (widget == mascot) {
@@ -44,15 +55,72 @@ void ShijimaManager::killAllButOne(ShijimaWidget *widget) {
     }
 }
 
+void ShijimaManager::killAllButOne(QString const& name) {
+    bool foundOne = false;
+    std::string stdName = name.toStdString();
+    for (auto mascot : m_mascots) {
+        if (mascot->mascotName() == stdName) {
+            if (!foundOne) {
+                foundOne = true;
+                continue;
+            }
+            mascot->markForDeletion();
+        }
+    }
+}
+
+void ShijimaManager::reloadMascot(QString const& name) {
+    MascotData data;
+    try {
+        data = { m_mascotsPath + QDir::separator() + name + ".mascot" };
+    }
+    catch (std::exception &ex) {
+        std::cerr << "couldn't load mascot: " << name.toStdString() << std::endl;
+        std::cerr << ex.what() << std::endl;
+    }
+    if (m_loadedMascots.contains(name)) {
+        m_factory.deregister_template(name.toStdString());
+        m_loadedMascots[name].unloadCache();
+        killAll(name);
+        m_loadedMascots.remove(name);
+    }
+    if (data.valid()) {
+        shijima::mascot::factory::tmpl tmpl;
+        tmpl.actions_xml = data.actionsXML().toStdString();
+        tmpl.behaviors_xml = data.behaviorsXML().toStdString();
+        tmpl.name = name.toStdString();
+        tmpl.path = data.path().toStdString();
+        m_factory.register_template(tmpl);
+        m_loadedMascots.insert(name, data);
+    }
+}
+
+void ShijimaManager::loadAllMascots() {
+    QDirIterator iter { m_mascotsPath, QDir::Dirs | QDir::NoDotAndDotDot,
+        QDirIterator::NoIteratorFlags };
+    while (iter.hasNext()) {
+        auto name = iter.nextFileInfo().fileName();
+        if (!name.endsWith(".mascot") || name.length() <= 7) {
+            continue;
+        }
+        reloadMascot(name.slice(0, name.length() - 7));
+    }
+}
+
 ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent) {
     QVBoxLayout *layout = new QVBoxLayout;
     QPushButton *spawnButton = new QPushButton("Spawn");
-    
-    MascotFinder mascotFinder;
-    int found = mascotFinder.findAll(m_factory);
-    if (found == 0) {
-        throw std::runtime_error("Could not find any mascots");
+
+    QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    QString mascotsPath = QDir::cleanPath(dataPath + QDir::separator() + "mascots");
+    QDir mascotsDir(mascotsPath);
+    if (!mascotsDir.exists()) {
+        mascotsDir.mkpath(mascotsPath);
     }
+    m_mascotsPath = mascotsPath;
+    std::cout << "Mascots path: " << m_mascotsPath.toStdString() << std::endl;
+    
+    loadAllMascots();
     auto &allTemplates = m_factory.get_all_templates();
     for (auto &pair : allTemplates) {
         std::cout << "Loaded mascot: " << pair.first << std::endl;
@@ -170,7 +238,9 @@ void ShijimaManager::spawn(std::string const& name) {
     auto product = m_factory.spawn(name, {});
     product.manager->reset_position();
     ShijimaWidget *shimeji = new ShijimaWidget(name,
-        product.tmpl->path, std::move(product.manager));
+        QDir::cleanPath(QString::fromStdString(product.tmpl->path)
+            + QDir::separator() + "img").toStdString(),
+        std::move(product.manager));
     shimeji->show();
     m_mascots.push_back(shimeji);
     m_env->reset_scale();

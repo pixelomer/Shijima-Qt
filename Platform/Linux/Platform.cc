@@ -91,7 +91,7 @@ void initialize(int argc, char **argv) {
     terminateClientFd = fds[1];
 
     // Install signal handlers
-    struct sigaction action = {0};
+    struct sigaction action = { 0 };
     action.sa_handler = handleSignal;
     sigaction(SIGINT, &action, NULL);
     sigaction(SIGTERM, &action, NULL);

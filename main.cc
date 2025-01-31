@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QDir>
+#include <QStandardPaths>
 #include <shijima/log.hpp>
 #include "Platform/Platform.hpp"
 #include "ShijimaManager.hpp"
@@ -7,12 +8,6 @@
 
 int main(int argc, char **argv) {
     Platform::initialize(argc, argv);
-    if (argc == 2) {
-        bool ret = QDir::setCurrent(argv[1]);
-        if (!ret) {
-            throw std::runtime_error("Could not change working directory");
-        }
-    }
     #ifdef _WIN32
         freopen("shijima_stdout.txt", "a", stdout);
         freopen("shijima_stderr.txt", "a", stderr);
@@ -21,6 +16,8 @@ int main(int argc, char **argv) {
         shijima::set_log_level(SHIJIMA_LOG_PARSER | SHIJIMA_LOG_WARNINGS);
     #endif
     QApplication app(argc, argv);
+    app.setApplicationName("Shijima-Qt");
+    app.setApplicationDisplayName("Shijima-Qt");
     ShijimaManager::defaultManager()->show();
     int ret = app.exec();
     ShijimaManager::finalize();

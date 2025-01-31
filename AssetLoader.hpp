@@ -11,5 +11,6 @@ private:
 public:
     static AssetLoader *defaultLoader();
     static void finalize();
-    Asset const& loadAsset(QString const& path);
+    Asset const& loadAsset(QString path);
+    void unloadAssets(QString root);
 };
