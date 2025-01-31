@@ -26,6 +26,12 @@ ShijimaContextMenu::ShijimaContextMenu(ShijimaWidget *parent)
         }
     }
 
+    // Show settings
+    action = addAction("Show settings");
+    connect(action, &QAction::triggered, [](){
+        ShijimaManager::defaultManager()->setManagerVisible(true);
+    });
+
     // Pause checkbox
     action = addAction("Pause");
     action->setCheckable(true);

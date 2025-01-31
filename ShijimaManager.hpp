@@ -26,15 +26,19 @@ public:
     void killAll(QString const& name);
     void killAllButOne(ShijimaWidget *widget);
     void killAllButOne(QString const& name);
+    void setManagerVisible(bool visible);
     void importOnShow(QString const& path);
     ShijimaWidget *hitTest(QPoint const& screenPos);
 protected:
     void timerEvent(QTimerEvent *event) override;
     void showEvent(QShowEvent *event) override;
+    void closeEvent(QCloseEvent *) override;
 private:
     explicit ShijimaManager(QWidget *parent = nullptr);
+    static std::string imgRootForTemplatePath(std::string const& path);
     void spawnClicked();
     void reloadMascot(QString const& name);
+    void askClose();
     void reloadMascots(std::set<std::string> const& mascots);
     void loadAllMascots();
     std::set<std::string> import(QString const& path) noexcept;
@@ -44,6 +48,8 @@ private:
     Platform::ActiveWindow m_currentWindow;
     Platform::ActiveWindowObserver m_windowObserver;
     int m_mascotTimer = -1;
+    bool m_allowClose = false;
+    bool m_wasVisible;
     int m_windowObserverTimer = -1;
     QMap<QString, MascotData> m_loadedMascots;
     std::shared_ptr<shijima::mascot::environment> m_env;

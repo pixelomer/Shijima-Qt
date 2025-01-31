@@ -3,7 +3,9 @@
 #include <iostream>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <QCloseEvent>
 #include <QPushButton>
+#include <QWindow>
 #include <QTextStream>
 #include <QGuiApplication>
 #include <QFile>
@@ -16,6 +18,8 @@
 #include <QStandardPaths>
 #include "ForcedProgressDialog.hpp"
 #include <QtConcurrent>
+#include <QMessageBox>
+#include <string>
 
 using namespace shijima;
 
@@ -161,6 +165,20 @@ void ShijimaManager::importWithDialog(QString const& path) {
             reloadMascots(changed);
             this->show();
             dialog->close();
+            QString msg;
+            QMessageBox::Icon icon;
+            if (changed.size() > 0) {
+                msg = QString::fromStdString("Imported " + std::to_string(changed.size()) +
+                    " mascot" + (changed.size() == 1 ? "" : "s") + ".");
+                icon = QMessageBox::Icon::Information;
+            }
+            else {
+                msg = "Could not import any mascots from the specified archive.";
+                icon = QMessageBox::Icon::Warning;
+            }
+            QMessageBox msgBox { icon, "Import", msg,
+                QMessageBox::StandardButton::Ok, this };
+            msgBox.exec();
         });
     });
 }
@@ -202,6 +220,18 @@ ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent) {
     if (m_windowObserver.tickFrequency() > 0) {
         m_windowObserverTimer = startTimer(m_windowObserver.tickFrequency());
     }
+    setWindowFlags((windowFlags() | Qt::CustomizeWindowHint | Qt::MaximizeUsingFullscreenGeometryHint |
+        Qt::WindowMinimizeButtonHint) & ~Qt::WindowMaximizeButtonHint);
+    setManagerVisible(true);
+}
+
+void ShijimaManager::closeEvent(QCloseEvent *event) {
+    if (!m_allowClose) {
+        event->ignore();
+        askClose();
+        return;
+    }
+    event->accept();
 }
 
 void ShijimaManager::timerEvent(QTimerEvent *event) {
@@ -255,7 +285,54 @@ void ShijimaManager::updateEnvironment() {
     m_env->set_scale(1.0);
 }
 
+void ShijimaManager::askClose() {
+    setManagerVisible(true);
+    QMessageBox msgBox { this };
+    msgBox.setWindowTitle("Close Shijima-Qt");
+    msgBox.setIcon(QMessageBox::Icon::Question);
+    msgBox.setStandardButtons(QMessageBox::StandardButton::Close |
+        QMessageBox::StandardButton::Cancel);
+    msgBox.setText("Do you want to close Shijima-Qt?");
+    int ret = msgBox.exec();
+    if (ret == QMessageBox::Button::Close) {
+        m_allowClose = true;
+        close();
+    }
+}
+
+std::string ShijimaManager::imgRootForTemplatePath(std::string const& path) {
+    return QDir::cleanPath(QString::fromStdString(path)
+        + QDir::separator() + "img").toStdString();
+}
+
+void ShijimaManager::setManagerVisible(bool visible) {
+    auto screen = QGuiApplication::primaryScreen();
+    auto geometry = screen->geometry();
+    if (visible) {
+        setFixedSize(400, 300);
+        move(geometry.width() / 2 - 200, geometry.height() / 2 - 150);
+        m_wasVisible = true;
+    }
+    else if (m_mascots.size() == 0) {
+        askClose();
+    }
+    else {
+        setFixedSize(1, 1);
+        move(geometry.width() * 10, geometry.height() * 10);
+        clearFocus();
+        m_wasVisible = false;
+    }
+}
+
 void ShijimaManager::tick() {
+    if (isMinimized()) {
+        setWindowState((windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
+        setManagerVisible(!m_wasVisible);
+    }
+    else if (isMaximized()) {
+        setManagerVisible(true);
+    }
+
     if (m_mascots.size() == 0) {
         return;
     }
@@ -267,7 +344,7 @@ void ShijimaManager::tick() {
         if (!shimeji->isVisible()) {
             delete shimeji;
             m_mascots.erase(m_mascots.begin() + i);
-            break;
+            continue;
         }
         shimeji->tick();
         auto &mascot = shimeji->mascot();
@@ -278,7 +355,8 @@ void ShijimaManager::tick() {
             }
             auto product = m_factory.spawn(breedRequest);
             ShijimaWidget *shimeji = new ShijimaWidget(product.tmpl->name,
-                product.tmpl->path, std::move(product.manager));
+                imgRootForTemplatePath(product.tmpl->path),
+                std::move(product.manager), this);
             shimeji->show();
             m_mascots.push_back(shimeji);
             breedRequest.available = false;
@@ -304,9 +382,8 @@ void ShijimaManager::spawn(std::string const& name) {
     auto product = m_factory.spawn(name, {});
     product.manager->reset_position();
     ShijimaWidget *shimeji = new ShijimaWidget(name,
-        QDir::cleanPath(QString::fromStdString(product.tmpl->path)
-            + QDir::separator() + "img").toStdString(),
-        std::move(product.manager));
+        imgRootForTemplatePath(product.tmpl->path),
+        std::move(product.manager), this);
     shimeji->show();
     m_mascots.push_back(shimeji);
     m_env->reset_scale();

@@ -6,6 +6,7 @@
 #include <QScreen>
 #include <QMouseEvent>
 #include <QMenu>
+#include <QWindow>
 #include <QDebug>
 #include <QGuiApplication>
 #include <QTextStream>
@@ -39,7 +40,8 @@ ShijimaWidget::ShijimaWidget(std::string const& mascotName,
     setAttribute(Qt::WA_MacShowFocusRect, false);
     setFixedSize(m_windowWidth, m_windowHeight);
     setWindowFlags(Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint
-        | Qt::WindowDoesNotAcceptFocus | Qt::NoDropShadowWindowHint);
+        | Qt::WindowDoesNotAcceptFocus | Qt::NoDropShadowWindowHint | Qt::Tool
+        | Qt::WindowOverridesSystemGestures);
 }
 
 Asset const& ShijimaWidget::getActiveAsset() {
