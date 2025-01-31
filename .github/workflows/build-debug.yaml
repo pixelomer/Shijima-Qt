@@ -72,6 +72,9 @@ jobs:
           target: 'desktop'
           arch: 'linux_gcc_64'
           modules: 'qtmultimedia'
+      - name: Install build dependencies
+        run: |
+          sudo apt-get install -y libxcb-cursor0 libarchive-dev
       - name: Build Linux x86_64 debug build
         env:
           CONFIG: debug
