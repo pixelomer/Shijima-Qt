@@ -90,7 +90,7 @@ jobs:
           path: publish/Linux/debug/shijima-qt
           retention-days: 1
   build-macos:
-    runs-on: macos-13
+    runs-on: macos-12
     steps:
       - uses: actions/checkout@v4
         with:
