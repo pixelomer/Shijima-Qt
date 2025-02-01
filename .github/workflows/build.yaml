@@ -9,6 +9,7 @@ jobs:
   build-windows:
     runs-on: ubuntu-latest
     steps:
+      - run: exit 1
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
@@ -41,6 +42,7 @@ jobs:
   build-linux:
     runs-on: ubuntu-20.04
     steps:
+      - run: exit 1
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
@@ -75,4 +77,39 @@ jobs:
         with:
           name: debug-linux-x86_64
           path: publish/Linux/debug/shijima-qt
+          retention-days: 1
+    build-macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PULL_TOKEN }}
+      - name: Fetch full history for Shijima submodules
+        env:
+          PULL_TOKEN: ${{ secrets.PULL_TOKEN }}
+        run: |
+          pushd libshijima
+          git remote set-url origin "https://${PULL_TOKEN}@github.com/pixelomer/libshijima.git"
+          git fetch --unshallow origin main
+          git remote set-url origin "git@github.com:pixelomer/libshijima"
+          echo "libshijima: $(git rev-list HEAD --count) commits"
+          popd
+      - name: Install Qt6
+        run: |
+          wget --no-verbose https://github.com/macports/macports-base/releases/download/v2.10.5/MacPorts-2.10.5-14-Sonoma.pkg
+          sudo installer -pkg MacPorts-2.10.5-14-Sonoma.pkg -target /
+          export PATH=/opt/local/bin:/opt/local/sbin:$PATH
+          yes | sudo port install qt6
+      - name: Build macOS arm64 debug build
+        env:
+          CONFIG: debug
+        run: |
+          make clean
+          make -j$(nproc)
+      - name: Archive macOS arm64 debug build
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-macos-arm64
+          path: publish/macOS/debug
           retention-days: 1
