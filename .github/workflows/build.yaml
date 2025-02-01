@@ -115,15 +115,15 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /opt/local
-          key: macos-12-macports-qt6
+          key: macos-13-macports-qt6
       - name: Revoke gtar's root permissions
         run: |
           sudo chmod u-s /opt/homebrew/bin/gtar
       - name: Install Qt6
         if: steps.cache-qt6.outputs.cache-hit != 'true'
         run: |
-          wget --no-verbose https://github.com/macports/macports-base/releases/download/v2.10.5/MacPorts-2.10.5-12-Monterey.pkg
-          sudo installer -pkg MacPorts-2.10.5-12-Monterey.pkg -target /
+          wget --no-verbose https://github.com/macports/macports-base/releases/download/v2.10.5/MacPorts-2.10.5-13-Ventura.pkg
+          sudo installer -pkg MacPorts-2.10.5-13-Ventura.pkg -target /
           export PATH=/opt/local/bin:/opt/local/sbin:$PATH
           yes | sudo port install qt6-qtbase qt6-qtmultimedia
           sudo rm -rf /opt/local/var/macports/build/*
