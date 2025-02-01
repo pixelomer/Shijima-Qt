@@ -9,7 +9,6 @@ jobs:
   build-windows:
     runs-on: ubuntu-latest
     steps:
-      - run: exit 1
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
@@ -24,11 +23,23 @@ jobs:
           git remote set-url origin "git@github.com:pixelomer/libshijima"
           echo "libshijima: $(git rev-list HEAD --count) commits"
           popd
+      - name: Cache Docker image
+        id: cache-docker
+        uses: actions/cache@v4
+        with:
+          path: shijima-qt-dev.tar.gz
+          key: docker-fedora-41-qt6-mingw
       - name: Build Docker image
+        if: steps.cache-docker.outputs.cache-hit != 'true'
         run: |
           pushd dev-docker
           docker build -t shijima-qt-dev .
+          docker save shijima-qt-dev | gzip > ../shijima-qt-dev.tar.gz
           popd
+      - name: Import Docker image
+        if: steps.cache-docker.outputs.cache-hit == 'true'
+        run: |
+          gzcat shijima-qt-dev.tar.gz | docker load
       - name: Build Windows x86_64 debug build
         run: |
           docker run -e CONFIG=debug --rm -v "$(pwd)":/work shijima-qt-dev bash -c \
@@ -42,7 +53,6 @@ jobs:
   build-linux:
     runs-on: ubuntu-20.04
     steps:
-      - run: exit 1
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
@@ -66,6 +76,7 @@ jobs:
           target: 'desktop'
           arch: 'linux_gcc_64'
           modules: 'qtmultimedia'
+          cache: true
       - name: Build Linux x86_64 debug build
         env:
           CONFIG: debug
@@ -103,11 +114,7 @@ jobs:
         id: cache-qt6
         uses: actions/cache@v4
         with:
-          path: |
-            /opt/local/bin
-            /opt/local/lib
-            /opt/local/libexec/qt6
-            /opt/local/sbin
+          path: /opt/local
           key: macos-14-macports-qt6
       - name: Revoke gtar's root permissions
         run: |
@@ -119,6 +126,8 @@ jobs:
           sudo installer -pkg MacPorts-2.10.5-14-Sonoma.pkg -target /
           export PATH=/opt/local/bin:/opt/local/sbin:$PATH
           yes | sudo port install qt6-qtbase qt6-qtmultimedia
+          sudo rm -rf /opt/local/var/macports/build/*
+          sudo rm -rf /opt/local/var/macports/distfiles/*
       - name: Build macOS arm64 debug build
         env:
           CONFIG: debug
