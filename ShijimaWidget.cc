@@ -20,7 +20,12 @@ using namespace shijima;
 ShijimaWidget::ShijimaWidget(std::string const& mascotName,
     std::string const& imgRoot,
     std::unique_ptr<shijima::mascot::manager> mascot,
-    QWidget *parent) : QWidget(parent)
+    QWidget *parent)
+#if defined(__APPLE__)
+    : QWidget(nullptr)
+#else
+    : QWidget(parent)
+#endif
 {
     m_mascotName = mascotName;
     m_windowHeight = 128;
@@ -39,9 +44,15 @@ ShijimaWidget::ShijimaWidget(std::string const& mascotName,
     setAttribute(Qt::WA_ShowWithoutActivating);
     setAttribute(Qt::WA_MacShowFocusRect, false);
     setFixedSize(m_windowWidth, m_windowHeight);
-    setWindowFlags(Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint
-        | Qt::WindowDoesNotAcceptFocus | Qt::NoDropShadowWindowHint | Qt::Tool
-        | Qt::WindowOverridesSystemGestures);
+    Qt::WindowFlags flags = Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint
+        | Qt::WindowDoesNotAcceptFocus | Qt::NoDropShadowWindowHint
+        | Qt::WindowOverridesSystemGestures;
+    #if defined(__APPLE__)
+    flags |= Qt::Window;
+    #else
+    flags |= Qt::Tool;
+    #endif
+    setWindowFlags(flags);
 }
 
 Asset const& ShijimaWidget::getActiveAsset() {

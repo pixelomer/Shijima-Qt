@@ -19,6 +19,7 @@
 #include <shimejifinder/analyze.hpp>
 #include <QStandardPaths>
 #include "ForcedProgressDialog.hpp"
+#include "qcoreapplication.h"
 #include "qfiledialog.h"
 #include <QListWidget>
 #include <QtConcurrent>
@@ -274,12 +275,17 @@ void ShijimaManager::itemDoubleClicked(QListWidgetItem *qItem) {
 }
 
 void ShijimaManager::closeEvent(QCloseEvent *event) {
+    #if !defined(__APPLE__)
     if (!m_allowClose) {
         event->ignore();
         askClose();
         return;
     }
     event->accept();
+    #else
+    event->ignore();
+    setManagerVisible(false);
+    #endif
 }
 
 void ShijimaManager::timerEvent(QTimerEvent *event) {
@@ -343,8 +349,12 @@ void ShijimaManager::askClose() {
     msgBox.setText("Do you want to close Shijima-Qt?");
     int ret = msgBox.exec();
     if (ret == QMessageBox::Button::Close) {
+        #if defined(__APPLE__)
+        QCoreApplication::quit();
+        #else
         m_allowClose = true;
         close();
+        #endif
     }
 }
 
@@ -354,6 +364,7 @@ std::string ShijimaManager::imgRootForTemplatePath(std::string const& path) {
 }
 
 void ShijimaManager::setManagerVisible(bool visible) {
+    #if !defined(__APPLE__)
     auto screen = QGuiApplication::primaryScreen();
     auto geometry = screen->geometry();
     if (visible) {
@@ -372,9 +383,23 @@ void ShijimaManager::setManagerVisible(bool visible) {
         clearFocus();
         m_wasVisible = false;
     }
+    #else
+    if (visible) {
+        show();
+        m_wasVisible = true;
+    }
+    else if (m_mascots.size() == 0) {
+        askClose();
+    }
+    else {
+        hide();
+        m_wasVisible = false;
+    }
+    #endif
 }
 
 void ShijimaManager::tick() {
+    #if !defined(__APPLE__)
     if (isMinimized()) {
         setWindowState(windowState() & ~Qt::WindowMinimized);
         setManagerVisible(!m_wasVisible);
@@ -382,6 +407,7 @@ void ShijimaManager::tick() {
     else if (isMaximized()) {
         setManagerVisible(true);
     }
+    #endif
 
     if (m_mascots.size() == 0) {
         return;
