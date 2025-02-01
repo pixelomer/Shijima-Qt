@@ -111,7 +111,7 @@ jobs:
           key: macos-14-macports-qt6
       - name: Revoke gtar's root permissions
         run: |
-          sudo chown u-s /opt/homebrew/bin/gtar
+          sudo chmod u-s /opt/homebrew/bin/gtar
       - name: Install Qt6
         if: steps.cache-qt6.outputs.cache-hit != 'true'
         run: |
