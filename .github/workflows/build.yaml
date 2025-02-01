@@ -98,7 +98,7 @@ jobs:
       - name: Temporarily let gtar run as root
         run: |
           sudo chown 0:0 /opt/homebrew/bin/gtar
-          sudo chown u+s /opt/homebrew/bin/gtar
+          sudo chmod u+s /opt/homebrew/bin/gtar
       - name: Cache Qt6
         id: cache-qt6
         uses: actions/cache@v4
