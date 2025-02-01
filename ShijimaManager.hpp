@@ -36,6 +36,8 @@ protected:
     void showEvent(QShowEvent *event) override;
     void closeEvent(QCloseEvent *) override;
     bool eventFilter(QObject *obj, QEvent *event) override;
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
 private:
     explicit ShijimaManager(QWidget *parent = nullptr);
     static std::string imgRootForTemplatePath(std::string const& path);
@@ -51,7 +53,7 @@ private:
     void deleteAction();
     void quitAction();
     std::set<std::string> import(QString const& path) noexcept;
-    void importWithDialog(QString const& path);
+    void importWithDialog(QList<QString> const& paths);
     void tick();
     Platform::ActiveWindow m_previousWindow;
     Platform::ActiveWindow m_currentWindow;

@@ -131,11 +131,11 @@ void ShijimaManager::reloadMascot(QString const& name) {
 }
 
 void ShijimaManager::importAction() {
-    auto path = QFileDialog::getOpenFileName(this, "Choose shimeji archive...");
-    if (path.isEmpty()) {
+    auto paths = QFileDialog::getOpenFileNames(this, "Choose shimeji archive...");
+    if (paths.isEmpty()) {
         return;
     }
-    importWithDialog(path);
+    importWithDialog(paths);
 }
 
 void ShijimaManager::quitAction() {
@@ -256,7 +256,7 @@ std::set<std::string> ShijimaManager::import(QString const& path) noexcept {
     }
 }
 
-void ShijimaManager::importWithDialog(QString const& path) {
+void ShijimaManager::importWithDialog(QList<QString> const& paths) {
     ForcedProgressDialog *dialog = new ForcedProgressDialog { this };
     dialog->setRange(0, 0);
     QPushButton *cancelButton = new QPushButton;
@@ -267,8 +267,13 @@ void ShijimaManager::importWithDialog(QString const& path) {
     dialog->setLabelText("Importing shimeji...");
     dialog->show();
     //hide();
-    QtConcurrent::run([this, path](){
-        return import(path);
+    QtConcurrent::run([this, paths](){
+        std::set<std::string> changed;
+        for (auto &path : paths) {
+            auto newChanged = import(path);
+            changed.insert(newChanged.begin(), newChanged.end());
+        }
+        return changed;
     }).then([this, dialog](std::set<std::string> changed){
         dispatchToMainThread([this, changed, dialog](){
             reloadMascots(changed);
@@ -282,7 +287,7 @@ void ShijimaManager::importWithDialog(QString const& path) {
                 icon = QMessageBox::Icon::Information;
             }
             else {
-                msg = "Could not import any mascots from the specified archive.";
+                msg = "Could not import any mascots from the specified archive(s).";
                 icon = QMessageBox::Icon::Warning;
             }
             QMessageBox msgBox { icon, "Import", msg,
@@ -296,12 +301,26 @@ void ShijimaManager::showEvent(QShowEvent *event) {
     if (!m_importOnShowPath.isEmpty()) {
         QString path = m_importOnShowPath;
         m_importOnShowPath = {};
-        importWithDialog(path);
+        importWithDialog({ path });
     }
 }
 
 void ShijimaManager::importOnShow(QString const& path) {
     m_importOnShowPath = path;
+}
+
+void ShijimaManager::dragEnterEvent(QDragEnterEvent *event) {
+    if (event->mimeData()->hasUrls()) {
+        event->acceptProposedAction();
+    }
+}
+
+void ShijimaManager::dropEvent(QDropEvent *event) {
+    QList<QString> paths;
+    for (auto &url : event->mimeData()->urls()) {
+        paths.append(url.toLocalFile());
+    }
+    importWithDialog(paths);
 }
 
 ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent) {
@@ -315,6 +334,7 @@ ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent) {
     std::cout << "Mascots path: " << m_mascotsPath.toStdString() << std::endl;
     
     loadAllMascots();
+    setAcceptDrops(true);
 
     m_env = m_factory.env = std::make_shared<mascot::environment>();
     m_mascotTimer = startTimer(10);
