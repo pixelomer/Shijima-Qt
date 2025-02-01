@@ -35,6 +35,7 @@ protected:
     void timerEvent(QTimerEvent *event) override;
     void showEvent(QShowEvent *event) override;
     void closeEvent(QCloseEvent *) override;
+    bool eventFilter(QObject *obj, QEvent *event) override;
 private:
     explicit ShijimaManager(QWidget *parent = nullptr);
     static std::string imgRootForTemplatePath(std::string const& path);
@@ -47,6 +48,7 @@ private:
     void refreshListWidget();
     void buildToolbar();
     void importAction();
+    void deleteAction();
     void quitAction();
     std::set<std::string> import(QString const& path) noexcept;
     void importWithDialog(QString const& path);

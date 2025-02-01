@@ -1,5 +1,6 @@
 #include "ShijimaManager.hpp"
 #include <exception>
+#include <filesystem>
 #include <iostream>
 #include <QVBoxLayout>
 #include <QWidget>
@@ -19,8 +20,14 @@
 #include <shimejifinder/analyze.hpp>
 #include <QStandardPaths>
 #include "ForcedProgressDialog.hpp"
+#include "qabstractitemmodel.h"
+#include "qaction.h"
 #include "qcoreapplication.h"
 #include "qfiledialog.h"
+#include "qitemselectionmodel.h"
+#include "qkeysequence.h"
+#include "qlistwidget.h"
+#include "qmessagebox.h"
 #include <QListWidget>
 #include <QtConcurrent>
 #include <QMessageBox>
@@ -136,16 +143,65 @@ void ShijimaManager::quitAction() {
     close();
 }
 
+void ShijimaManager::deleteAction() {
+    if (m_loadedMascots.size() == 0) {
+        return;
+    }
+    auto selected = m_listWidget.selectedItems();
+    if (selected.size() == 0) {
+        return;
+    }
+    QString msg = "Are you sure you want to delete these shimeji?";
+    for (auto item : selected) {
+        msg += "\n* " + item->text();
+    }
+    QMessageBox msgBox { this };
+    msgBox.setWindowTitle("Delete shimeji");
+    msgBox.setText(msg);
+    msgBox.setStandardButtons(QMessageBox::StandardButton::Yes |
+        QMessageBox::StandardButton::No);
+    msgBox.setIcon(QMessageBox::Icon::Question);
+    int ret = msgBox.exec();
+    if (ret == QMessageBox::StandardButton::Yes) {
+        for (auto item : selected) {
+            std::filesystem::path path = m_loadedMascots[item->text()].path().toStdString();
+            std::cout << "Deleting mascot: " << item->text().toStdString() << std::endl;
+            try {
+                // remove_all(path) could be dangerous
+                std::filesystem::remove_all(path / "img");
+                std::filesystem::remove_all(path / "sound");
+                std::filesystem::remove(path / "actions.xml");
+                std::filesystem::remove(path / "behaviors.xml");
+                std::filesystem::remove(path);
+            }
+            catch (std::exception &ex) {
+                std::cerr << "failed to delete mascot: " << path.string()
+                    << ": " << ex.what() << std::endl;
+            }
+            reloadMascot(item->text());
+        }
+        refreshListWidget();
+    }
+}
+
 void ShijimaManager::buildToolbar() {
     QAction *action;
-
-    QMenu *fileMenu = menuBar()->addMenu("File");
+    QMenu *menu;
     
-    action = fileMenu->addAction("Import shimeji...");
-    connect(action, &QAction::triggered, this, &ShijimaManager::importAction);
+    menu = menuBar()->addMenu("File");
+    {
+        action = menu->addAction("Import shimeji...");
+        connect(action, &QAction::triggered, this, &ShijimaManager::importAction);
 
-    action = fileMenu->addAction("Quit");
-    connect(action, &QAction::triggered, this, &ShijimaManager::quitAction);
+        action = menu->addAction("Quit");
+        connect(action, &QAction::triggered, this, &ShijimaManager::quitAction);
+    }
+
+    menu = menuBar()->addMenu("Edit");
+    {
+        action = menu->addAction("Delete shimeji", QKeySequence::StandardKey::Delete);
+        connect(action, &QAction::triggered, this, &ShijimaManager::deleteAction);
+    }
 }
 
 void ShijimaManager::refreshListWidget() {
@@ -160,6 +216,12 @@ void ShijimaManager::refreshListWidget() {
         m_listWidget.addItem(item);
     }
     m_listItemsToRefresh.clear();
+    if (names.size() == 0) {
+        m_listWidget.addItem(
+            "Welcome to Shijima! Get started by dragging and dropping a \n"
+            "shimeji archive to this window. You can also import archives \n"
+            "by selecting File > Import.");
+    }
 }
 
 void ShijimaManager::loadAllMascots() {
@@ -266,11 +328,16 @@ ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent) {
     connect(&m_listWidget, &QListWidget::itemDoubleClicked,
         this, &ShijimaManager::itemDoubleClicked);
     m_listWidget.setIconSize({ 64, 64 });
+    m_listWidget.installEventFilter(this);
+    m_listWidget.setSelectionMode(QListWidget::ExtendedSelection);
     setCentralWidget(&m_listWidget);
     buildToolbar();
 }
 
 void ShijimaManager::itemDoubleClicked(QListWidgetItem *qItem) {
+    if (m_loadedMascots.size() == 0) {
+        return;
+    }
     spawn(qItem->text().toStdString());
 }
 
@@ -463,6 +530,20 @@ void ShijimaManager::spawn(std::string const& name) {
     shimeji->show();
     m_mascots.push_back(shimeji);
     m_env->reset_scale();
+}
+
+bool ShijimaManager::eventFilter(QObject *obj, QEvent *event) {
+    if (event->type() == QEvent::KeyPress) {
+        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+        auto key = keyEvent->key();
+        if (key == Qt::Key::Key_Return || key == Qt::Key::Key_Enter) {
+            for (auto item : m_listWidget.selectedItems()) {
+                itemDoubleClicked(item);
+            }
+            return true;
+        }
+    }
+    return QMainWindow::eventFilter(obj, event);
 }
 
 void ShijimaManager::spawnClicked() {
