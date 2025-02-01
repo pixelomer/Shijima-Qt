@@ -39,7 +39,7 @@ jobs:
       - name: Import Docker image
         if: steps.cache-docker.outputs.cache-hit == 'true'
         run: |
-          gzcat shijima-qt-dev.tar.gz | docker load
+          gunzip -c < shijima-qt-dev.tar.gz | docker load
       - name: Build Windows x86_64 debug build
         run: |
           docker run -e CONFIG=debug --rm -v "$(pwd)":/work shijima-qt-dev bash -c \
