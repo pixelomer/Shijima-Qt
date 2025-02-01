@@ -24,11 +24,23 @@ jobs:
           git remote set-url origin "git@github.com:pixelomer/libshijima"
           echo "libshijima: $(git rev-list HEAD --count) commits"
           popd
+      - name: Cache Docker image
+        id: cache-docker
+        uses: actions/cache@v4
+        with:
+          path: shijima-qt-dev.tar.gz
+          key: docker-fedora-41-qt6-mingw
       - name: Build Docker image
+        if: steps.cache-docker.outputs.cache-hit != 'true'
         run: |
           pushd dev-docker
           docker build -t shijima-qt-dev .
+          docker save shijima-qt-dev | gzip > ../shijima-qt-dev.tar.gz
           popd
+      - name: Import Docker image
+        if: steps.cache-docker.outputs.cache-hit == 'true'
+        run: |
+          gunzip -c < shijima-qt-dev.tar.gz | docker load
       - name: Build Windows x86_64 release build
         run: |
           docker run -e CONFIG=release --rm -v "$(pwd)":/work shijima-qt-dev bash -c \
@@ -69,6 +81,7 @@ jobs:
           target: 'desktop'
           arch: 'linux_gcc_64'
           modules: 'qtmultimedia'
+          cache: true
       - name: Install build dependencies
         run: |
           sudo apt-get install -y libxcb-cursor0 libarchive-dev
@@ -85,3 +98,62 @@ jobs:
           name: release-linux-x86_64
           path: publish/Linux/release
           retention-days: 1
+  build-macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PULL_TOKEN }}
+      - name: Fetch full history for Shijima submodules
+        env:
+          PULL_TOKEN: ${{ secrets.PULL_TOKEN }}
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+        run: |
+          git remote set-url origin "https://${PULL_TOKEN}@github.com/pixelomer/Shijima-Qt.git"
+          git fetch --unshallow origin $BRANCH_NAME
+          git remote set-url origin "git@github.com:pixelomer/Shijima-Qt"
+          pushd libshijima
+          git remote set-url origin "https://${PULL_TOKEN}@github.com/pixelomer/libshijima.git"
+          git fetch --unshallow origin main
+          git remote set-url origin "git@github.com:pixelomer/libshijima"
+          echo "libshijima: $(git rev-list HEAD --count) commits"
+          popd
+      - name: Temporarily let gtar run as root
+        run: |
+          sudo chown 0:0 /opt/homebrew/bin/gtar
+          sudo chmod u+s /opt/homebrew/bin/gtar
+      - name: Cache Qt6
+        id: cache-qt6
+        uses: actions/cache@v4
+        with:
+          path: /opt/local
+          key: macos-14-macports-qt6
+      - name: Revoke gtar's root permissions
+        run: |
+          sudo chmod u-s /opt/homebrew/bin/gtar
+      - name: Install Qt6
+        if: steps.cache-qt6.outputs.cache-hit != 'true'
+        run: |
+          wget --no-verbose https://github.com/macports/macports-base/releases/download/v2.10.5/MacPorts-2.10.5-14-Sonoma.pkg
+          sudo installer -pkg MacPorts-2.10.5-14-Sonoma.pkg -target /
+          export PATH=/opt/local/bin:/opt/local/sbin:$PATH
+          yes | sudo port install qt6-qtbase qt6-qtmultimedia
+          sudo rm -rf /opt/local/var/macports/build/*
+          sudo rm -rf /opt/local/var/macports/distfiles/*
+      - name: Build macOS arm64 release build
+        env:
+          CONFIG: release
+        run: |
+          make clean
+          make -j6
+      - name: Archive macOS arm64 release build
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-macos-arm64
+          path: publish/macOS/release
+          retention-days: 1
+      - name: Temporarily let gtar run as root
+        run: |
+          sudo chown 0:0 /opt/homebrew/bin/gtar
+          sudo chmod u+s /opt/homebrew/bin/gtar
