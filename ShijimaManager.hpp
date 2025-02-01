@@ -60,7 +60,7 @@ private:
     Platform::ActiveWindowObserver m_windowObserver;
     int m_mascotTimer = -1;
     bool m_allowClose = false;
-    bool m_wasVisible;
+    bool m_wasVisible = false;
     int m_windowObserverTimer = -1;
     QMap<QString, MascotData> m_loadedMascots;
     QSet<QString> m_listItemsToRefresh;

@@ -454,17 +454,14 @@ void ShijimaManager::setManagerVisible(bool visible) {
     #if !defined(__APPLE__)
     auto screen = QGuiApplication::primaryScreen();
     auto geometry = screen->geometry();
-    if (visible) {
+    if (!m_wasVisible && visible) {
         setWindowState(windowState() | Qt::WindowActive);
         setMinimumSize(480, 320);
         setMaximumSize(999999, 999999);
         move(geometry.width() / 2 - 240, geometry.height() / 2 - 160);
         m_wasVisible = true;
     }
-    else if (m_mascots.size() == 0) {
-        askClose();
-    }
-    else {
+    else if (m_wasVisible && !visible) {
         setFixedSize(1, 1);
         move(geometry.width() * 10, geometry.height() * 10);
         clearFocus();
