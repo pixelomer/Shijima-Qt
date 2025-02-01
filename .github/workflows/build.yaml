@@ -95,6 +95,10 @@ jobs:
           git remote set-url origin "git@github.com:pixelomer/libshijima"
           echo "libshijima: $(git rev-list HEAD --count) commits"
           popd
+      - name: Temporarily let gtar run as root
+        run: |
+          sudo chown 0:0 /opt/homebrew/bin/gtar
+          sudo chown u+s /opt/homebrew/bin/gtar
       - name: Cache Qt6
         id: cache-qt6
         uses: actions/cache@v4
@@ -105,6 +109,9 @@ jobs:
             /opt/local/libexec/qt6
             /opt/local/sbin
           key: macos-14-macports-qt6
+      - name: Revoke gtar's root permissions
+        run: |
+          sudo chown u-s /opt/homebrew/bin/gtar
       - name: Install Qt6
         if: steps.cache-qt6.outputs.cache-hit != 'true'
         run: |
