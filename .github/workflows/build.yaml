@@ -9,6 +9,7 @@ jobs:
   build-windows:
     runs-on: ubuntu-latest
     steps:
+      - run: exit 1
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
@@ -53,6 +54,7 @@ jobs:
   build-linux:
     runs-on: ubuntu-20.04
     steps:
+      - run: exit 1
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
@@ -108,8 +110,8 @@ jobs:
           popd
       - name: Temporarily let gtar run as root
         run: |
-          sudo chown 0:0 /opt/homebrew/bin/gtar
-          sudo chmod u+s /opt/homebrew/bin/gtar
+          sudo chown 0:0 /opt/homebrew/bin/gtar || true
+          sudo chmod u+s /opt/homebrew/bin/gtar || true
       - name: Cache Qt6
         id: cache-qt6
         uses: actions/cache@v4
@@ -118,7 +120,7 @@ jobs:
           key: macos-13-macports-qt6
       - name: Revoke gtar's root permissions
         run: |
-          sudo chmod u-s /opt/homebrew/bin/gtar
+          sudo chmod u-s /opt/homebrew/bin/gtar || true
       - name: Install Qt6
         if: steps.cache-qt6.outputs.cache-hit != 'true'
         run: |
@@ -133,7 +135,7 @@ jobs:
           CONFIG: debug
         run: |
           make clean
-          make -j6
+          make -j8
       - name: Archive macOS x86_64 debug build
         uses: actions/upload-artifact@v4
         with:
@@ -142,5 +144,5 @@ jobs:
           retention-days: 1
       - name: Temporarily let gtar run as root
         run: |
-          sudo chown 0:0 /opt/homebrew/bin/gtar
-          sudo chmod u+s /opt/homebrew/bin/gtar
+          sudo chown 0:0 /opt/homebrew/bin/gtar || true
+          sudo chmod u+s /opt/homebrew/bin/gtar || true
