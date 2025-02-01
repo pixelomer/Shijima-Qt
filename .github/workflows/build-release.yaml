@@ -138,9 +138,12 @@ jobs:
           wget --no-verbose https://github.com/macports/macports-base/releases/download/v2.10.5/MacPorts-2.10.5-14-Sonoma.pkg
           sudo installer -pkg MacPorts-2.10.5-14-Sonoma.pkg -target /
           export PATH=/opt/local/bin:/opt/local/sbin:$PATH
-          yes | sudo port install qt6-qtbase qt6-qtmultimedia
+          yes | sudo port install qt6-qtbase qt6-qtmultimedia pkgconfig libarchive
           sudo rm -rf /opt/local/var/macports/build/*
           sudo rm -rf /opt/local/var/macports/distfiles/*
+      - name: Expose MacPorts tools
+        run: |
+          echo "PATH=/opt/local/bin:/opt/local/sbin:$PATH" >> $GITHUB_ENV
       - name: Build macOS arm64 release build
         env:
           CONFIG: release
