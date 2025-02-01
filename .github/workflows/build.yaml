@@ -90,7 +90,7 @@ jobs:
           path: publish/Linux/debug/shijima-qt
           retention-days: 1
   build-macos:
-    runs-on: macos-14
+    runs-on: macos-12
     steps:
       - uses: actions/checkout@v4
         with:
@@ -115,29 +115,29 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /opt/local
-          key: macos-14-macports-qt6
+          key: macos-12-macports-qt6
       - name: Revoke gtar's root permissions
         run: |
           sudo chmod u-s /opt/homebrew/bin/gtar
       - name: Install Qt6
         if: steps.cache-qt6.outputs.cache-hit != 'true'
         run: |
-          wget --no-verbose https://github.com/macports/macports-base/releases/download/v2.10.5/MacPorts-2.10.5-14-Sonoma.pkg
-          sudo installer -pkg MacPorts-2.10.5-14-Sonoma.pkg -target /
+          wget --no-verbose https://github.com/macports/macports-base/releases/download/v2.10.5/MacPorts-2.10.5-12-Monterey.pkg
+          sudo installer -pkg MacPorts-2.10.5-12-Monterey.pkg -target /
           export PATH=/opt/local/bin:/opt/local/sbin:$PATH
           yes | sudo port install qt6-qtbase qt6-qtmultimedia
           sudo rm -rf /opt/local/var/macports/build/*
           sudo rm -rf /opt/local/var/macports/distfiles/*
-      - name: Build macOS arm64 debug build
+      - name: Build macOS x86_64 debug build
         env:
           CONFIG: debug
         run: |
           make clean
           make -j6
-      - name: Archive macOS arm64 debug build
+      - name: Archive macOS x86_64 debug build
         uses: actions/upload-artifact@v4
         with:
-          name: debug-macos-arm64
+          name: debug-macos-x86_64
           path: publish/macOS/debug
           retention-days: 1
       - name: Temporarily let gtar run as root
