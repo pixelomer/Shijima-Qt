@@ -95,7 +95,18 @@ jobs:
           git remote set-url origin "git@github.com:pixelomer/libshijima"
           echo "libshijima: $(git rev-list HEAD --count) commits"
           popd
+      - name: Cache Qt6
+        id: cache-qt6
+        uses: actions/cache@v4
+        with:
+          path: |
+            /opt/local/bin
+            /opt/local/lib
+            /opt/local/libexec/qt6
+            /opt/local/sbin
+          key: macos-14-macports-qt6
       - name: Install Qt6
+        if: steps.cache-qt6.outputs.cache-hit != 'true'
         run: |
           wget --no-verbose https://github.com/macports/macports-base/releases/download/v2.10.5/MacPorts-2.10.5-14-Sonoma.pkg
           sudo installer -pkg MacPorts-2.10.5-14-Sonoma.pkg -target /
