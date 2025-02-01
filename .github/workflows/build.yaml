@@ -100,13 +100,13 @@ jobs:
           wget --no-verbose https://github.com/macports/macports-base/releases/download/v2.10.5/MacPorts-2.10.5-14-Sonoma.pkg
           sudo installer -pkg MacPorts-2.10.5-14-Sonoma.pkg -target /
           export PATH=/opt/local/bin:/opt/local/sbin:$PATH
-          yes | sudo port install qt6
+          yes | sudo port install qt6-qtbase qt6-qtmultimedia 
       - name: Build macOS arm64 debug build
         env:
           CONFIG: debug
         run: |
           make clean
-          make -j$(nproc)
+          make -j6
       - name: Archive macOS arm64 debug build
         uses: actions/upload-artifact@v4
         with:
