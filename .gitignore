@@ -7,6 +7,11 @@
 !/*.cc
 !/*.hpp
 !/.gitattributes
+!/Shijima-Qt.app/
+!/Shijima-Qt.app/Contents/
+!/Shijima-Qt.app/Contents/Resources/
+!/Shijima-Qt.app/Contents/Resources/AppIcon.icns
+!/Shijima-Qt.app/Contents/Info.plist
 !/Makefile
 !/common.mk
 !/dev-docker/

@@ -156,7 +156,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: debug-macos-arm64
-          path: publish/macOS/debug
+          path: publish/macOS/debug/shijima-qt
           retention-days: 1
       - name: Temporarily let gtar run as root
         run: |

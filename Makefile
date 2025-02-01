@@ -51,6 +51,13 @@ publish/Linux/$(CONFIG): shijima-qt$(EXE)
 	mkdir -p $@
 	$(call copy_changed,$<,$@)
 
+publish/macOS/$(CONFIG)/Shijima-Qt.app: publish/macOS/$(CONFIG)
+	rm -rf $@ && [ ! -d $@ ]
+	cp -r Shijima-Qt.app $@
+	mkdir -p $@/Contents/MacOS
+	cp $^/shijima-qt $@/Contents/MacOS/
+	/opt/local/libexec/qt6/bin/macdeployqt $@
+
 publish/Linux/$(CONFIG)/Shijima-Qt-x86_64.AppImage: publish/Linux/$(CONFIG) linuxdeploy-x86_64.AppImage
 	rm -rf AppDir
 	NO_STRIP=1 ./linuxdeploy-x86_64.AppImage --appdir AppDir --executable publish/Linux/$(CONFIG)/shijima-qt \
@@ -58,6 +65,8 @@ publish/Linux/$(CONFIG)/Shijima-Qt-x86_64.AppImage: publish/Linux/$(CONFIG) linu
 	mv Shijima-Qt-x86_64.AppImage publish/Linux/$(CONFIG)/
 
 appimage: publish/Linux/$(CONFIG)/Shijima-Qt-x86_64.AppImage
+
+macapp: publish/macOS/$(CONFIG)/Shijima-Qt.app
 
 shijima-qt$(EXE): Platform/Platform.a libshimejifinder/build/libshimejifinder.a \
 	libshijima/build/libshijima.a shijima-qt.a

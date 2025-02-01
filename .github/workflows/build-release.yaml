@@ -150,6 +150,7 @@ jobs:
         run: |
           make clean
           make -j6
+          make macapp
       - name: Archive macOS arm64 release build
         uses: actions/upload-artifact@v4
         with:
