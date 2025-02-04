@@ -513,12 +513,25 @@ void ShijimaManager::tick() {
             if (breedRequest.name == "") {
                 breedRequest.name = shimeji->mascotName();
             }
-            auto product = m_factory.spawn(breedRequest);
-            ShijimaWidget *shimeji = new ShijimaWidget(product.tmpl->name,
-                imgRootForTemplatePath(product.tmpl->path),
-                std::move(product.manager), this);
-            shimeji->show();
-            m_mascots.push_back(shimeji);
+            // only consider the last path component
+            breedRequest.name = breedRequest.name.substr(breedRequest.name.rfind('\\')+1);
+            breedRequest.name = breedRequest.name.substr(breedRequest.name.rfind('/')+1);
+            std::optional<shijima::mascot::factory::product> product;
+            try {
+                product = m_factory.spawn(breedRequest);
+            }
+            catch (std::exception &ex) {
+                std::cerr << "couldn't fulfill breed request for "
+                    << breedRequest.name << std::endl;
+                std::cerr << ex.what() << std::endl;
+            }
+            if (product.has_value()) {
+                ShijimaWidget *shimeji = new ShijimaWidget(product->tmpl->name,
+                    imgRootForTemplatePath(product->tmpl->path),
+                    std::move(product->manager), this);
+                shimeji->show();
+                m_mascots.push_back(shimeji);
+            }
             breedRequest.available = false;
         }
     }
