@@ -12,6 +12,7 @@
 #include <QTextStream>
 #include <QGuiApplication>
 #include <QFile>
+#include <QDesktopServices>
 #include <QScreen>
 #include <QRandomGenerator>
 #include "ShijimaWidget.hpp"
@@ -20,14 +21,17 @@
 #include <shimejifinder/analyze.hpp>
 #include <QStandardPaths>
 #include "ForcedProgressDialog.hpp"
-#include "qabstractitemmodel.h"
-#include "qaction.h"
-#include "qcoreapplication.h"
-#include "qfiledialog.h"
-#include "qitemselectionmodel.h"
-#include "qkeysequence.h"
-#include "qlistwidget.h"
-#include "qmessagebox.h"
+#include <QAbstractItemModel>
+#include <QAction>
+#include <QCoreApplication>
+#include <QCursor>
+#include <QDesktopServices>
+#include <QFileDialog>
+#include <QItemSelectionModel>
+#include <QKeySequence>
+#include <QListWidget>
+#include <QMessageBox>
+#include <QUrl>
 #include <QListWidget>
 #include <QtConcurrent>
 #include <QMessageBox>
@@ -184,6 +188,10 @@ void ShijimaManager::deleteAction() {
     }
 }
 
+void ShijimaManager::visitHomepageAction() {
+    QDesktopServices::openUrl(QUrl { "https://getshijima.app" });
+}
+
 void ShijimaManager::buildToolbar() {
     QAction *action;
     QMenu *menu;
@@ -201,6 +209,18 @@ void ShijimaManager::buildToolbar() {
     {
         action = menu->addAction("Delete shimeji", QKeySequence::StandardKey::Delete);
         connect(action, &QAction::triggered, this, &ShijimaManager::deleteAction);
+    }
+
+    menu = menuBar()->addMenu("Help");
+    {
+        action = menu->addAction("View Licenses");
+        //TODO
+
+        action = menu->addAction("Visit Shijima Homepage");
+        connect(action, &QAction::triggered, this, &ShijimaManager::visitHomepageAction);
+
+        action = menu->addAction("About Shijima-Qt");
+        //TODO
     }
 }
 

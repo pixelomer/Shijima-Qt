@@ -52,6 +52,7 @@ private:
     void importAction();
     void deleteAction();
     void quitAction();
+    void visitHomepageAction();
     std::set<std::string> import(QString const& path) noexcept;
     void importWithDialog(QList<QString> const& paths);
     void tick();
