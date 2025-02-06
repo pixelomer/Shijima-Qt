@@ -44,4 +44,7 @@
 !/libshimejifinder
 !/libshijima
 !/README.md
+!/licenses/
+!/licenses/*.rst
+!/licenses/*.txt
 licenses_generated.hpp
