@@ -51,9 +51,7 @@ private:
     void buildToolbar();
     void importAction();
     void deleteAction();
-    void viewLicensesAction();
     void quitAction();
-    void visitHomepageAction();
     std::set<std::string> import(QString const& path) noexcept;
     void importWithDialog(QList<QString> const& paths);
     void tick();
@@ -62,6 +60,7 @@ private:
     Platform::ActiveWindowObserver m_windowObserver;
     int m_mascotTimer = -1;
     bool m_allowClose = false;
+    bool m_firstShow = true;
     bool m_wasVisible = false;
     int m_windowObserverTimer = -1;
     QMap<QString, MascotData> m_loadedMascots;

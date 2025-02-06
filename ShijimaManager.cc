@@ -33,9 +33,7 @@
 #include <QListWidget>
 #include <QMessageBox>
 #include <QUrl>
-#include <QListWidget>
 #include <QtConcurrent>
-#include <QMessageBox>
 #include <string>
 
 using namespace shijima;
@@ -189,15 +187,6 @@ void ShijimaManager::deleteAction() {
     }
 }
 
-void ShijimaManager::viewLicensesAction() {
-    ShijimaLicensesDialog dialog { this };
-    dialog.exec();
-}
-
-void ShijimaManager::visitHomepageAction() {
-    QDesktopServices::openUrl(QUrl { "https://getshijima.app" });
-}
-
 void ShijimaManager::buildToolbar() {
     QAction *action;
     QMenu *menu;
@@ -220,13 +209,20 @@ void ShijimaManager::buildToolbar() {
     menu = menuBar()->addMenu("Help");
     {
         action = menu->addAction("View Licenses");
-        connect(action, &QAction::triggered, this, &ShijimaManager::viewLicensesAction);
+        connect(action, &QAction::triggered, [this](){
+            ShijimaLicensesDialog dialog { this };
+            dialog.exec();
+        });
 
         action = menu->addAction("Visit Shijima Homepage");
-        connect(action, &QAction::triggered, this, &ShijimaManager::visitHomepageAction);
+        connect(action, &QAction::triggered, [](){
+            QDesktopServices::openUrl(QUrl { "https://getshijima.app" });
+        });
 
-        action = menu->addAction("About Shijima-Qt");
-        //TODO
+        action = menu->addAction("Report Issue");
+        connect(action, &QAction::triggered, [](){
+            QDesktopServices::openUrl(QUrl { "https://github.com/pixelomer/Shijima-Qt-releases/issues" });
+        });
     }
 }
 
@@ -324,10 +320,23 @@ void ShijimaManager::importWithDialog(QList<QString> const& paths) {
 }
 
 void ShijimaManager::showEvent(QShowEvent *event) {
+    QMainWindow::showEvent(event);
+    if (!m_firstShow) {
+        return;
+    }
+    m_firstShow = false;
     if (!m_importOnShowPath.isEmpty()) {
         QString path = m_importOnShowPath;
         m_importOnShowPath = {};
         importWithDialog({ path });
+    }
+    else {
+        QMessageBox msgBox { this };
+        msgBox.setText("This is an early alpha version of Shijima-Qt. Please "
+            "report any issues you encounter by pressing Help > Report Issue. "
+            "Your feedback is highly appreciated.");
+        msgBox.addButton(QMessageBox::StandardButton::Ok);
+        msgBox.exec();
     }
 }
 
