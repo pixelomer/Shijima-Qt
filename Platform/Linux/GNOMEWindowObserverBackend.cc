@@ -9,7 +9,7 @@ namespace Platform {
 
 const QString GNOMEWindowObserverBackend::m_gnomeScriptUUID = "shijima-helper@pixelomer.github.io";
 const QString GNOMEWindowObserverBackend::m_gnomeScriptPath = "/tmp/gnome-shijima-helper.zip";
-const QString GNOMEWindowObserverBackend::m_gnomeScriptVersion = "1.1";
+const QString GNOMEWindowObserverBackend::m_gnomeScriptVersion = "1.2";
 
 GNOMEWindowObserverBackend::GNOMEWindowObserverBackend() {
     if (!GNOME::userExtensionsEnabled()) {
