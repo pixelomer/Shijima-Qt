@@ -15,6 +15,7 @@
 #include <QDesktopServices>
 #include <QScreen>
 #include <QRandomGenerator>
+#include "ShijimaLicensesDialog.hpp"
 #include "ShijimaWidget.hpp"
 #include <QDirIterator>
 #include <shijima/mascot/factory.hpp>
@@ -188,6 +189,11 @@ void ShijimaManager::deleteAction() {
     }
 }
 
+void ShijimaManager::viewLicensesAction() {
+    ShijimaLicensesDialog dialog { this };
+    dialog.exec();
+}
+
 void ShijimaManager::visitHomepageAction() {
     QDesktopServices::openUrl(QUrl { "https://getshijima.app" });
 }
@@ -214,7 +220,7 @@ void ShijimaManager::buildToolbar() {
     menu = menuBar()->addMenu("Help");
     {
         action = menu->addAction("View Licenses");
-        //TODO
+        connect(action, &QAction::triggered, this, &ShijimaManager::viewLicensesAction);
 
         action = menu->addAction("Visit Shijima Homepage");
         connect(action, &QAction::triggered, this, &ShijimaManager::visitHomepageAction);

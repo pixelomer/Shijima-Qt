@@ -45,6 +45,7 @@ jobs:
         run: |
           docker run -e CONFIG=release --rm -v "$(pwd)":/work shijima-qt-dev bash -c \
             'mingw64-make clean && mingw64-make -j$(nproc)'
+          cp -r licenses publish/Windows/release/
       - name: Archive Windows x86_64 release build
         uses: actions/upload-artifact@v4
         with:
@@ -92,6 +93,7 @@ jobs:
           make clean
           make -j$(nproc)
           make appimage
+          cp -r licenses publish/Linux/release/
       - name: Archive Linux x86_64 release build
         uses: actions/upload-artifact@v4
         with:
@@ -151,6 +153,7 @@ jobs:
           make clean
           make -j6
           make macapp
+          cp -r licenses publish/macOS/release/
       - name: Archive macOS arm64 release build
         uses: actions/upload-artifact@v4
         with:

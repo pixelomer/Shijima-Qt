@@ -8,7 +8,19 @@ SOURCES = main.cc \
 	ShijimaContextMenu.cc \
 	ShijimaManager.cc \
 	ShijimaWidget.cc \
-	SoundEffectManager.cc
+	SoundEffectManager.cc \
+	ShijimaLicensesDialog.cc
+
+LICENSE_FILES := Shijima-Qt.LICENSE.txt \
+	duktape.LICENSE.txt \
+	duktape.AUTHORS.rst \
+	libarchive.LICENSE.txt \
+	libshijima.LICENSE.txt \
+	libshimejifinder.LICENSE.txt \
+	Qt.LICENSE.txt \
+	rapidxml.LICENSE.txt
+
+LICENSE_FILES := $(addprefix licenses/,$(LICENSE_FILES))
 
 QT_LIBS = Widgets Core Gui Multimedia Concurrent
 
@@ -75,6 +87,21 @@ shijima-qt$(EXE): Platform/Platform.a libshimejifinder/build/libshimejifinder.a 
 
 libshijima/build/libshijima.a: libshijima/build/Makefile
 	$(MAKE) -C libshijima/build
+
+ShijimaLicensesDialog.cc: licenses_generated.hpp
+	touch ShijimaLicensesDialog.cc
+
+licenses_generated.hpp: $(LICENSE_FILES) Makefile
+	echo 'static const char *shijima_licenses = R"(' > licenses_generated.hpp
+	echo 'Licenses for the software components used in Shijima-Qt are listed below.' >> licenses_generated.hpp
+	for file in $^; do \
+		[ "$$file" != "Makefile" ] || continue; \
+		(echo; echo) >> licenses_generated.hpp; \
+		echo "~~~~~~~~~~ $$(basename $$file) ~~~~~~~~~~" >> licenses_generated.hpp; \
+		echo >> licenses_generated.hpp; \
+		cat $$file >> licenses_generated.hpp; \
+	done
+	echo ')";' >> licenses_generated.hpp
 
 libshijima/build/Makefile: libshijima/CMakeLists.txt FORCE
 	mkdir -p libshijima/build && cd libshijima/build && $(CMAKE) $(CMAKEFLAGS) -DSHIJIMA_BUILD_EXAMPLES=NO ..

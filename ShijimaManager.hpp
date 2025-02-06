@@ -51,6 +51,7 @@ private:
     void buildToolbar();
     void importAction();
     void deleteAction();
+    void viewLicensesAction();
     void quitAction();
     void visitHomepageAction();
     std::set<std::string> import(QString const& path) noexcept;
