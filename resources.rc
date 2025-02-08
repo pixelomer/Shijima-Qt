@@ -1,0 +1,24 @@
+id ICON "shijima-qt.ico"
+1 VERSIONINFO
+FILEVERSION     0,0,1,0
+PRODUCTVERSION  0,0,1,0
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "080904E4"
+    BEGIN
+      VALUE "CompanyName", "pixelomer"
+      VALUE "FileDescription", "Shijima-Qt"
+      VALUE "FileVersion", "0.0.1"
+      VALUE "InternalName", "shijima-qt"
+      VALUE "LegalCopyright", "Copyright (c) - pixelomer"
+      VALUE "OriginalFilename", "shijima-qt.exe"
+      VALUE "ProductName", "Shijima-Qt"
+      VALUE "ProductVersion", "0.0.1"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x809, 1252
+  END
+END

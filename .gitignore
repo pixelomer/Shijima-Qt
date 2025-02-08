@@ -40,7 +40,9 @@
 !/Platform/Stub/*.hpp
 !/find_dlls.sh
 !/shijima-qt.png
+!/shijima-qt.ico
 !/shijima-qt.desktop
+!/resources.rc
 !/libshimejifinder
 !/libshijima
 !/README.md

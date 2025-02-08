@@ -3,6 +3,7 @@ QT_VERSION := 6
 CONFIG ?= release
 STRIP ?= strip
 PKG_CONFIG ?= pkg-config
+WINDRES ?= $(patsubst %-windres,%-gcc,$(CC))
 AR ?= ar
 CMAKE ?= cmake
 
@@ -137,7 +138,13 @@ STD_CXXFLAGS := -Wall -std=c++17
 PKG_CFLAGS = $(shell [ -z "$(PKG_LIBS)" ] || $(PKG_CONFIG) --cflags $(PKG_LIBS))
 PKG_LDFLAGS = $(shell [ -z "$(PKG_LIBS)" ] || $(PKG_CONFIG) --libs $(PKG_LIBS))
 
-OBJECTS = $(patsubst %.c,%.o,$(patsubst %.mm,%.o,$(patsubst %.cc,%.o,$(SOURCES))))
+ifneq ($(PLATFORM),Windows)
+SOURCES_FILTERED = $(filter-out %.rc,$(SOURCES))
+else
+SOURCES_FILTERED = $(SOURCES)
+endif
+
+OBJECTS = $(patsubst %.rc,%.o,$(patsubst %.c,%.o,$(patsubst %.mm,%.o,$(patsubst %.cc,%.o,$(SOURCES_FILTERED)))))
 CFLAGS = $(STD_CFLAGS) $(CONFIG_CFLAGS) $(PLATFORM_CFLAGS) $(QT_CFLAGS) $(PKG_CFLAGS)
 CXXFLAGS = $(STD_CXXFLAGS) $(CONFIG_CXXFLAGS) $(PLATFORM_CXXFLAGS) $(QT_CFLAGS) $(PKG_CFLAGS)
 LDFLAGS = $(CONFIG_LDFLAGS) $(PLATFORM_LDFLAGS) $(QT_LDFLAGS) $(PKG_LDFLAGS)
@@ -157,6 +164,9 @@ CMAKEFLAGS = $(CONFIG_CMAKEFLAGS)
 
 %.o: %.mm
 	$(CC) -MMD -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
+
+%.o: %.rc
+	$(WINDRES) $< -o $@
 
 all::
 

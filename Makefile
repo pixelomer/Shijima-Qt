@@ -9,7 +9,8 @@ SOURCES = main.cc \
 	ShijimaManager.cc \
 	ShijimaWidget.cc \
 	SoundEffectManager.cc \
-	ShijimaLicensesDialog.cc
+	ShijimaLicensesDialog.cc \
+	resources.rc
 
 LICENSE_FILES := Shijima-Qt.LICENSE.txt \
 	duktape.LICENSE.txt \
@@ -122,5 +123,5 @@ clean::
 Platform/Platform.a: FORCE
 	$(MAKE) -C Platform
 
-shijima-qt.a: $(OBJECTS)
-	ar rcs $@ $^
+shijima-qt.a: $(OBJECTS) Makefile
+	ar rcs $@ $(filter %.o,$^)
