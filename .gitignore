@@ -38,6 +38,10 @@
 !/Platform/Stub/Makefile
 !/Platform/Stub/*.cc
 !/Platform/Stub/*.hpp
+!/Platform/Windows/
+!/Platform/Windows/Makefile
+!/Platform/Windows/*.cc
+!/Platform/Windows/*.hpp
 !/find_dlls.sh
 !/shijima-qt.png
 !/shijima-qt.ico

@@ -13,11 +13,11 @@ PLATFORM_CXXFLAGS :=
 PLATFORM_LDFLAGS :=
 ifeq ($(OS),Windows_NT)
 	PLATFORM := Windows
-	BUILD_PLATFORM := Stub
+	BUILD_PLATFORM := Windows
 else
 	ifeq ($(shell echo $(CC) | grep mingw >/dev/null && echo 1),1)
 		PLATFORM := Windows
-		BUILD_PLATFORM := Stub
+		BUILD_PLATFORM := Windows
 	else
 		UNAME_S := $(shell uname -s)
 		ifeq ($(UNAME_S),Linux)
