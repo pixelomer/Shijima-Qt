@@ -1,6 +1,7 @@
 #include <QApplication>
 #include <QDir>
 #include <QStandardPaths>
+#include <QMessageBox>
 #include <shijima/log.hpp>
 #include "Platform/Platform.hpp"
 #include "ShijimaManager.hpp"
@@ -21,7 +22,17 @@ int main(int argc, char **argv) {
     if (argc == 2) {
         ShijimaManager::defaultManager()->importOnShow(argv[1]);
     }
-    ShijimaManager::defaultManager()->show();
+    try {
+        ShijimaManager::defaultManager()->show();
+    }
+    catch (std::exception &ex) {
+        QMessageBox *msg = new QMessageBox {};
+        msg->setText("Shijima-Qt failed to start. Reason: " +
+            QString::fromUtf8(ex.what()));
+        msg->setStandardButtons(QMessageBox::StandardButton::Close);
+        msg->setAttribute(Qt::WA_DeleteOnClose);
+        msg->show();
+    }
     int ret = app.exec();
     ShijimaManager::finalize();
     AssetLoader::finalize();
