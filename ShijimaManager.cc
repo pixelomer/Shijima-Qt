@@ -502,6 +502,9 @@ void ShijimaManager::setManagerVisible(bool visible) {
         setFixedSize(1, 1);
         move(geometry.width() * 10, geometry.height() * 10);
         clearFocus();
+        if (window() != nullptr) {
+            window()->activateWindow();
+        }
         m_wasVisible = false;
     }
     #else
