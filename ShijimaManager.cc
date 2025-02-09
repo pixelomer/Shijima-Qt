@@ -466,11 +466,11 @@ void ShijimaManager::askClose() {
     QMessageBox msgBox { this };
     msgBox.setWindowTitle("Close Shijima-Qt");
     msgBox.setIcon(QMessageBox::Icon::Question);
-    msgBox.setStandardButtons(QMessageBox::StandardButton::Close |
-        QMessageBox::StandardButton::Cancel);
+    msgBox.setStandardButtons(QMessageBox::StandardButton::Yes |
+        QMessageBox::StandardButton::No);
     msgBox.setText("Do you want to close Shijima-Qt?");
     int ret = msgBox.exec();
-    if (ret == QMessageBox::Button::Close) {
+    if (ret == QMessageBox::Button::Yes) {
         #if defined(__APPLE__)
         QCoreApplication::quit();
         #else
