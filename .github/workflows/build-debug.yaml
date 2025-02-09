@@ -32,7 +32,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: shijima-qt-dev.tar.gz
-          key: docker-fedora-41-qt6-mingw
+          key: docker-fedora-42-qt6-mingw
       - name: Build Docker image
         if: steps.cache-docker.outputs.cache-hit != 'true'
         run: |
