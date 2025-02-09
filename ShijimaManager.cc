@@ -490,7 +490,9 @@ void ShijimaManager::setManagerVisible(bool visible) {
     auto screen = QGuiApplication::primaryScreen();
     auto geometry = screen->geometry();
     if (!m_wasVisible && visible) {
-        setWindowState(windowState() | Qt::WindowActive);
+        if (window() != nullptr) {
+            window()->activateWindow();
+        }
         setMinimumSize(480, 320);
         setMaximumSize(999999, 999999);
         move(geometry.width() / 2 - 240, geometry.height() / 2 - 160);
