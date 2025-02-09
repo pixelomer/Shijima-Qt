@@ -574,6 +574,11 @@ void ShijimaManager::tick() {
     }
     
     m_env->reset_scale();
+
+    if (m_mascots.size() == 0) {
+        // All mascots self-destructed, show manager
+        setManagerVisible(true);
+    }
 }
 
 ShijimaWidget *ShijimaManager::hitTest(QPoint const& screenPos) {
