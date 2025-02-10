@@ -1,7 +1,6 @@
 #include "DBus.hpp"
 #include <QDBusConnection>
 #include <QDBusVariant>
-#include <iostream>
 
 namespace Platform {
 namespace DBus {

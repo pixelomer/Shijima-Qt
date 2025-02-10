@@ -36,12 +36,12 @@ bool isExtensionEnabled(QString const& uuid) {
 void installExtension(QString const& path) {
     auto stdPath = path.toStdString();
 
-    // Filter: [a-zA-Z0-9\-./]+
     for (char c : stdPath) {
         if (c >= 'A' && c <= 'Z') continue;
         if (c >= 'a' && c <= 'z') continue;
-        if (c >= '-' && c <= '9') continue;
-        throw std::invalid_argument("Potentially unsafe path");
+        if (c >= '0' && c <= '9') continue;
+        if (c == '-' || c == '.' || c == '_' || c == '/') continue;
+        throw std::invalid_argument("Potentially unsafe path (" + std::string(&c, 1) + "): " + path.toStdString());
     }
 
     // No need to overcomplicate the code. system() will

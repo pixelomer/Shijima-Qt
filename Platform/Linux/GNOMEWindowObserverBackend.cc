@@ -8,14 +8,25 @@
 namespace Platform {
 
 const QString GNOMEWindowObserverBackend::m_gnomeScriptUUID = "shijima-helper@pixelomer.github.io";
-const QString GNOMEWindowObserverBackend::m_gnomeScriptPath = "/tmp/gnome-shijima-helper.zip";
 const QString GNOMEWindowObserverBackend::m_gnomeScriptVersion = "1.2";
 
-GNOMEWindowObserverBackend::GNOMEWindowObserverBackend() {
+GNOMEWindowObserverBackend::GNOMEWindowObserverBackend():
+    m_gnomeScriptPath(m_gnomeScriptDir.filePath("shijima_gnome_extension.zip"))
+{
     if (!GNOME::userExtensionsEnabled()) {
         GNOME::setUserExtensionsEnabled(true);
     }
-    writeExtensionToDisk();
+    if (!m_gnomeScriptDir.isValid()) {
+        throw std::runtime_error("failed to create temporary directory for GNOME extension");
+    }
+    QFile file { m_gnomeScriptPath };
+    if (!file.open(QFile::WriteOnly)) {
+        throw std::runtime_error("failed to create temporary file for KDE extension");
+    }
+    QDataStream stream { &file };
+    stream << QByteArray(gnome_script, gnome_script_len);
+    file.flush();
+    file.close();
     GNOME::installExtension(m_gnomeScriptPath);
     auto extensionInfo = GNOME::getExtensionInfo(m_gnomeScriptUUID);
     static const QString kVersionName = "version-name";
@@ -40,18 +51,6 @@ GNOMEWindowObserverBackend::GNOMEWindowObserverBackend() {
             + restartReason + ")");
     }
     GNOME::enableExtension(m_gnomeScriptUUID);
-}
-
-void GNOMEWindowObserverBackend::writeExtensionToDisk() {
-    QFile file { m_gnomeScriptPath };
-    if (!file.open(QFile::WriteOnly)) {
-        throw std::runtime_error("could not open file for writing: "
-            + m_gnomeScriptPath.toStdString());
-    }
-    QDataStream stream { &file };
-    stream << QByteArray(gnome_script, gnome_script_len);
-    file.flush();
-    file.close();
 }
 
 GNOMEWindowObserverBackend::~GNOMEWindowObserverBackend() {

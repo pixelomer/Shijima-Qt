@@ -1,17 +1,30 @@
 #include "KDEWindowObserverBackend.hpp"
 #include "KWin.hpp"
-#include <QFile>
 #include <QTextStream>
+#include <QTemporaryDir>
 
 #include "kwin_script.c"
 
 namespace Platform {
 
 const QString KDEWindowObserverBackend::m_kwinScriptName = "ShijimaScript";
-const QString KDEWindowObserverBackend::m_kwinScriptPath = "/tmp/shijima_get_active_window.js";
 
-KDEWindowObserverBackend::KDEWindowObserverBackend(): WindowObserverBackend() {
-    createKWinScript();
+KDEWindowObserverBackend::KDEWindowObserverBackend(): WindowObserverBackend(),
+    m_kwinScriptPath(m_kwinScriptDir.filePath("shijima_kwin_script.js"))
+{
+    if (!m_kwinScriptDir.isValid()) {
+        throw std::runtime_error("failed to create temporary directory for KDE extension");
+    }
+    QFile file { m_kwinScriptPath };
+    if (!file.open(QFile::WriteOnly | QFile::Text)) {
+        throw std::runtime_error("failed to create temporary file for KDE extension");
+    }
+    QTextStream stream { &file };
+    stream << QByteArray(kwin_script, kwin_script_len);
+    stream.flush();
+    file.flush();
+    file.close();
+    loadKWinScript();
     startKWinScript();
 }
 
@@ -30,23 +43,13 @@ void KDEWindowObserverBackend::stopKWinScript() {
     m_kwinScriptID = -1;
 }
 
-void KDEWindowObserverBackend::createKWinScript() {
-    QFile file { m_kwinScriptPath };
-    if (!file.open(QFile::WriteOnly | QFile::Text)) {
-        throw std::runtime_error("could not open file for writing: "
-            + m_kwinScriptPath.toStdString());
-    }
-    QTextStream stream { &file };
-    stream << QByteArray(kwin_script, kwin_script_len);
-    stream.flush();
-    file.flush();
-    file.close();
+void KDEWindowObserverBackend::loadKWinScript() {
+    m_kwinScriptID = KWin::loadScript(m_kwinScriptPath, m_kwinScriptName);
 }
 
 void KDEWindowObserverBackend::startKWinScript() {
     stopKWinScript();
-    createKWinScript();
-    m_kwinScriptID = KWin::loadScript(m_kwinScriptPath, m_kwinScriptName);
+    loadKWinScript();
     KWin::runScript(m_kwinScriptID);
 }
 
