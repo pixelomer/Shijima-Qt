@@ -76,7 +76,7 @@ publish/Linux/$(CONFIG)/Shijima-Qt-x86_64.AppImage: publish/Linux/$(CONFIG) linu
 	rm -rf AppDir
 	NO_STRIP=1 ./linuxdeploy-x86_64.AppImage --appdir AppDir --executable publish/Linux/$(CONFIG)/shijima-qt \
 		--desktop-file shijima-qt.desktop --output appimage --plugin qt --icon-file shijima-qt.png
-	mv Shijima-Qt-x86_64.AppImage publish/Linux/$(CONFIG)/
+	cp Shijima-Qt-x86_64.AppImage publish/Linux/$(CONFIG)/
 
 appimage: publish/Linux/$(CONFIG)/Shijima-Qt-x86_64.AppImage
 
@@ -118,7 +118,7 @@ libshimejifinder/build/libshimejifinder.a: libshimejifinder/build/Makefile
 
 clean::
 	rm -rf publish/$(PLATFORM)/$(CONFIG) libshijima/build libshimejifinder/build
-	rm -f $(OBJECTS) shijima-qt.a shijima-qt$(EXE)
+	rm -f $(OBJECTS) shijima-qt.a shijima-qt$(EXE) Shijima-Qt-x86_64.AppImage
 	$(MAKE) -C Platform clean
 
 Platform/Platform.a: FORCE

@@ -3,6 +3,10 @@
 #include <QDBusMessage>
 #include <QVariantList>
 #include <QDBusArgument>
+#include <QProcess>
+#include <QStringList>
+#include "unistd.h"
+#include <QDir>
 
 using namespace Platform::DBus;
 
@@ -34,26 +38,30 @@ bool isExtensionEnabled(QString const& uuid) {
 }
 
 void installExtension(QString const& path) {
-    auto stdPath = path.toStdString();
-
-    for (char c : stdPath) {
-        if (c >= 'A' && c <= 'Z') continue;
-        if (c >= 'a' && c <= 'z') continue;
-        if (c >= '0' && c <= '9') continue;
-        if (c == '-' || c == '.' || c == '_' || c == '/') continue;
-        throw std::invalid_argument("Potentially unsafe path (" + std::string(&c, 1) + "): " + path.toStdString());
+    bool flatpak = QProcessEnvironment::systemEnvironment()
+        .value("SHIJIMA_FLATPAK") == "1";
+    QString program;
+    QStringList args;
+    if (flatpak) {
+        program = "flatpak-spawn";
+        int uid = getuid();
+        QString hostPath = QDir::cleanPath("/run/user/" +
+            QString::number(uid) + "/.flatpak/com.pixelomer.ShijimaQT/" + path);
+        args = { "--host", "gnome-extensions", "install",
+            "--force", hostPath };
     }
-
-    // No need to overcomplicate the code. system() will
-    // do the job just fine.
-    auto cmd = "gnome-extensions install --force " + stdPath;
-    int ret = std::system(cmd.c_str());
-    if (ret == -1) {
-        throw std::system_error({ errno, std::generic_category() }, strerror(errno));
+    else {
+        program = "gnome-extensions";
+        args = { "install", "--force", path };
     }
-    else if (ret != 0) {
-        throw std::runtime_error("gnome-extensions install failed: " +
-            std::to_string(ret));
+    QProcess process;
+    process.setProcessChannelMode(QProcess::ProcessChannelMode::ForwardedChannels);
+    process.start(program, args);
+    process.waitForFinished(-1);
+    int exitCode = process.exitCode();
+    if (exitCode != 0) {
+        throw std::runtime_error(std::string("gnome-extensions install failed. ") +
+            "See output for details. (" + std::to_string(exitCode) + ")");
     }
 }
 
