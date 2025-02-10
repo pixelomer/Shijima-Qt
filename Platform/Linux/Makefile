@@ -1,7 +1,8 @@
 include ../../common.mk
 
 SOURCES = Platform.cc ActiveWindowObserver.cc KWin.cc PrivateActiveWindowObserver.cc \
-	DBus.cc GNOME.cc GNOMEWindowObserverBackend.cc KDEWindowObserverBackend.cc
+	DBus.cc GNOME.cc GNOMEWindowObserverBackend.cc KDEWindowObserverBackend.cc \
+	ExtensionFile.cc
 QT_LIBS = Core DBus Widgets
 
 define bin2c

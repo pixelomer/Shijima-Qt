@@ -10,20 +10,8 @@ namespace Platform {
 const QString KDEWindowObserverBackend::m_kwinScriptName = "ShijimaScript";
 
 KDEWindowObserverBackend::KDEWindowObserverBackend(): WindowObserverBackend(),
-    m_kwinScriptPath(m_kwinScriptDir.filePath("shijima_kwin_script.js"))
+    m_extensionFile("shijima_kwin_script.js", kwin_script, kwin_script_len)
 {
-    if (!m_kwinScriptDir.isValid()) {
-        throw std::runtime_error("failed to create temporary directory for KDE extension");
-    }
-    QFile file { m_kwinScriptPath };
-    if (!file.open(QFile::WriteOnly | QFile::Text)) {
-        throw std::runtime_error("failed to create temporary file for KDE extension");
-    }
-    QTextStream stream { &file };
-    stream << QByteArray(kwin_script, kwin_script_len);
-    stream.flush();
-    file.flush();
-    file.close();
     loadKWinScript();
     startKWinScript();
 }
@@ -44,7 +32,8 @@ void KDEWindowObserverBackend::stopKWinScript() {
 }
 
 void KDEWindowObserverBackend::loadKWinScript() {
-    m_kwinScriptID = KWin::loadScript(m_kwinScriptPath, m_kwinScriptName);
+    m_kwinScriptID = KWin::loadScript(m_extensionFile.path(),
+        m_kwinScriptName);
 }
 
 void KDEWindowObserverBackend::startKWinScript() {

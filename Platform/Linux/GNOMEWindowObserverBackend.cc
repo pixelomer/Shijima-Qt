@@ -10,24 +10,13 @@ namespace Platform {
 const QString GNOMEWindowObserverBackend::m_gnomeScriptUUID = "shijima-helper@pixelomer.github.io";
 const QString GNOMEWindowObserverBackend::m_gnomeScriptVersion = "1.2";
 
-GNOMEWindowObserverBackend::GNOMEWindowObserverBackend():
-    m_gnomeScriptPath(m_gnomeScriptDir.filePath("shijima_gnome_extension.zip"))
+GNOMEWindowObserverBackend::GNOMEWindowObserverBackend(): m_extensionFile(
+    "shijima_gnome_extension.zip", gnome_script, gnome_script_len)
 {
     if (!GNOME::userExtensionsEnabled()) {
         GNOME::setUserExtensionsEnabled(true);
     }
-    if (!m_gnomeScriptDir.isValid()) {
-        throw std::runtime_error("failed to create temporary directory for GNOME extension");
-    }
-    QFile file { m_gnomeScriptPath };
-    if (!file.open(QFile::WriteOnly)) {
-        throw std::runtime_error("failed to create temporary file for KDE extension");
-    }
-    QDataStream stream { &file };
-    stream << QByteArray(gnome_script, gnome_script_len);
-    file.flush();
-    file.close();
-    GNOME::installExtension(m_gnomeScriptPath);
+    GNOME::installExtension(m_extensionFile.path());
     auto extensionInfo = GNOME::getExtensionInfo(m_gnomeScriptUUID);
     static const QString kVersionName = "version-name";
     std::string restartReason;

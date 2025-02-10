@@ -1,14 +1,14 @@
 #include "WindowObserverBackend.hpp"
 #include <QString>
 #include <QTemporaryDir>
+#include "ExtensionFile.hpp"
 
 namespace Platform {
 
 class KDEWindowObserverBackend : public WindowObserverBackend {
 private:
     static const QString m_kwinScriptName;
-    QTemporaryDir m_kwinScriptDir;
-    QString m_kwinScriptPath;
+    ExtensionFile m_extensionFile;
     int m_kwinScriptID = -1;
     void loadKWinScript();
     void startKWinScript();
