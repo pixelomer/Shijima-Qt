@@ -10,6 +10,7 @@ SOURCES = main.cc \
 	ShijimaWidget.cc \
 	SoundEffectManager.cc \
 	ShijimaLicensesDialog.cc \
+	ShimejiInspectorDialog.cc \
 	resources.rc
 
 LICENSE_FILES := Shijima-Qt.LICENSE.txt \

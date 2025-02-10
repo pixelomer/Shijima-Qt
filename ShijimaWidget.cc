@@ -11,6 +11,7 @@
 #include <QGuiApplication>
 #include <QTextStream>
 #include <shijima/shijima.hpp>
+#include "ShimejiInspectorDialog.hpp"
 #include "AssetLoader.hpp"
 #include "ShijimaContextMenu.hpp"
 #include "ShijimaManager.hpp"
@@ -20,12 +21,13 @@ using namespace shijima;
 ShijimaWidget::ShijimaWidget(std::string const& mascotName,
     std::string const& imgRoot,
     std::unique_ptr<shijima::mascot::manager> mascot,
-    QWidget *parent)
+    QWidget *parent):
 #if defined(__APPLE__)
-    : QWidget(nullptr)
+    QWidget(nullptr),
 #else
-    : QWidget(parent)
+    QWidget(parent),
 #endif
+    m_inspector(nullptr)
 {
     m_mascotName = mascotName;
     m_windowHeight = 128;
@@ -53,6 +55,13 @@ ShijimaWidget::ShijimaWidget(std::string const& mascotName,
     flags |= Qt::Tool;
     #endif
     setWindowFlags(flags);
+}
+
+void ShijimaWidget::showInspector() {
+    if (m_inspector == nullptr) {
+        m_inspector = new ShimejiInspectorDialog { this };
+    }
+    m_inspector->show();
 }
 
 Asset const& ShijimaWidget::getActiveAsset() {
@@ -217,6 +226,11 @@ void ShijimaWidget::tick() {
     else if (!m_sounds.playing()) {
         m_mascot->state->active_sound.clear();
     }
+
+    // Update inspector
+    if (m_inspector != nullptr && m_inspector->isVisible()) {
+        m_inspector->tick();
+    }
 }
 
 void ShijimaWidget::contextMenuClosed(QCloseEvent *event) {
@@ -234,6 +248,10 @@ ShijimaWidget::~ShijimaWidget() {
     if (m_dragTargetPt != nullptr) {
         *m_dragTargetPt = nullptr;
         m_dragTargetPt = nullptr;
+    }
+    if (m_inspector != nullptr) {
+        m_inspector->close();
+        delete m_inspector;
     }
     setDragTarget(nullptr);
 }

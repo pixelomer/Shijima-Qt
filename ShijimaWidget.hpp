@@ -12,6 +12,7 @@ class QPaintEvent;
 class QMouseEvent;
 class QCloseEvent;
 class ShijimaContextMenu;
+class ShimejiInspectorDialog;
 
 class ShijimaWidget : public QWidget
 {
@@ -23,6 +24,7 @@ public:
         QWidget *parent = nullptr);
     void tick();
     bool pointInside(QPoint const& point);
+    void showInspector();
     void markForDeletion() { m_markedForDeletion = true; }
     bool paused() const { return m_paused || m_contextMenuVisible; }
     shijima::mascot::manager &mascot() {
@@ -49,6 +51,7 @@ private:
     void contextMenuClosed(QCloseEvent *);
     void showContextMenu(QPoint const&);
     bool updateOffsets();
+    ShimejiInspectorDialog *m_inspector;
     SoundEffectManager m_sounds;
     Asset const& getActiveAsset();
     ShijimaWidget *m_dragTarget = nullptr;
