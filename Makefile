@@ -28,11 +28,11 @@ LICENSE_FILES := $(addprefix licenses/,$(LICENSE_FILES))
 
 QT_LIBS = Widgets Core Gui Multimedia Concurrent
 
-LDFLAGS += -Llibshimejifinder/build/unarr -lunarr
+TARGET_LDFLAGS := -Llibshimejifinder/build/unarr -lunarr
 
 ifeq ($(PLATFORM),Linux)
 QT_LIBS += DBus
-LDFLAGS += -Wl,-R -Wl,$(shell pwd)/publish/Linux/$(CONFIG)
+TARGET_LDFLAGS += -Wl,-R -Wl,$(shell pwd)/publish/Linux/$(CONFIG)
 endif
 
 CXXFLAGS += -Ilibshijima -Ilibshimejifinder
@@ -91,7 +91,8 @@ macapp: publish/macOS/$(CONFIG)/Shijima-Qt.app
 
 shijima-qt$(EXE): Platform/Platform.a libshimejifinder/build/libshimejifinder.a \
 	libshijima/build/libshijima.a shijima-qt.a
-	$(CXX) -o $@ $(LD_COPY_NEEDED) $(LD_WHOLE_ARCHIVE) $^ $(LD_NO_WHOLE_ARCHIVE) $(LDFLAGS)
+	$(CXX) -o $@ $(LD_COPY_NEEDED) $(LD_WHOLE_ARCHIVE) $^ $(LD_NO_WHOLE_ARCHIVE) \
+		$(TARGET_LDFLAGS) $(LDFLAGS)
 	if [ $(CONFIG) = "release" ]; then $(STRIP) $@; fi
 
 libshijima/build/libshijima.a: libshijima/build/Makefile
