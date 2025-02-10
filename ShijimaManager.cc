@@ -156,8 +156,11 @@ void ShijimaManager::deleteAction() {
         return;
     }
     QString msg = "Are you sure you want to delete these shimeji?";
-    for (auto item : selected) {
-        msg += "\n* " + item->text();
+    for (long i=0; i<selected.size() && i<5; ++i) {
+        msg += "\n* " + selected[i]->text();
+    }
+    if (selected.size() > 5) {
+        msg += "\n... and " + QString::number(selected.size() - 5) + " other(s)";
     }
     QMessageBox msgBox { this };
     msgBox.setWindowTitle("Delete shimeji");
