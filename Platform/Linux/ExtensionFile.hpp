@@ -12,7 +12,7 @@ private:
     bool m_valid;
 public:
     ExtensionFile();
-    ExtensionFile(QString const& filename, const char *data, size_t len);
+    ExtensionFile(QString const& filename, bool text, const char *data, size_t len);
     QString const& path();
     bool valid();
 };

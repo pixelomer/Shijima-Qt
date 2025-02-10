@@ -10,7 +10,7 @@ namespace Platform {
 const QString KDEWindowObserverBackend::m_kwinScriptName = "ShijimaScript";
 
 KDEWindowObserverBackend::KDEWindowObserverBackend(): WindowObserverBackend(),
-    m_extensionFile("shijima_kwin_script.js", kwin_script, kwin_script_len)
+    m_extensionFile("shijima_kwin_script.js", true, kwin_script, kwin_script_len)
 {
     loadKWinScript();
     startKWinScript();
