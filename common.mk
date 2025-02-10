@@ -1,5 +1,13 @@
 QT_VERSION := 6
 
+ifeq ($(QT_VERSION),6)
+QMAKE ?= qmake
+else
+QMAKE ?= qmake-qt5
+endif
+
+export QMAKE
+
 CONFIG ?= release
 STRIP ?= strip
 PKG_CONFIG ?= pkg-config
