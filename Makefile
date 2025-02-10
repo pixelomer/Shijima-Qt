@@ -19,6 +19,8 @@ LICENSE_FILES := Shijima-Qt.LICENSE.txt \
 	libarchive.LICENSE.txt \
 	libshijima.LICENSE.txt \
 	libshimejifinder.LICENSE.txt \
+	unarr.LICENSE.txt \
+	unarr.AUTHORS.txt \
 	Qt.LICENSE.txt \
 	rapidxml.LICENSE.txt
 
@@ -26,8 +28,11 @@ LICENSE_FILES := $(addprefix licenses/,$(LICENSE_FILES))
 
 QT_LIBS = Widgets Core Gui Multimedia Concurrent
 
+LDFLAGS += -Llibshimejifinder/build/unarr -lunarr
+
 ifeq ($(PLATFORM),Linux)
 QT_LIBS += DBus
+LDFLAGS += -Wl,-R -Wl,$(shell pwd)/publish/Linux/$(CONFIG)
 endif
 
 CXXFLAGS += -Ilibshijima -Ilibshimejifinder
@@ -38,6 +43,7 @@ all:: publish/$(PLATFORM)/$(CONFIG)
 
 publish/Windows/$(CONFIG): shijima-qt$(EXE) FORCE
 	mkdir -p $@
+	@$(call copy_changed,libshimejifinder/build/unarr/libunarr.dll,$@)
 	@$(call copy_changed,$<,$@)
 	@$(call copy_exe_dlls,$<,$@)
 	@$(call copy_qt_plugin_dlls,$@)
@@ -63,7 +69,8 @@ publish/macOS/$(CONFIG): shijima-qt$(EXE)
 
 publish/Linux/$(CONFIG): shijima-qt$(EXE)
 	mkdir -p $@
-	$(call copy_changed,$<,$@)
+	@$(call copy_changed,libshimejifinder/build/unarr/libunarr.so.1,$@)
+	@$(call copy_changed,$<,$@)
 
 publish/macOS/$(CONFIG)/Shijima-Qt.app: publish/macOS/$(CONFIG)
 	rm -rf $@ && [ ! -d $@ ]
@@ -110,11 +117,12 @@ libshijima/build/Makefile: libshijima/CMakeLists.txt FORCE
 
 libshimejifinder/build/Makefile: libshimejifinder/CMakeLists.txt FORCE
 	mkdir -p libshimejifinder/build && cd libshimejifinder/build && $(CMAKE) $(CMAKEFLAGS) \
-		-DSHIMEJIFINDER_USE_LIBUNARR=NO -DSHIMEJIFINDER_BUILD_LIBARCHIVE=NO \
-		-DSHIMEJIFINDER_BUILD_EXAMPLES=NO ..
+		-DSHIMEJIFINDER_BUILD_LIBARCHIVE=NO -DSHIMEJIFINDER_BUILD_EXAMPLES=NO ..
 
 libshimejifinder/build/libshimejifinder.a: libshimejifinder/build/Makefile
 	$(MAKE) -C libshimejifinder/build
+	if [ $(PLATFORM) = "Windows" ]; then cp libshimejifinder/build/unarr/libunarr.so.1.1.0 \
+		libshimejifinder/build/unarr/libunarr.dll; fi
 
 clean::
 	rm -rf publish/$(PLATFORM)/$(CONFIG) libshijima/build libshimejifinder/build
