@@ -2,6 +2,7 @@
 #include <exception>
 #include <filesystem>
 #include <iostream>
+#include <QVariant>
 #include <QVBoxLayout>
 #include <QWidget>
 #include <QCloseEvent>
@@ -206,6 +207,21 @@ void ShijimaManager::buildToolbar() {
         connect(action, &QAction::triggered, this, &ShijimaManager::deleteAction);
     }
 
+    menu = menuBar()->addMenu("Settings");
+    {
+        static const QString key = "multiplicationEnabled";
+        bool initial = m_settings.value(key, QVariant::fromValue(true)).toBool();
+
+        action = menu->addAction("Enable multiplication");
+        action->setCheckable(true);
+        action->setChecked(initial);
+        m_env->allows_breeding = initial;
+        connect(action, &QAction::triggered, [this](bool checked){
+            m_env->allows_breeding = checked;
+            m_settings.setValue(key, QVariant::fromValue(checked));
+        });
+    }
+
     menu = menuBar()->addMenu("Help");
     {
         action = menu->addAction("View Licenses");
@@ -358,7 +374,9 @@ void ShijimaManager::dropEvent(QDropEvent *event) {
     importWithDialog(paths);
 }
 
-ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent) {
+ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent),
+    m_settings("pixelomer", "Shijima-Qt")
+{
     QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
     QString mascotsPath = QDir::cleanPath(dataPath + QDir::separator() + "mascots");
     QDir mascotsDir(mascotsPath);

@@ -8,6 +8,7 @@
 #include <QMap>
 #include <QListWidgetItem>
 #include <QListWidget>
+#include <QSettings>
 #include "MascotData.hpp"
 #include <set>
 #include "Platform/ActiveWindowObserver.hpp"
@@ -55,6 +56,7 @@ private:
     std::set<std::string> import(QString const& path) noexcept;
     void importWithDialog(QList<QString> const& paths);
     void tick();
+    QSettings m_settings;
     Platform::ActiveWindow m_previousWindow;
     Platform::ActiveWindow m_currentWindow;
     Platform::ActiveWindowObserver m_windowObserver;
