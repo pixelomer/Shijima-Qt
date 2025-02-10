@@ -26,8 +26,8 @@ ShijimaContextMenu::ShijimaContextMenu(ShijimaWidget *parent)
         }
     }
 
-    // Show settings
-    action = addAction("Show settings");
+    // Show manager
+    action = addAction("Show manager");
     connect(action, &QAction::triggered, [](){
         ShijimaManager::defaultManager()->setManagerVisible(true);
     });
