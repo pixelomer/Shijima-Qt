@@ -23,7 +23,7 @@ public:
     QString introspect(QString const& path) const override;
     bool handleMessage(const QDBusMessage &message,
         const QDBusConnection &connection) override;
-    bool alive() { return m_backend->alive(); }
+    bool alive() { return (m_backend == nullptr) || m_backend->alive(); }
     ActiveWindow getActiveWindow() { return m_activeWindow; }
 };
 

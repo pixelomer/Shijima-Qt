@@ -5,11 +5,12 @@
 #include "KDEWindowObserverBackend.hpp"
 #include "GNOMEWindowObserverBackend.hpp"
 #include "Platform-Linux.hpp"
+#include <QProcessEnvironment>
 #include <QDBusConnection>
 #include <QTextStream>
-#include <iostream>
 #include <QGuiApplication>
 #include <QFile>
+#include <iostream>
 #include <unistd.h>
 
 namespace Platform {
@@ -26,7 +27,14 @@ PrivateActiveWindowObserver::PrivateActiveWindowObserver(QObject *obj)
     connect(m_signalNotifier, &QSocketNotifier::activated, []{
         QGuiApplication::exit(0);
     });
-    if (KWin::running()) {
+    bool disableWindowTracking = QProcessEnvironment::systemEnvironment()
+        .value("SHIJIMA_NO_WINDOW_TRACKING") == "1";
+    if (disableWindowTracking) {
+        std::cout << "Detected SHIJIMA_NO_WINDOW_TRACKING=1, window tracking " <<
+            "is disabled" << std::endl;
+        m_backend = nullptr;
+    }
+    else if (KWin::running()) {
         std::cout << "Detected KDE" << std::endl;
         m_backend = std::make_unique<KDEWindowObserverBackend>();
     }
@@ -35,23 +43,27 @@ PrivateActiveWindowObserver::PrivateActiveWindowObserver(QObject *obj)
         m_backend = std::make_unique<GNOMEWindowObserverBackend>();
     }
     else {
-        throw std::runtime_error("No window observer backend available");
+        std::cout << "Could not find a supported desktop environment, " <<
+            "window tracking will not work" << std::endl;
+        m_backend = nullptr;
     }
-    auto bus = QDBusConnection::sessionBus();
-    if (!bus.isConnected()) {
-        throw std::runtime_error("could not connect to DBus");
-    }
-    bool ret = bus.registerVirtualObject("/", this);
-    if (!ret) {
-        throw std::runtime_error("could not register object");
-    }
-    ret = bus.registerService(m_dbusServiceName);
-    if (!ret) {
-        throw std::runtime_error("could not register DBus service");
+    if (m_backend != nullptr) {
+        auto bus = QDBusConnection::sessionBus();
+        if (!bus.isConnected()) {
+            throw std::runtime_error("could not connect to DBus");
+        }
+        bool ret = bus.registerVirtualObject("/", this);
+        if (!ret) {
+            throw std::runtime_error("could not register object");
+        }
+        ret = bus.registerService(m_dbusServiceName);
+        if (!ret) {
+            throw std::runtime_error("could not register DBus service");
+        }
     }
 }
 
-QString PrivateActiveWindowObserver::introspect(QString const& path) const {
+QString PrivateActiveWindowObserver::introspect(QString const&) const {
     const QString interfaceXML =
         "<interface name=\"" + m_dbusInterfaceName + "\">"
         "  <method name=\"" + m_dbusMethodName + "\">"
