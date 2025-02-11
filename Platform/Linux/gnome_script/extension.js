@@ -10,16 +10,16 @@ class ActiveIE {
             this.visible = false;
         }
         else {
-            if (isNaN(scale) || scale <= 1) {
+            if (isNaN(scale)) {
                 scale = 1;
             }
             this.visible = true;
             this.uid = uid;
             this.pid = pid;
-            this.x = rect.x / scale;
-            this.y = rect.y / scale;
-            this.width = rect.width / scale;
-            this.height = rect.height / scale;
+            this.x = rect.x;
+            this.y = rect.y;
+            this.width = rect.width;
+            this.height = rect.height;
         }
     }
 
@@ -84,7 +84,7 @@ export default class ShijimaExtension extends Extension {
             return new ActiveIE();
         }
         const rect = focused.get_frame_rect();
-        const scale = global.display.get_monitor_scale(global.display.get_primary_monitor());
+        const scale = focused.get_display().get_monitor_scale(focused.get_monitor());
         return new ActiveIE(rect, focused.get_id(), focused.get_pid(), scale);
     }
 
@@ -92,7 +92,6 @@ export default class ShijimaExtension extends Extension {
         const activeIE = this._getActiveIE(ignoreHidden);
         if (this._activeIE == null || !this._activeIE.isEqual(activeIE)) {
             this._activeIE = activeIE;
-            console.log("activeIE=" + this._activeIE.toString());
             let variant;
             if (this._activeIE.visible) {
                 variant = new GLib.Variant('(sidddd)', [
