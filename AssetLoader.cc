@@ -30,10 +30,11 @@ Asset const& AssetLoader::loadAsset(QString path) {
         if (path.startsWith("@")) {
             auto filename = path.sliced(path.lastIndexOf('/') + 1)
                 .toStdString();
-            auto &file = defaultMascot.at(filename);
-            image.loadFromData((const uchar *)file.first,
-                (int)file.second);
-            image = image.scaled({ 128, 128 });
+            if (defaultMascot.count(filename) == 1) {
+                auto &file = defaultMascot.at(filename);
+                image.loadFromData((const uchar *)file.first,
+                    (int)file.second);
+            }
         }
         else {
             image.load(path);
