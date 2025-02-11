@@ -378,7 +378,8 @@ void ShijimaManager::dropEvent(QDropEvent *event) {
     importWithDialog(paths);
 }
 
-ShijimaManager::ShijimaManager(QWidget *parent): PlatformWidget(parent, PlatformWidget::ShowOnAllDesktops),
+ShijimaManager::ShijimaManager(QWidget *parent):
+    PlatformWidget(parent, PlatformWidget::ShowOnAllDesktops),
     m_settings("pixelomer", "Shijima-Qt")
 {
     QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
@@ -422,7 +423,16 @@ void ShijimaManager::closeEvent(QCloseEvent *event) {
     #if !defined(__APPLE__)
     if (!m_allowClose) {
         event->ignore();
+        #if defined(_WIN32)
+        if (m_mascots.size() == 0) {
+            askClose();
+        }
+        else {
+            setManagerVisible(false);
+        }
+        #else
         askClose();
+        #endif
         return;
     }
     event->accept();
@@ -556,6 +566,12 @@ void ShijimaManager::tick() {
     #endif
 
     if (m_mascots.size() == 0) {
+        #if !defined(__APPLE__)
+        if (isMinimized() || !m_wasVisible) {
+            setWindowState(windowState() & ~Qt::WindowMinimized);
+            setManagerVisible(true);
+        }
+        #endif
         return;
     }
 

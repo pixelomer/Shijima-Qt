@@ -1,7 +1,7 @@
 include ../../common.mk
 
 SOURCES = Platform.cc ActiveWindowObserver.cc PrivateActiveWindowObserver.cc
-QT_LIBS = Core
+QT_LIBS = Core Widgets
 
 all:: Windows.a
 
