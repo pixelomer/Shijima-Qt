@@ -15,6 +15,7 @@
 #include "AssetLoader.hpp"
 #include "ShijimaContextMenu.hpp"
 #include "ShijimaManager.hpp"
+#include <shimejifinder/utils.hpp>
 
 using namespace shijima;
 
@@ -66,8 +67,9 @@ void ShijimaWidget::showInspector() {
 
 Asset const& ShijimaWidget::getActiveAsset() {
     auto &name = m_mascot->state->active_frame.get_name(m_mascot->state->looking_right);
+    auto lowerName = shimejifinder::to_lower(name);
     auto imagePath = QDir::cleanPath(QString::fromStdString(m_imgRoot)
-        + QDir::separator() + QString(name.c_str()));
+        + QDir::separator() + QString::fromStdString(lowerName));
     return AssetLoader::defaultLoader()->loadAsset(imagePath);
 }
 
