@@ -16,6 +16,7 @@
 #include <QDesktopServices>
 #include <QScreen>
 #include <QRandomGenerator>
+#include "PlatformWidget.hpp"
 #include "ShijimaLicensesDialog.hpp"
 #include "ShijimaWidget.hpp"
 #include <QDirIterator>
@@ -339,7 +340,7 @@ void ShijimaManager::importWithDialog(QList<QString> const& paths) {
 }
 
 void ShijimaManager::showEvent(QShowEvent *event) {
-    QMainWindow::showEvent(event);
+    PlatformWidget::showEvent(event);
     if (!m_firstShow) {
         return;
     }
@@ -377,7 +378,7 @@ void ShijimaManager::dropEvent(QDropEvent *event) {
     importWithDialog(paths);
 }
 
-ShijimaManager::ShijimaManager(QWidget *parent): QMainWindow(parent),
+ShijimaManager::ShijimaManager(QWidget *parent): PlatformWidget(parent, PlatformWidget::ShowOnAllDesktops),
     m_settings("pixelomer", "Shijima-Qt")
 {
     QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);

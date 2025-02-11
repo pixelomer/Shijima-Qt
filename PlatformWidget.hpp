@@ -2,17 +2,26 @@
 
 #include <QWidget>
 #include <cstdint>
+#include "Platform/Platform.hpp"
 
-class PlatformWidget : public QWidget {
+template<typename T>
+class PlatformWidget : public T {
 public:
     enum Flags : uint32_t {
         ShowOnAllDesktops = 0x1
     };
-    PlatformWidget();
-    PlatformWidget(QWidget *parent);
-    PlatformWidget(QWidget *parent, Flags flags);
+    PlatformWidget(): T(), m_flags(0) {}
+    PlatformWidget(QWidget *parent): T(parent), m_flags(0) {}
+    PlatformWidget(QWidget *parent, Flags flags): T(parent) {
+        m_flags = flags;
+    }
 private:
     uint32_t m_flags;
 protected:
-    void showEvent(QShowEvent *) override;
+    void showEvent(QShowEvent *event) override {
+        T::showEvent(event);
+        if (m_flags & ShowOnAllDesktops) {
+            Platform::showOnAllDesktops(this);
+        }
+    }
 };

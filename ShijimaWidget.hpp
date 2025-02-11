@@ -15,7 +15,7 @@ class QCloseEvent;
 class ShijimaContextMenu;
 class ShimejiInspectorDialog;
 
-class ShijimaWidget : public PlatformWidget
+class ShijimaWidget : public PlatformWidget<QWidget>
 {
 public:
     friend class ShijimaContextMenu;

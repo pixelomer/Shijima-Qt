@@ -11,6 +11,7 @@
 #include <QWidget>
 #include <QApplication>
 #include <X11/Xlib.h>
+#include <iostream>
 #include <X11/Xatom.h>
 #include <unistd.h>
 #include <signal.h>
@@ -107,7 +108,6 @@ void initialize(int argc, char **argv) {
 }
 
 void showOnAllDesktops(QWidget *widget) {
-    widget->winId();
     unsigned long data = 0xFFFFFFFF;
     QNativeInterface::QX11Application *x11App = qApp->nativeInterface<QNativeInterface::QX11Application>();
     Display *displayID = x11App->display();

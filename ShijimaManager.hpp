@@ -9,6 +9,7 @@
 #include <QListWidgetItem>
 #include <QListWidget>
 #include <QSettings>
+#include "PlatformWidget.hpp"
 #include "MascotData.hpp"
 #include <set>
 #include "Platform/ActiveWindowObserver.hpp"
@@ -17,7 +18,7 @@
 class QVBoxLayout;
 class QWidget;
 
-class ShijimaManager : public QMainWindow
+class ShijimaManager : public PlatformWidget<QMainWindow>
 {
 public:
     static ShijimaManager *defaultManager();
