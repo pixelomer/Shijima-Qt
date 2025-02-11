@@ -6,6 +6,7 @@
 #include "SoundEffectManager.hpp"
 #include <shijima/mascot/manager.hpp>
 #include <shijima/mascot/environment.hpp>
+#include "PlatformWidget.hpp"
 
 class QPushButton;
 class QPaintEvent;
@@ -14,7 +15,7 @@ class QCloseEvent;
 class ShijimaContextMenu;
 class ShimejiInspectorDialog;
 
-class ShijimaWidget : public QWidget
+class ShijimaWidget : public PlatformWidget
 {
 public:
     friend class ShijimaContextMenu;

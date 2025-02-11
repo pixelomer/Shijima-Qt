@@ -24,9 +24,9 @@ ShijimaWidget::ShijimaWidget(std::string const& mascotName,
     std::unique_ptr<shijima::mascot::manager> mascot,
     QWidget *parent):
 #if defined(__APPLE__)
-    QWidget(nullptr),
+    PlatformWidget(nullptr, PlatformWidget::ShowOnAllDesktops),
 #else
-    QWidget(parent),
+    PlatformWidget(parent, PlatformWidget::ShowOnAllDesktops),
 #endif
     m_inspector(nullptr)
 {

@@ -8,6 +8,10 @@
 #endif
 #include "../Platform.hpp"
 #include <stdlib.h>
+#include <QWidget>
+#include <QApplication>
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
 #include <unistd.h>
 #include <signal.h>
 #include <sys/socket.h>
@@ -100,6 +104,17 @@ void initialize(int argc, char **argv) {
     // Wayland does not allow windows to reposition themselves.
     // Set WAYLAND_DISPLAY to an invalid value to prevent its use.
     setenv("WAYLAND_DISPLAY", "", 1);
+}
+
+void showOnAllDesktops(QWidget *widget) {
+    widget->winId();
+    unsigned long data = 0xFFFFFFFF;
+    QNativeInterface::QX11Application *x11App = qApp->nativeInterface<QNativeInterface::QX11Application>();
+    Display *displayID = x11App->display();
+    XChangeProperty(displayID, widget->winId(),
+        XInternAtom(displayID, "_NET_WM_DESKTOP", False),
+        XA_CARDINAL, 32, PropModeReplace,
+        reinterpret_cast<unsigned char *>(&data), 1);
 }
 
 }

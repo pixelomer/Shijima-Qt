@@ -11,7 +11,8 @@ SOURCES = main.cc \
 	SoundEffectManager.cc \
 	ShijimaLicensesDialog.cc \
 	ShimejiInspectorDialog.cc \
-	resources.rc
+	resources.rc \
+	PlatformWidget.cc
 
 LICENSE_FILES := Shijima-Qt.LICENSE.txt \
 	duktape.LICENSE.txt \
@@ -32,11 +33,12 @@ TARGET_LDFLAGS := -Llibshimejifinder/build/unarr -lunarr
 
 ifeq ($(PLATFORM),Linux)
 QT_LIBS += DBus
+PKG_LIBS := x11
 TARGET_LDFLAGS += -Wl,-R -Wl,$(shell pwd)/publish/Linux/$(CONFIG)
 endif
 
 CXXFLAGS += -Ilibshijima -Ilibshimejifinder
-PKG_LIBS = libarchive
+PKG_LIBS += libarchive
 PUBLISH_DLL = $(addprefix Qt6,$(QT_LIBS)) 
 
 all:: publish/$(PLATFORM)/$(CONFIG)
