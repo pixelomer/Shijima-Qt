@@ -3,6 +3,7 @@
 #include "qdiriterator.h"
 #include <QPainter>
 #include <QDir>
+#include "DefaultMascot.hpp"
 #include <stdexcept>
 #include <shijima/parser.hpp>
 
@@ -17,6 +18,21 @@ static QString readFile(QString const& file) {
 MascotData::MascotData(): m_valid(false) {}
 
 MascotData::MascotData(QString const& path): m_path(path), m_valid(true) {
+    if (path == "@") {
+        m_name = "Default Mascot";
+        m_behaviorsXML = QString { defaultMascot.at("behaviors.xml").first };
+        m_actionsXML = QString { defaultMascot.at("actions.xml").first };
+        m_path = "@";
+        m_valid = true;
+        m_deletable = false;
+        QImage frame;
+        frame.loadFromData((const uchar *)defaultMascot.at("shime1.png").first,
+            (int)defaultMascot.at("shime1.png").second);
+        QImage preview = renderPreview(frame);
+        m_preview = QPixmap::fromImage(preview);
+        return;
+    }
+    m_deletable = true;
     QDir dir { path };
     auto dirname = dir.dirName();
     if (!dirname.endsWith(".mascot")) {
@@ -42,13 +58,13 @@ MascotData::MascotData(QString const& path): m_path(path), m_valid(true) {
         }
     }
     images.sort(Qt::CaseInsensitive);
-    QImage preview = renderPreview(dir.absoluteFilePath(images[0]));
+    QImage frame;
+    frame.load(dir.absoluteFilePath(images[0]));
+    QImage preview = renderPreview(frame);
     m_preview = QPixmap::fromImage(preview);
 }
 
-QImage MascotData::renderPreview(QString const& path) {
-    QImage frame;
-    frame.load(path);
+QImage MascotData::renderPreview(QImage frame) {
     frame = frame.scaled({ 128, 128 }, Qt::KeepAspectRatio);
     QImage preview { 128, 128, QImage::Format_ARGB32_Premultiplied };
     preview.fill(Qt::transparent);
@@ -60,6 +76,10 @@ QImage MascotData::renderPreview(QString const& path) {
 
 void MascotData::unloadCache() const {
     AssetLoader::defaultLoader()->unloadAssets(m_path);
+}
+
+bool MascotData::deletable() const {
+    return m_deletable;
 }
 
 bool MascotData::valid() const {

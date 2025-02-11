@@ -106,7 +106,30 @@ void ShijimaManager::killAllButOne(QString const& name) {
     }
 }
 
+void ShijimaManager::loadData(MascotData const& data) {
+    if (data.valid()) {
+        shijima::mascot::factory::tmpl tmpl;
+        tmpl.actions_xml = data.actionsXML().toStdString();
+        tmpl.behaviors_xml = data.behaviorsXML().toStdString();
+        tmpl.name = data.name().toStdString();
+        tmpl.path = data.path().toStdString();
+        m_factory.register_template(tmpl);
+        m_loadedMascots.insert(data.name(), data);
+        std::cout << "Loaded mascot: " << data.name().toStdString() << std::endl;
+    }
+}
+
+void ShijimaManager::loadDefaultMascot() {
+    MascotData data { "@" };
+    loadData(data);
+}
+
 void ShijimaManager::reloadMascot(QString const& name) {
+    if (m_loadedMascots.contains(name) && !m_loadedMascots[name].deletable()) {
+        std::cout << "Refusing to unload mascot: " << name.toStdString()
+            << std::endl;
+        return;
+    }
     MascotData data;
     try {
         data = { m_mascotsPath + QDir::separator() + name + ".mascot" };
@@ -123,14 +146,10 @@ void ShijimaManager::reloadMascot(QString const& name) {
         std::cout << "Unloaded mascot: " << name.toStdString() << std::endl;
     }
     if (data.valid()) {
-        shijima::mascot::factory::tmpl tmpl;
-        tmpl.actions_xml = data.actionsXML().toStdString();
-        tmpl.behaviors_xml = data.behaviorsXML().toStdString();
-        tmpl.name = name.toStdString();
-        tmpl.path = data.path().toStdString();
-        m_factory.register_template(tmpl);
-        m_loadedMascots.insert(name, data);
-        std::cout << "Loaded mascot: " << name.toStdString() << std::endl;
+        if (data.name() != name) {
+            throw std::runtime_error("Impossible condition: New mascot name is incorrect");
+        }
+        loadData(data);
     }
     m_listItemsToRefresh.insert(name);
 }
@@ -153,6 +172,12 @@ void ShijimaManager::deleteAction() {
         return;
     }
     auto selected = m_listWidget.selectedItems();
+    for (long i=(long)selected.size()-1; i>=0; --i) {
+        auto &mascotData = m_loadedMascots[selected[i]->text()];
+        if (!mascotData.deletable()) {
+            selected.remove(i);
+        }
+    }
     if (selected.size() == 0) {
         return;
     }
@@ -172,7 +197,11 @@ void ShijimaManager::deleteAction() {
     int ret = msgBox.exec();
     if (ret == QMessageBox::StandardButton::Yes) {
         for (auto item : selected) {
-            std::filesystem::path path = m_loadedMascots[item->text()].path().toStdString();
+            auto &mascotData = m_loadedMascots[item->text()];
+            if (!mascotData.deletable()) {
+                continue;
+            }
+            std::filesystem::path path = mascotData.path().toStdString();
             std::cout << "Deleting mascot: " << item->text().toStdString() << std::endl;
             try {
                 // remove_all(path) could be dangerous
@@ -258,12 +287,6 @@ void ShijimaManager::refreshListWidget() {
         m_listWidget.addItem(item);
     }
     m_listItemsToRefresh.clear();
-    if (names.size() == 0) {
-        m_listWidget.addItem(
-            "Welcome to Shijima! Get started by dragging and dropping a \n"
-            "shimeji archive to this window. You can also import archives \n"
-            "by selecting File > Import.");
-    }
 }
 
 void ShijimaManager::loadAllMascots() {
@@ -357,6 +380,16 @@ void ShijimaManager::showEvent(QShowEvent *event) {
             "Your feedback is highly appreciated.");
         msgBox.addButton(QMessageBox::StandardButton::Ok);
         msgBox.exec();
+
+        if (m_loadedMascots.size() == 1) {
+            auto msgBox = new QMessageBox { this };
+            msgBox->setText("Welcome to Shijima! Get started by dragging and dropping a "
+                "shimeji archive to the manager window. You can also import archives "
+                "by selecting File > Import.");
+            msgBox->addButton(QMessageBox::StandardButton::Ok);
+            msgBox->setAttribute(Qt::WA_DeleteOnClose);
+            msgBox->show();
+        }
     }
 }
 
@@ -391,6 +424,7 @@ ShijimaManager::ShijimaManager(QWidget *parent):
     m_mascotsPath = mascotsPath;
     std::cout << "Mascots path: " << m_mascotsPath.toStdString() << std::endl;
     
+    loadDefaultMascot();
     loadAllMascots();
     setAcceptDrops(true);
 
@@ -413,9 +447,6 @@ ShijimaManager::ShijimaManager(QWidget *parent):
 }
 
 void ShijimaManager::itemDoubleClicked(QListWidgetItem *qItem) {
-    if (m_loadedMascots.size() == 0) {
-        return;
-    }
     spawn(qItem->text().toStdString());
 }
 

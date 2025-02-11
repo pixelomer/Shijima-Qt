@@ -43,6 +43,8 @@ protected:
 private:
     explicit ShijimaManager(QWidget *parent = nullptr);
     static std::string imgRootForTemplatePath(std::string const& path);
+    void loadDefaultMascot();
+    void loadData(MascotData const& data);
     void spawnClicked();
     void reloadMascot(QString const& name);
     void askClose();

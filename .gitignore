@@ -54,3 +54,10 @@
 !/licenses/*.rst
 !/licenses/*.txt
 licenses_generated.hpp
+DefaultMascot.cc
+!/bundle-default.sh
+!/DefaultMascot/
+!/DefaultMascot/actions.xml
+!/DefaultMascot/behaviors.xml
+!/DefaultMascot/img/
+!/DefaultMascot/img/shime*.png

@@ -11,7 +11,11 @@ SOURCES = main.cc \
 	SoundEffectManager.cc \
 	ShijimaLicensesDialog.cc \
 	ShimejiInspectorDialog.cc \
+	DefaultMascot.cc \
 	resources.rc
+
+DEFAULT_MASCOT_FILES := $(addsuffix .png,$(addprefix DefaultMascot/img/shime,$(shell seq -s ' ' 1 1 46))) \
+	DefaultMascot/behaviors.xml DefaultMascot/actions.xml
 
 LICENSE_FILES := Shijima-Qt.LICENSE.txt \
 	duktape.LICENSE.txt \
@@ -38,7 +42,7 @@ endif
 
 CXXFLAGS += -Ilibshijima -Ilibshimejifinder
 PKG_LIBS += libarchive
-PUBLISH_DLL = $(addprefix Qt6,$(QT_LIBS)) 
+PUBLISH_DLL = $(addprefix Qt6,$(QT_LIBS))
 
 all:: publish/$(PLATFORM)/$(CONFIG)
 
@@ -98,6 +102,10 @@ shijima-qt$(EXE): Platform/Platform.a libshimejifinder/build/libshimejifinder.a 
 
 libshijima/build/libshijima.a: libshijima/build/Makefile
 	$(MAKE) -C libshijima/build
+
+DefaultMascot.cc: $(DEFAULT_MASCOT_FILES) Makefile bundle-default.sh
+	./bundle-default.sh $(DEFAULT_MASCOT_FILES) > '$@-'
+	mv '$@-' '$@'
 
 ShijimaLicensesDialog.cc: licenses_generated.hpp
 	touch ShijimaLicensesDialog.cc
