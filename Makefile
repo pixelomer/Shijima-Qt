@@ -44,7 +44,7 @@ all:: publish/$(PLATFORM)/$(CONFIG)
 
 publish/Windows/$(CONFIG): shijima-qt$(EXE) FORCE
 	mkdir -p $@
-	@$(call copy_changed,libshimejifinder/build/unarr/libunarr.dll,$@)
+	@$(call copy_changed,libshimejifinder/build/unarr/libunarr.so.1.1.0,$@)
 	@$(call copy_changed,$<,$@)
 	@$(call copy_exe_dlls,$<,$@)
 	@$(call copy_qt_plugin_dlls,$@)
