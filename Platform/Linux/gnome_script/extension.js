@@ -125,7 +125,7 @@ export default class ShijimaExtension extends Extension {
     }
 
     _windowMinimized(metaWindow) {
-        console.log("minimized changed: " + metaWindow.toString());
+        //console.log("minimized changed: " + metaWindow.toString());
         this._notifyShijima(true);
     }
 
