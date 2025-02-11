@@ -15,8 +15,8 @@
 
 namespace Platform {
 
-const QString PrivateActiveWindowObserver::m_dbusInterfaceName = "com.pixelomer.ShijimaQT";
-const QString PrivateActiveWindowObserver::m_dbusServiceName = "com.pixelomer.ShijimaQT";
+const QString PrivateActiveWindowObserver::m_dbusInterfaceName = "com.pixelomer.ShijimaQt";
+const QString PrivateActiveWindowObserver::m_dbusServiceName = "com.pixelomer.ShijimaQt";
 const QString PrivateActiveWindowObserver::m_dbusMethodName = "updateActiveWindow";
 
 PrivateActiveWindowObserver::PrivateActiveWindowObserver(QObject *obj)

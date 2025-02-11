@@ -107,9 +107,9 @@ export default class ShijimaExtension extends Extension {
                 variant = new GLib.Variant('(sidddd)', [ "", -1, -1, -1, -1, -1 ])
             }
             Gio.DBus.session.call(
-                'com.pixelomer.ShijimaQT',
+                'com.pixelomer.ShijimaQt',
                 '/',
-                'com.pixelomer.ShijimaQT',
+                'com.pixelomer.ShijimaQt',
                 'updateActiveWindow',
                 variant,
                 null,

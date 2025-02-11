@@ -1,6 +1,6 @@
 (function(){
     const allWindows = new Map();
-    const serviceName = "com.pixelomer.ShijimaQT";
+    const serviceName = "com.pixelomer.ShijimaQt";
     const interfaceName = serviceName;
     const methodPath = "/";
     const methodName = "updateActiveWindow";

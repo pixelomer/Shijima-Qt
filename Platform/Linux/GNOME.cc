@@ -46,7 +46,7 @@ void installExtension(QString const& path) {
         program = "flatpak-spawn";
         int uid = getuid();
         QString hostPath = QDir::cleanPath("/run/user/" +
-            QString::number(uid) + "/.flatpak/com.pixelomer.ShijimaQT/" + path);
+            QString::number(uid) + "/.flatpak/com.pixelomer.ShijimaQt/" + path);
         args = { "--host", "gnome-extensions", "install",
             "--force", hostPath };
     }
