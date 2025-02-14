@@ -1,4 +1,5 @@
 #include "ShijimaManager.hpp"
+#include <cmath>
 #include <exception>
 #include <filesystem>
 #include <iostream>
@@ -37,6 +38,8 @@
 #include <QUrl>
 #include <QtConcurrent>
 #include <string>
+#include <QLabel>
+#include <QFormLayout>
 
 using namespace shijima;
 
@@ -224,6 +227,7 @@ void ShijimaManager::deleteAction() {
 void ShijimaManager::buildToolbar() {
     QAction *action;
     QMenu *menu;
+    QMenu *submenu;
     
     menu = menuBar()->addMenu("File");
     {
@@ -242,17 +246,103 @@ void ShijimaManager::buildToolbar() {
 
     menu = menuBar()->addMenu("Settings");
     {
-        static const QString key = "multiplicationEnabled";
-        bool initial = m_settings.value(key, QVariant::fromValue(true)).toBool();
+        {
+            static const QString key = "multiplicationEnabled";
+            bool initial = m_settings.value(key, 
+                QVariant::fromValue(true)).toBool();
 
-        action = menu->addAction("Enable multiplication");
-        action->setCheckable(true);
-        action->setChecked(initial);
-        m_env->allows_breeding = initial;
-        connect(action, &QAction::triggered, [this](bool checked){
-            m_env->allows_breeding = checked;
-            m_settings.setValue(key, QVariant::fromValue(checked));
-        });
+            action = menu->addAction("Enable multiplication");
+            action->setCheckable(true);
+            action->setChecked(initial);
+            m_env->allows_breeding = initial;
+            connect(action, &QAction::triggered, [this](bool checked){
+                m_env->allows_breeding = checked;
+                m_settings.setValue(key, QVariant::fromValue(checked));
+            });
+        }
+
+        submenu = menu->addMenu("Scale");
+        {
+            static const QString key = "userScale";
+            m_userScale = m_settings.value(key,
+                QVariant::fromValue(1.0)).toDouble();
+            
+            auto makeScaleText = [](double scale){
+                return QString::asprintf("%.3lfx", scale);
+            };
+
+            auto makeCustomActionText = [this, makeScaleText]() {
+                return QString { "Custom... (" } +
+                    makeScaleText(m_userScale) + ")";
+            };
+            QAction *customAction = submenu->addAction(makeCustomActionText());
+
+            #define addPreset(scale) do { \
+                action = submenu->addAction(#scale "x"); \
+                action->setCheckable(true); \
+                action->setChecked(std::fabs(m_userScale - scale) < 0.01); \
+                connect(action, &QAction::triggered, [this, customAction, \
+                    makeCustomActionText, action, submenu]() \
+                { \
+                    for (auto neighbour : submenu->actions()) { \
+                        neighbour->setChecked(false); \
+                    } \
+                    m_userScale = scale; \
+                    m_settings.setValue(key, QVariant::fromValue(scale)); \
+                    action->setChecked(true); \
+                    customAction->setText(makeCustomActionText()); \
+                }); \
+            } while (0)
+            
+            addPreset(0.25);
+            addPreset(0.50);
+            addPreset(0.75);
+            addPreset(1.00);
+            addPreset(1.25);
+            addPreset(1.50);
+            addPreset(1.75);
+            addPreset(2.00);
+
+            #undef addPreset
+
+            connect(customAction, &QAction::triggered, [this,
+                customAction, makeCustomActionText, submenu, makeScaleText]()
+            {
+                QDialog dialog { this };
+                QFormLayout layout;
+                dialog.setLayout(&layout);
+                QSlider slider { Qt::Horizontal };
+                QLabel label;
+                QPushButton button;
+                button.setText("Save");
+                layout.addRow(&label, &slider);
+                layout.addRow(&button);
+                label.setText(makeScaleText(m_userScale));
+                slider.setMinimum(100);
+                slider.setMaximum(10000);
+                slider.setValue(static_cast<int>(m_userScale * 1000.0));
+                connect(&slider, &QSlider::valueChanged,
+                    [this, &label, makeScaleText](int value)
+                {
+                    m_userScale = value / 1000.0;
+                    label.setText(makeScaleText(m_userScale));
+                });
+                connect(&button, &QPushButton::clicked,
+                    [&dialog]()
+                {
+                    dialog.close();
+                });
+                dialog.exec();
+                for (auto neighbour : submenu->actions()) {
+                    //double value = neighbour->text().sliced(0, 4).toDouble();
+                    //std::cout << std::fabs(m_userScale - value) << std::endl;
+                    //neighbour->setChecked(std::fabs(m_userScale - value) < 0.01);
+                    neighbour->setChecked(false);
+                }
+                customAction->setText(makeCustomActionText());
+                m_settings.setValue(key, QVariant::fromValue(m_userScale));
+            });
+        }
     }
 
     menu = menuBar()->addMenu("Help");
@@ -521,7 +611,7 @@ void ShijimaManager::updateEnvironment() {
     m_env->subtick_count = 4;
     m_previousWindow = m_currentWindow;
 
-    m_env->set_scale(1.0);
+    m_env->set_scale(1.0 / std::sqrt(m_userScale));
 }
 
 void ShijimaManager::askClose() {

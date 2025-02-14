@@ -67,6 +67,7 @@ private:
     bool m_allowClose = false;
     bool m_firstShow = true;
     bool m_wasVisible = false;
+    double m_userScale = 1.0;
     int m_windowObserverTimer = -1;
     QMap<QString, MascotData> m_loadedMascots;
     QSet<QString> m_listItemsToRefresh;
