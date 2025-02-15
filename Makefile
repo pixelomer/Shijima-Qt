@@ -63,17 +63,17 @@ publish/Windows/$(CONFIG): shijima-qt$(EXE) FORCE
 	@$(call copy_qt_plugin_dlls,$@)
 
 linuxdeploy-plugin-appimage-x86_64.AppImage:
-	wget -O $@ -c --no-verbose https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/1-alpha-20230713-1/linuxdeploy-plugin-appimage-x86_64.AppImage
+	wget -O $@ -c --no-verbose https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/latest/download/linuxdeploy-plugin-appimage-x86_64.AppImage
 	touch $@
 	chmod +x linuxdeploy-plugin-appimage-x86_64.AppImage
 
 linuxdeploy-plugin-qt-x86_64.AppImage:
-	wget -O $@ -c --no-verbose https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/2.0.0-alpha-1-20250119/linuxdeploy-plugin-qt-x86_64.AppImage
+	wget -O $@ -c --no-verbose https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/latest/download/linuxdeploy-plugin-qt-x86_64.AppImage
 	touch $@
 	chmod +x linuxdeploy-plugin-qt-x86_64.AppImage
 
 linuxdeploy-x86_64.AppImage: linuxdeploy-plugin-qt-x86_64.AppImage linuxdeploy-plugin-appimage-x86_64.AppImage
-	wget -O $@ -c --no-verbose https://github.com/linuxdeploy/linuxdeploy/releases/download/2.0.0-alpha-1-20241106/linuxdeploy-x86_64.AppImage
+	wget -O $@ -c --no-verbose https://github.com/linuxdeploy/linuxdeploy/releases/latest/download/linuxdeploy-x86_64.AppImage
 	touch $@
 	chmod +x linuxdeploy-x86_64.AppImage
 
