@@ -1,7 +1,11 @@
 #include "SoundEffectManager.hpp"
+
+#if SHIJIMA_USE_QTMULTIMEDIA
+
 #include <QFile>
 #include <QDir>
 #include <iostream>
+#include <QSoundEffect>
 
 void SoundEffectManager::play(QString const& name) {
     if (!m_loadedEffects.contains(name)) {
@@ -47,3 +51,12 @@ SoundEffectManager::~SoundEffectManager() {
         delete effect;
     }
 }
+
+#else
+
+void SoundEffectManager::play(QString const&) {}
+bool SoundEffectManager::playing() const { return true; }
+void SoundEffectManager::stop() {}
+SoundEffectManager::~SoundEffectManager() {}
+
+#endif

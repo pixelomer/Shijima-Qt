@@ -1,6 +1,8 @@
-#include <QSoundEffect>
+#pragma once
 #include <QMap>
 #include <QString>
+
+class QSoundEffect;
 
 class SoundEffectManager {
 public:

@@ -1,5 +1,7 @@
 include common.mk
 
+SHIJIMA_USE_QTMULTIMEDIA ?= 1
+
 SOURCES = main.cc \
 	Asset.cc \
 	MascotData.cc \
@@ -30,7 +32,7 @@ LICENSE_FILES := Shijima-Qt.LICENSE.txt \
 
 LICENSE_FILES := $(addprefix licenses/,$(LICENSE_FILES))
 
-QT_LIBS = Widgets Core Gui Multimedia Concurrent
+QT_LIBS = Widgets Core Gui Concurrent
 
 TARGET_LDFLAGS := -Llibshimejifinder/build/unarr -lunarr
 
@@ -38,6 +40,13 @@ ifeq ($(PLATFORM),Linux)
 QT_LIBS += DBus
 PKG_LIBS := x11
 TARGET_LDFLAGS += -Wl,-R -Wl,$(shell pwd)/publish/Linux/$(CONFIG)
+endif
+
+ifeq ($(SHIJIMA_USE_QTMULTIMEDIA),1)
+QT_LIBS += Multimedia
+CXXFLAGS += -DSHIJIMA_USE_QTMULTIMEDIA=1
+else
+CXXFLAGS += -DSHIJIMA_USE_QTMULTIMEDIA=0
 endif
 
 CXXFLAGS += -Ilibshijima -Ilibshimejifinder
@@ -70,7 +79,9 @@ linuxdeploy-x86_64.AppImage: linuxdeploy-plugin-qt-x86_64.AppImage linuxdeploy-p
 
 publish/macOS/$(CONFIG): shijima-qt$(EXE)
 	mkdir -p $@
+	$(call copy_changed,libshimejifinder/build/unarr/libunarr.1.dylib,$@)
 	$(call copy_changed,$<,$@)
+	install_name_tool -add_rpath "$$(realpath $@)" $@/$<
 
 publish/Linux/$(CONFIG): shijima-qt$(EXE)
 	mkdir -p $@
