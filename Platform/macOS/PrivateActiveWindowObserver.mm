@@ -73,7 +73,7 @@ ActiveWindow PrivateActiveWindowObserver::getActiveWindow() {
     CGWindowID windowID;
     BOOL gotData = GetDataFromUIElement(focusedWindowRef, &rect, &pid, &windowID);
     if (!gotData) {
-        NSLog(@"Failed to get window data");
+        //NSLog(@"Failed to get window data");
         return m_activeWindow = {};
     }
     m_activePid = pid;
