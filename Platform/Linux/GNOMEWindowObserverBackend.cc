@@ -16,7 +16,7 @@ GNOMEWindowObserverBackend::GNOMEWindowObserverBackend(): m_extensionFile(
     if (!GNOME::userExtensionsEnabled()) {
         GNOME::setUserExtensionsEnabled(true);
     }
-    GNOME::installExtension(m_extensionFile.path());
+    GNOME::installExtension(m_extensionFile.hostPath());
     auto extensionInfo = GNOME::getExtensionInfo(m_gnomeScriptUUID);
     static const QString kVersionName = "version-name";
     std::string restartReason;

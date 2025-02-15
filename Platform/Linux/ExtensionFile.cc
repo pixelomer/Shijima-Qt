@@ -1,4 +1,6 @@
 #include "ExtensionFile.hpp"
+#include <QProcessEnvironment>
+#include <unistd.h>
 
 namespace Platform {
 
@@ -30,10 +32,28 @@ ExtensionFile::ExtensionFile(QString const& name, bool text,
     }
     file.flush();
     file.close();
+    if (flatpak()) {
+        int uid = getuid();
+        QString hostPath = QDir::cleanPath("/run/user/" +
+            QString::number(uid) + "/.flatpak/com.pixelomer.ShijimaQt/" + m_path);
+        m_hostPath = hostPath;
+    }
+    else {
+        m_hostPath = m_path;
+    }
+}
+
+bool ExtensionFile::flatpak() {
+    return QProcessEnvironment::systemEnvironment()
+        .value("SHIJIMA_FLATPAK") == "1";
 }
 
 QString const& ExtensionFile::path() {
     return m_path;
+}
+
+QString const& ExtensionFile::hostPath() {
+    return m_hostPath;
 }
 
 }

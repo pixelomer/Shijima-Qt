@@ -5,7 +5,7 @@
 #include <QDBusArgument>
 #include <QProcess>
 #include <QStringList>
-#include "unistd.h"
+#include "ExtensionFile.hpp"
 #include <QDir>
 
 using namespace Platform::DBus;
@@ -38,17 +38,12 @@ bool isExtensionEnabled(QString const& uuid) {
 }
 
 void installExtension(QString const& path) {
-    bool flatpak = QProcessEnvironment::systemEnvironment()
-        .value("SHIJIMA_FLATPAK") == "1";
     QString program;
     QStringList args;
-    if (flatpak) {
+    if (ExtensionFile::flatpak()) {
         program = "flatpak-spawn";
-        int uid = getuid();
-        QString hostPath = QDir::cleanPath("/run/user/" +
-            QString::number(uid) + "/.flatpak/com.pixelomer.ShijimaQt/" + path);
         args = { "--host", "gnome-extensions", "install",
-            "--force", hostPath };
+            "--force", path };
     }
     else {
         program = "gnome-extensions";

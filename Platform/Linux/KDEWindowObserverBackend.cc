@@ -33,13 +33,13 @@ void KDEWindowObserverBackend::stopKWinScript() {
 
 void KDEWindowObserverBackend::loadKWinScript() {
     try {
-        m_kwinScriptID = KWin::loadScript(m_extensionFile.path(),
+        m_kwinScriptID = KWin::loadScript(m_extensionFile.hostPath(),
             m_kwinScriptName);
     }
     catch (...) {
         // try unloading first?
         KWin::unloadScript(m_kwinScriptName);
-        m_kwinScriptID = KWin::loadScript(m_extensionFile.path(),
+        m_kwinScriptID = KWin::loadScript(m_extensionFile.hostPath(),
             m_kwinScriptName);
     }
 }
