@@ -315,6 +315,8 @@ void ShijimaManager::buildToolbar() {
                 QLabel label;
                 QPushButton button;
                 button.setText("Save");
+                label.setMinimumWidth(80);
+                slider.setMinimumWidth(300);
                 layout.addRow(&label, &slider);
                 layout.addRow(&button);
                 label.setText(makeScaleText(m_userScale));
