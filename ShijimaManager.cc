@@ -509,7 +509,9 @@ void ShijimaManager::dropEvent(QDropEvent *event) {
 
 void ShijimaManager::screenAdded(QScreen *screen) {
     if (!m_env.contains(screen)) {
-        m_env[screen] = std::make_shared<shijima::mascot::environment>();
+        auto env = std::make_shared<shijima::mascot::environment>();
+        m_env[screen] = env;
+        m_reverseEnv[env.get()] = screen;
         auto primary = QGuiApplication::primaryScreen();
         if (screen != primary && m_env.contains(primary)) {
             m_env[screen]->allows_breeding = m_env[primary]->allows_breeding;
@@ -524,6 +526,7 @@ void ShijimaManager::screenRemoved(QScreen *screen) {
             mascot->setEnv(m_env[primary]);
             mascot->mascot().reset_position();
         }
+        m_reverseEnv.remove(m_env[primary].get());
         m_env.remove(screen);
     }
 }
@@ -540,9 +543,7 @@ ShijimaManager::ShijimaManager(QWidget *parent):
     m_settings("pixelomer", "Shijima-Qt")
 {
     for (auto screen : QGuiApplication::screens()) {
-        if (!m_env.contains(screen)) {
-            m_env[screen] = std::make_shared<shijima::mascot::environment>();
-        }
+        screenAdded(screen);
     }
 
     connect(qApp, &QGuiApplication::screenAdded,
@@ -766,6 +767,13 @@ void ShijimaManager::tick() {
         auto &mascot = shimeji->mascot();
         auto &breedRequest = mascot.state->breed_request;
         if (mascot.state->dragging) {
+            auto oldScreen = m_reverseEnv[mascot.state->env.get()];
+            auto newScreen = QGuiApplication::screenAt(QPoint {
+                (int)mascot.state->anchor.x, (int)mascot.state->anchor.y });
+            if (oldScreen != newScreen) {
+                mascot.state->env = m_env[newScreen];
+            }
+        }
         if (breedRequest.available) {
             if (breedRequest.name == "") {
                 breedRequest.name = shimeji->mascotName();

@@ -77,6 +77,7 @@ private:
     QMap<QString, MascotData> m_loadedMascots;
     QSet<QString> m_listItemsToRefresh;
     QMap<QScreen *, std::shared_ptr<shijima::mascot::environment>> m_env;
+    QMap<shijima::mascot::environment *, QScreen *> m_reverseEnv;
     shijima::mascot::factory m_factory;
     QString m_importOnShowPath;
     std::vector<ShijimaWidget *> m_mascots;
