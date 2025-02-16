@@ -770,7 +770,7 @@ void ShijimaManager::tick() {
             auto oldScreen = m_reverseEnv[mascot.state->env.get()];
             auto newScreen = QGuiApplication::screenAt(QPoint {
                 (int)mascot.state->anchor.x, (int)mascot.state->anchor.y });
-            if (oldScreen != newScreen) {
+            if (newScreen != nullptr && oldScreen != newScreen) {
                 mascot.state->env = m_env[newScreen];
             }
         }
