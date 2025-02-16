@@ -765,6 +765,7 @@ void ShijimaManager::tick() {
         shimeji->tick();
         auto &mascot = shimeji->mascot();
         auto &breedRequest = mascot.state->breed_request;
+        if (mascot.state->dragging) {
         if (breedRequest.available) {
             if (breedRequest.name == "") {
                 breedRequest.name = shimeji->mascotName();
@@ -782,11 +783,12 @@ void ShijimaManager::tick() {
                 std::cerr << ex.what() << std::endl;
             }
             if (product.has_value()) {
-                ShijimaWidget *shimeji = new ShijimaWidget(product->tmpl->name,
+                ShijimaWidget *child = new ShijimaWidget(product->tmpl->name,
                     imgRootForTemplatePath(product->tmpl->path),
                     std::move(product->manager), this);
-                shimeji->show();
-                m_mascots.push_back(shimeji);
+                child->setEnv(shimeji->env());
+                child->show();
+                m_mascots.push_back(child);
             }
             breedRequest.available = false;
         }
