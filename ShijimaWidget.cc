@@ -130,8 +130,10 @@ bool ShijimaWidget::updateOffsets() {
     // Detemine draw offsets and window positions
     QPoint drawOffset;
     m_visible = true;
-    int winX = (int)m_mascot->state->anchor.x - m_anchorInWindow.x();
-    int winY = (int)m_mascot->state->anchor.y - m_anchorInWindow.y();
+    int winX = (int)m_mascot->state->anchor.x - m_anchorInWindow.x()
+        - (int)env()->screen.left;
+    int winY = (int)m_mascot->state->anchor.y - m_anchorInWindow.y()
+        - (int)env()->screen.top;
     if (winX < 0) {
         drawOffset.setX(winX);
         winX = 0;
@@ -148,6 +150,8 @@ bool ShijimaWidget::updateOffsets() {
         drawOffset.setY(winY - screenHeight + windowHeight);
         winY = screenHeight - windowHeight;
     }
+    winX += (int)env()->screen.left;
+    winY += (int)env()->screen.top;
 
     if (isMirroredRender()) {
         drawOffset += QPoint {

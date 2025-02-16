@@ -9,6 +9,7 @@
 #include <QListWidgetItem>
 #include <QListWidget>
 #include <QSettings>
+#include <QScreen>
 #include "PlatformWidget.hpp"
 #include "MascotData.hpp"
 #include <set>
@@ -24,6 +25,7 @@ public:
     static ShijimaManager *defaultManager();
     static void finalize();
     void updateEnvironment();
+    void updateEnvironment(QScreen *);
     QString const& mascotsPath();
     void spawn(std::string const& name);
     void killAll();
@@ -33,6 +35,7 @@ public:
     void setManagerVisible(bool visible);
     void importOnShow(QString const& path);
     ShijimaWidget *hitTest(QPoint const& screenPos);
+    ~ShijimaManager();
 protected:
     void timerEvent(QTimerEvent *event) override;
     void showEvent(QShowEvent *event) override;
@@ -55,6 +58,8 @@ private:
     void buildToolbar();
     void importAction();
     void deleteAction();
+    void screenAdded(QScreen *);
+    void screenRemoved(QScreen *);
     void quitAction();
     std::set<std::string> import(QString const& path) noexcept;
     void importWithDialog(QList<QString> const& paths);
@@ -71,7 +76,7 @@ private:
     int m_windowObserverTimer = -1;
     QMap<QString, MascotData> m_loadedMascots;
     QSet<QString> m_listItemsToRefresh;
-    std::shared_ptr<shijima::mascot::environment> m_env;
+    QMap<QScreen *, std::shared_ptr<shijima::mascot::environment>> m_env;
     shijima::mascot::factory m_factory;
     QString m_importOnShowPath;
     std::vector<ShijimaWidget *> m_mascots;

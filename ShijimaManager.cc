@@ -254,9 +254,13 @@ void ShijimaManager::buildToolbar() {
             action = menu->addAction("Enable multiplication");
             action->setCheckable(true);
             action->setChecked(initial);
-            m_env->allows_breeding = initial;
+            for (auto &env : m_env) {
+                env->allows_breeding = initial;
+            }
             connect(action, &QAction::triggered, [this](bool checked){
-                m_env->allows_breeding = checked;
+                for (auto &env : m_env) {
+                    env->allows_breeding = checked;
+                }
                 m_settings.setValue(key, QVariant::fromValue(checked));
             });
         }
@@ -503,10 +507,49 @@ void ShijimaManager::dropEvent(QDropEvent *event) {
     importWithDialog(paths);
 }
 
+void ShijimaManager::screenAdded(QScreen *screen) {
+    if (!m_env.contains(screen)) {
+        m_env[screen] = std::make_shared<shijima::mascot::environment>();
+        auto primary = QGuiApplication::primaryScreen();
+        if (screen != primary && m_env.contains(primary)) {
+            m_env[screen]->allows_breeding = m_env[primary]->allows_breeding;
+        }
+    }
+}
+
+void ShijimaManager::screenRemoved(QScreen *screen) {
+    if (m_env.contains(screen)) {
+        auto primary = QGuiApplication::primaryScreen();
+        for (auto &mascot : m_mascots) {
+            mascot->setEnv(m_env[primary]);
+            mascot->mascot().reset_position();
+        }
+        m_env.remove(screen);
+    }
+}
+
+ShijimaManager::~ShijimaManager() {
+    disconnect(qApp, &QGuiApplication::screenAdded,
+        this, &ShijimaManager::screenAdded);
+    disconnect(qApp, &QGuiApplication::screenRemoved,
+        this, &ShijimaManager::screenRemoved);
+}
+
 ShijimaManager::ShijimaManager(QWidget *parent):
     PlatformWidget(parent, PlatformWidget::ShowOnAllDesktops),
     m_settings("pixelomer", "Shijima-Qt")
 {
+    for (auto screen : QGuiApplication::screens()) {
+        if (!m_env.contains(screen)) {
+            m_env[screen] = std::make_shared<shijima::mascot::environment>();
+        }
+    }
+
+    connect(qApp, &QGuiApplication::screenAdded,
+        this, &ShijimaManager::screenAdded);
+    connect(qApp, &QGuiApplication::screenRemoved,
+        this, &ShijimaManager::screenRemoved);
+
     QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
     QString mascotsPath = QDir::cleanPath(dataPath + QDir::separator() + "mascots");
     QDir mascotsDir(mascotsPath);
@@ -520,7 +563,6 @@ ShijimaManager::ShijimaManager(QWidget *parent):
     loadAllMascots();
     setAcceptDrops(true);
 
-    m_env = m_factory.env = std::make_shared<mascot::environment>();
     m_mascotTimer = startTimer(10);
     if (m_windowObserver.tickFrequency() > 0) {
         m_windowObserverTimer = startTimer(m_windowObserver.tickFrequency());
@@ -575,45 +617,58 @@ void ShijimaManager::timerEvent(QTimerEvent *event) {
     }
 }
 
-void ShijimaManager::updateEnvironment() {
-    m_currentWindow = m_windowObserver.getActiveWindow();
+void ShijimaManager::updateEnvironment(QScreen *screen) {
+    if (!m_env.contains(screen)) {
+        return;
+    }
+    auto &env = m_env[screen];
     auto cursor = QCursor::pos();
-    auto screen = QGuiApplication::primaryScreen();
     auto geometry = screen->geometry();
     auto available = screen->availableGeometry();
-    int taskbarHeight = geometry.height() - available.height() - available.y();
+    int taskbarHeight = geometry.y() + geometry.height() - available.height()
+        - available.y();
     if (taskbarHeight < 0) {
         taskbarHeight = 0;
     }
-    double gwidth = (double)geometry.width();
-    double gheight = (double)geometry.height();
-    m_env->screen = { 0, gwidth, gheight, 0 };
-    m_env->floor = { gheight - taskbarHeight, 0, gwidth };
-    m_env->work_area = { 0, gwidth, gheight - taskbarHeight, 0 };
-    m_env->ceiling = { 0, 0, gwidth };
+    env->screen = { (double)geometry.top(), (double)geometry.right(),
+        (double)geometry.bottom(), (double)geometry.left() };
+    env->floor = { (double)geometry.bottom() - taskbarHeight,
+        (double)geometry.left(), (double)geometry.right() };
+    env->work_area = { (double)geometry.top(), (double)geometry.right(),
+        (double)geometry.bottom() - taskbarHeight,
+        (double)geometry.left() };
+    env->ceiling = { (double)geometry.top(), (double)geometry.left(),
+        (double)geometry.right() };
     if (m_currentWindow.available && std::fabs(m_currentWindow.x) > 1
         && std::fabs(m_currentWindow.y) > 1)
     {
-        m_env->active_ie = { m_currentWindow.y,
+        env->active_ie = { m_currentWindow.y,
             m_currentWindow.x + m_currentWindow.width,
             m_currentWindow.y + m_currentWindow.height,
             m_currentWindow.x };
         if (m_previousWindow.available &&
             m_previousWindow.uid == m_currentWindow.uid)
         {
-            m_env->active_ie.dy = m_currentWindow.y - m_previousWindow.y;
-            m_env->active_ie.dx = m_currentWindow.x - m_previousWindow.x;
+            env->active_ie.dy = m_currentWindow.y - m_previousWindow.y;
+            env->active_ie.dx = m_currentWindow.x - m_previousWindow.x;
         }
     }
     else {
-        m_env->active_ie = { -50, -50, -50, -50 };
+        env->active_ie = { -50, -50, -50, -50 };
     }
     int x = cursor.x(), y = cursor.y();
-    m_env->cursor = { (double)x, (double)y, x - m_env->cursor.x, y - m_env->cursor.y };
-    m_env->subtick_count = 4;
+    env->cursor = { (double)x, (double)y, x - env->cursor.x, y - env->cursor.y };
+    env->subtick_count = 4;
     m_previousWindow = m_currentWindow;
 
-    m_env->set_scale(1.0 / std::sqrt(m_userScale));
+    env->set_scale(1.0 / std::sqrt(m_userScale));
+}
+
+void ShijimaManager::updateEnvironment() {
+    m_currentWindow = m_windowObserver.getActiveWindow();
+    for (auto screen : QGuiApplication::screens()) {
+        updateEnvironment(screen);
+    }
 }
 
 void ShijimaManager::askClose() {
@@ -737,7 +792,9 @@ void ShijimaManager::tick() {
         }
     }
     
-    m_env->reset_scale();
+    for (auto &env : m_env) {
+        env->reset_scale();
+    }
 
     if (m_mascots.size() == 0) {
         // All mascots self-destructed, show manager
@@ -757,15 +814,18 @@ ShijimaWidget *ShijimaManager::hitTest(QPoint const& screenPos) {
 }
 
 void ShijimaManager::spawn(std::string const& name) {
-    updateEnvironment();
+    QScreen *screen = this->screen();
+    updateEnvironment(screen);
+    auto &env = m_env[screen];
     auto product = m_factory.spawn(name, {});
+    product.manager->state->env = env;
     product.manager->reset_position();
     ShijimaWidget *shimeji = new ShijimaWidget(name,
         imgRootForTemplatePath(product.tmpl->path),
         std::move(product.manager), this);
     shimeji->show();
     m_mascots.push_back(shimeji);
-    m_env->reset_scale();
+    env->reset_scale();
 }
 
 bool ShijimaManager::eventFilter(QObject *obj, QEvent *event) {
