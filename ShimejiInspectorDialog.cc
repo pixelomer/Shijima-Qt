@@ -3,6 +3,7 @@
 #include <QFormLayout>
 #include <string>
 #include <QLabel>
+#include <QPoint>
 
 static std::string doubleToString(double val) {
     auto str = std::to_string(val);
@@ -11,6 +12,39 @@ static std::string doubleToString(double val) {
         str = str.substr(0, dot + 3);
     }
     return str;
+}
+
+static std::string vecToString(shijima::math::vec2 const& vec) {
+    return "x: " + doubleToString(vec.x) +
+        ", y: " + doubleToString(vec.y);
+}
+
+static std::string vecToString(QPoint const& vec) {
+    return "x: " + doubleToString(vec.x()) +
+        ", y: " + doubleToString(vec.y());
+}
+
+static std::string vecToString(shijima::mascot::environment::dvec2 const& vec) {
+    return "x: " + doubleToString(vec.x) +
+        ", y: " + doubleToString(vec.y) +
+        ", dx: " + doubleToString(vec.dx) +
+        ", dy: " + doubleToString(vec.dy);
+}
+
+static std::string areaToString(shijima::mascot::environment::area const& area) {
+    return "x: " + doubleToString(area.left) +
+        ", y: " + doubleToString(area.top) +
+        ", width: " + doubleToString(area.width()) +
+        ", height: " + doubleToString(area.height());
+}
+
+static std::string areaToString(shijima::mascot::environment::darea const& area) {
+    return "x: " + doubleToString(area.left) +
+        ", y: " + doubleToString(area.top) +
+        ", width: " + doubleToString(area.width()) +
+        ", height: " + doubleToString(area.height()) + 
+        ", dx: " + doubleToString(area.dx) + 
+        ", dy: " + doubleToString(area.dy);
 }
 
 ShimejiInspectorDialog::ShimejiInspectorDialog(ShijimaWidget *parent):
@@ -23,11 +57,14 @@ ShimejiInspectorDialog::ShimejiInspectorDialog(ShijimaWidget *parent):
     m_formLayout->setFormAlignment(Qt::AlignLeft);
     m_formLayout->setLabelAlignment(Qt::AlignRight);
 
-    addRow("X", [](shijima::mascot::manager &mascot){
-        return doubleToString(mascot.state->anchor.x);
+    addRow("Window", [this](shijima::mascot::manager &mascot){
+        return vecToString(shijimaParent()->pos());
     });
-    addRow("Y", [](shijima::mascot::manager &mascot){
-        return doubleToString(mascot.state->anchor.y);
+    addRow("Anchor", [](shijima::mascot::manager &mascot){
+        return vecToString(mascot.state->anchor);
+    });
+    addRow("Cursor", [](shijima::mascot::manager &mascot){
+        return vecToString(mascot.state->get_cursor());
     });
     addRow("Behavior", [](shijima::mascot::manager &mascot){
         return mascot.active_behavior()->name;
@@ -35,12 +72,27 @@ ShimejiInspectorDialog::ShimejiInspectorDialog(ShijimaWidget *parent):
     addRow("Image", [](shijima::mascot::manager &mascot){
         return mascot.state->active_frame.get_name(mascot.state->looking_right);
     });
+    addRow("Screen", [](shijima::mascot::manager &mascot){
+        return areaToString(mascot.state->env->screen);
+    });
+    addRow("Work Area", [](shijima::mascot::manager &mascot){
+        return areaToString(mascot.state->env->work_area);
+    });
+    addRow("Active IE", [](shijima::mascot::manager &mascot){
+        if (mascot.state->env->active_ie.visible()) {
+            return areaToString(mascot.state->env->active_ie);
+        }
+        else {
+            return std::string { "not visible" };
+        }
+    });
 }
 
 void ShimejiInspectorDialog::addRow(QString const& label,
     std::function<std::string(shijima::mascot::manager &)> tick)
 {
     auto labelWidget = new QLabel { label };
+    labelWidget->setStyleSheet("font-weight: bold;");
     auto dataWidget = new QLabel {};
     m_tickCallbacks.push_back([this, dataWidget, tick](){
         auto newText = tick(shijimaParent()->mascot());
