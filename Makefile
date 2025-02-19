@@ -14,7 +14,8 @@ SOURCES = main.cc \
 	ShijimaLicensesDialog.cc \
 	ShimejiInspectorDialog.cc \
 	DefaultMascot.cc \
-	resources.rc
+	resources.rc \
+	ShijimaHttpApi.cc
 
 DEFAULT_MASCOT_FILES := $(addsuffix .png,$(addprefix DefaultMascot/img/shime,$(shell seq -s ' ' 1 1 46))) \
 	DefaultMascot/behaviors.xml DefaultMascot/actions.xml
@@ -49,7 +50,7 @@ else
 CXXFLAGS += -DSHIJIMA_USE_QTMULTIMEDIA=0
 endif
 
-CXXFLAGS += -Ilibshijima -Ilibshimejifinder
+CXXFLAGS += -Ilibshijima -Ilibshimejifinder -Icpp-httplib
 PKG_LIBS += libarchive
 PUBLISH_DLL = $(addprefix Qt6,$(QT_LIBS))
 

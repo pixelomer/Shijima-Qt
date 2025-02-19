@@ -17,12 +17,15 @@ static QString readFile(QString const& file) {
 
 MascotData::MascotData(): m_valid(false) {}
 
-MascotData::MascotData(QString const& path): m_path(path), m_valid(true) {
+MascotData::MascotData(QString const& path, int id): m_path(path),
+    m_valid(true), m_id(id) 
+{
     if (path == "@") {
         m_name = "Default Mascot";
         m_behaviorsXML = QString { defaultMascot.at("behaviors.xml").first };
         m_actionsXML = QString { defaultMascot.at("actions.xml").first };
         m_path = "@";
+        m_imgRoot = "@/img";
         m_valid = true;
         m_deletable = false;
         QImage frame;
@@ -47,6 +50,7 @@ MascotData::MascotData(QString const& path): m_path(path), m_valid(true) {
         parser.parse(m_actionsXML.toStdString(), m_behaviorsXML.toStdString());
     }
     dir.cd("img");
+    m_imgRoot = QDir::cleanPath(path + QDir::separator() + "img");
     QDirIterator iter { dir.absolutePath(), QDir::Files,
         QDirIterator::NoIteratorFlags };
     QList<QString> images;
@@ -72,6 +76,10 @@ QImage MascotData::renderPreview(QImage frame) {
     painter.setBackgroundMode(Qt::BGMode::TransparentMode);
     painter.drawImage(QPoint{ (128 - frame.width()) / 2, 0 }, frame);
     return preview;
+}
+
+QString const &MascotData::imgRoot() const {
+    return m_imgRoot;
 }
 
 void MascotData::unloadCache() const {
@@ -104,4 +112,8 @@ QString const &MascotData::name() const {
 
 QIcon const &MascotData::preview() const {
     return m_preview;
+}
+
+int MascotData::id() const {
+    return m_id;
 }

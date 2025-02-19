@@ -61,3 +61,4 @@ DefaultMascot.cc
 !/DefaultMascot/behaviors.xml
 !/DefaultMascot/img/
 !/DefaultMascot/img/shime*.png
+!/cpp-httplib

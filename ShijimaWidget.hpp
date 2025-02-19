@@ -7,6 +7,7 @@
 #include <shijima/mascot/manager.hpp>
 #include <shijima/mascot/environment.hpp>
 #include "PlatformWidget.hpp"
+#include "MascotData.hpp"
 
 class QPushButton;
 class QPaintEvent;
@@ -19,12 +20,12 @@ class ShijimaWidget : public PlatformWidget<QWidget>
 {
 public:
     friend class ShijimaContextMenu;
-    explicit ShijimaWidget(std::string const& mascotName,
-        std::string const& imgRoot,
+    explicit ShijimaWidget(MascotData *mascotData,
         std::unique_ptr<shijima::mascot::manager> mascot,
-        QWidget *parent = nullptr);
+        int mascotId, QWidget *parent = nullptr);
     void tick();
     bool pointInside(QPoint const& point);
+    int mascotId() { return m_mascotId; }
     void showInspector();
     void markForDeletion() { m_markedForDeletion = true; }
     bool paused() const { return m_paused || m_contextMenuVisible; }
@@ -37,8 +38,11 @@ public:
     std::shared_ptr<shijima::mascot::environment> env() {
         return m_mascot->state->env; 
     }
-    std::string const& mascotName() {
-        return m_mascotName;
+    MascotData *mascotData() {
+        return m_data;
+    }
+    QString const& mascotName() {
+        return m_data->name();
     }
     ~ShijimaWidget();
 protected:
@@ -52,14 +56,13 @@ private:
     void contextMenuClosed(QCloseEvent *);
     void showContextMenu(QPoint const&);
     bool updateOffsets();
+    MascotData *m_data;
     ShimejiInspectorDialog *m_inspector;
     SoundEffectManager m_sounds;
     Asset const& getActiveAsset();
     ShijimaWidget *m_dragTarget = nullptr;
     ShijimaWidget **m_dragTargetPt = nullptr;
     std::unique_ptr<shijima::mascot::manager> m_mascot;
-    std::string m_mascotName;
-    std::string m_imgRoot;
     QRect m_imageRect;
     QPoint m_anchorInWindow;
     double m_drawScale = 1.0;
@@ -70,4 +73,5 @@ private:
     bool m_contextMenuVisible = false;
     bool m_paused = false;
     bool m_markedForDeletion = false;
+    int m_mascotId;
 };

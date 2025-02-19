@@ -49,7 +49,8 @@ ShijimaContextMenu::ShijimaContextMenu(ShijimaWidget *parent)
     // Call another
     action = addAction("Call another");
     connect(action, &QAction::triggered, [this](){
-        ShijimaManager::defaultManager()->spawn(this->shijimaParent()->mascotName());
+        ShijimaManager::defaultManager()->spawn(this->shijimaParent()->mascotName()
+            .toStdString());
     });
 
     // Dismiss all but one

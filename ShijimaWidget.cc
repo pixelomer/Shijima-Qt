@@ -19,25 +19,21 @@
 
 using namespace shijima;
 
-ShijimaWidget::ShijimaWidget(std::string const& mascotName,
-    std::string const& imgRoot,
+ShijimaWidget::ShijimaWidget(MascotData *mascotData,
     std::unique_ptr<shijima::mascot::manager> mascot,
-    QWidget *parent):
+    int mascotId, QWidget *parent):
 #if defined(__APPLE__)
     PlatformWidget(nullptr, PlatformWidget::ShowOnAllDesktops),
 #else
     PlatformWidget(parent, PlatformWidget::ShowOnAllDesktops),
 #endif
-    m_inspector(nullptr)
+    m_data(mascotData), m_inspector(nullptr), m_mascotId(mascotId)
 {
-    m_mascotName = mascotName;
     m_windowHeight = 128;
     m_windowWidth = 128;
-    m_imgRoot = imgRoot;
     m_mascot = std::move(mascot);
-
-    QString qImgRoot = QString::fromStdString(imgRoot);
-    QDir dir { qImgRoot };
+    
+    QDir dir { m_data->imgRoot() };
     if (dir.exists() && dir.cdUp() && dir.cd("sound")) {
         m_sounds.searchPaths.push_back(dir.path());
     }
@@ -68,7 +64,7 @@ void ShijimaWidget::showInspector() {
 Asset const& ShijimaWidget::getActiveAsset() {
     auto &name = m_mascot->state->active_frame.get_name(m_mascot->state->looking_right);
     auto lowerName = shimejifinder::to_lower(name);
-    auto imagePath = QDir::cleanPath(QString::fromStdString(m_imgRoot)
+    auto imagePath = QDir::cleanPath(m_data->imgRoot()
         + QDir::separator() + QString::fromStdString(lowerName));
     return AssetLoader::defaultLoader()->loadAsset(imagePath);
 }
