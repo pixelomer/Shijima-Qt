@@ -91,15 +91,17 @@ static std::optional<QJsonObject> jsonForRequest(Request const& req) {
     }
 }
 
-static void badRequest(Request const&, Response &res) {
-    res.status = 400;
-    res.set_content("{\"error\": \"Bad Request\"}", "application/json");
-}
-
 static void sendJson(Response &res, QJsonObject const& object) {
     QJsonDocument doc { object };
     auto bytes = doc.toJson();
     res.set_content(&bytes[0], bytes.size(), "application/json");
+}
+
+static void badRequest(Request const&, Response &res) {
+    QJsonObject obj;
+    obj["error"] = "400 Bad Request";
+    res.status = 400;
+    sendJson(res, obj);
 }
 
 ShijimaHttpApi::ShijimaHttpApi(ShijimaManager *manager): m_server(new Server),
@@ -223,12 +225,12 @@ ShijimaHttpApi::ShijimaHttpApi(ShijimaManager *manager): m_server(new Server),
         sendJson(res, object);
     });
     m_server->Delete("/shijima/api/v1/mascots",
-        [this](Request const& req, Response &res)
+        [this](Request const&, Response &res)
     {
         m_manager->onTickSync([](ShijimaManager *manager){
             manager->killAll();
         });
-        res.set_content("{}", "application/json");
+        sendJson(res, {});
     });
     m_server->Get("/shijima/api/v1/loadedMascots",
         [this](Request const&, Response &res)
