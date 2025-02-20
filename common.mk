@@ -106,11 +106,9 @@ endif
 
 EXE := 
 ifeq ($(PLATFORM),Windows)
-	#FIXME: --allow-multiple-definition should not be necessary
-
 	PLATFORM_CFLAGS := -mwindows -msse2
 	PLATFORM_CXXFLAGS := -mwindows -msse2
-	PLATFORM_LDFLAGS := -Wl,--allow-multiple-definition -mwindows -msse2
+	PLATFORM_LDFLAGS := -mwindows -msse2
 	ifeq ($(bindir),)
 		bindir := $(shell [ "$${PATH:0:6}" = /mingw ] && echo "$${PATH%%:*}")
 		ifeq ($(bindir),)
@@ -119,9 +117,9 @@ $(error bindir is not set)
 	endif
 	WINDLL_PATH := $(bindir)
 	QT_PLUGIN_PATH := $(WINDLL_PATH)/../lib/qt$(QT_VERSION)/plugins
-	ifeq ($(shell [ -d "$(QT_PLUGIN_PATH)" ] && echo 1 ]),)
+	ifeq ($(shell [ -d "$(QT_PLUGIN_PATH)" ] && echo 1),)
 		QT_PLUGIN_PATH := $(WINDLL_PATH)/../share/qt$(QT_VERSION)/plugins
-		ifeq ($(shell [ -d "$(QT_PLUGIN_PATH)" ] && echo 1 ]),)
+		ifeq ($(shell [ -d "$(QT_PLUGIN_PATH)" ] && echo 1),)
 $(error could not find Qt plugin path)
 		endif
 	endif
