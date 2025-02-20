@@ -1,14 +1,11 @@
 #pragma once
 #include <string>
+#include <thread>
 
 class ShijimaManager;
 
 namespace httplib {
     class Server;
-}
-
-namespace std {
-    class thread;
 }
 
 class ShijimaHttpApi {
