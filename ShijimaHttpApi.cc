@@ -94,7 +94,7 @@ static std::optional<QJsonObject> jsonForRequest(Request const& req) {
 
 static void sendJson(Response &res, QJsonObject const& object) {
     QJsonDocument doc { object };
-    auto bytes = doc.toJson();
+    auto bytes = doc.toJson(QJsonDocument::Compact);
     res.set_content(&bytes[0], bytes.size(), "application/json");
 }
 
