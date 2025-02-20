@@ -6,8 +6,13 @@
 #include "Platform/Platform.hpp"
 #include "ShijimaManager.hpp"
 #include "AssetLoader.hpp"
+#include "cli.hpp"
+#include <httplib.h>
 
 int main(int argc, char **argv) {
+    if (argc > 1) {
+        return shijimaRunCli(argc, argv);
+    }
     Platform::initialize(argc, argv);
     #ifdef _WIN32
         freopen("shijima_stdout.txt", "a", stdout);
@@ -19,10 +24,13 @@ int main(int argc, char **argv) {
     QApplication app(argc, argv);
     app.setApplicationName("Shijima-Qt");
     app.setApplicationDisplayName("Shijima-Qt");
-    if (argc == 2) {
-        ShijimaManager::defaultManager()->importOnShow(argv[1]);
-    }
     try {
+        httplib::Client pingClient { "http://127.0.0.1:32456" };
+        pingClient.set_connection_timeout(0, 500000);
+        auto pingResult = pingClient.Get("/shijima/api/v1/ping");
+        if (pingResult != nullptr) {
+            throw std::runtime_error("Shijima-Qt is already running!");
+        }
         ShijimaManager::defaultManager()->show();
     }
     catch (std::exception &ex) {
@@ -36,6 +44,5 @@ int main(int argc, char **argv) {
     int ret = app.exec();
     ShijimaManager::finalize();
     AssetLoader::finalize();
-    std::cout << std::endl;
     return ret;
 }

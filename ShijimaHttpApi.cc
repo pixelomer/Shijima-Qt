@@ -22,6 +22,7 @@ static QJsonObject mascotToObject(ShijimaWidget *widget) {
     QJsonObject obj;
     obj["id"] = widget->mascotId();
     obj["data_id"] = widget->mascotData()->id();
+    obj["name"] = widget->mascotData()->name();
     obj["anchor"] = vecToObject(widget->mascot().state->anchor);
     auto activeBehavior = widget->mascot().active_behavior();
     if (activeBehavior != nullptr) {
@@ -245,6 +246,11 @@ ShijimaHttpApi::ShijimaHttpApi(ShijimaManager *manager): m_server(new Server),
         QJsonObject object;
         object["loaded_mascots"] = array;
         sendJson(res, object);
+    });
+    m_server->Get("/shijima/api/v1/ping",
+        [](Request const&, Response &res)
+    {
+        sendJson(res, {});
     });
     m_server->Get("/shijima/api/v1/loadedMascots/([0-9]+)",
         [this](Request const& req, Response &res)

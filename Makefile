@@ -14,8 +14,9 @@ SOURCES = main.cc \
 	ShijimaLicensesDialog.cc \
 	ShimejiInspectorDialog.cc \
 	DefaultMascot.cc \
-	resources.rc \
-	ShijimaHttpApi.cc
+	ShijimaHttpApi.cc \
+	cli.cc \
+	resources.rc
 
 DEFAULT_MASCOT_FILES := $(addsuffix .png,$(addprefix DefaultMascot/img/shime,$(shell seq -s ' ' 1 1 46))) \
 	DefaultMascot/behaviors.xml DefaultMascot/actions.xml
