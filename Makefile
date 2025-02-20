@@ -66,6 +66,8 @@ publish/Windows/$(CONFIG): shijima-qt$(EXE) FORCE
 	@$(call copy_changed,$<,$@)
 	@$(call copy_exe_dlls,$<,$@)
 	@$(call copy_qt_plugin_dlls,$@)
+	if [ $(CONFIG) = release ]; then find $@ -name '*.dll' -exec $(STRIP) '{}' \;; fi
+	if [ $(CONFIG) = release ]; then $(STRIP) $@/libunarr.so.1.1.0; fi
 
 linuxdeploy-plugin-appimage-x86_64.AppImage:
 	wget -O $@ -c --no-verbose https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/latest/download/linuxdeploy-plugin-appimage-x86_64.AppImage
@@ -86,11 +88,13 @@ publish/macOS/$(CONFIG): shijima-qt$(EXE)
 	mkdir -p $@
 	$(call copy_changed,libshimejifinder/build/unarr/libunarr.1.dylib,$@)
 	$(call copy_changed,$<,$@)
+	if [ $(CONFIG) = release ]; then $(STRIP) $@/libunarr.1.dylib; fi
 	install_name_tool -add_rpath "$$(realpath $@)" $@/$<
 
 publish/Linux/$(CONFIG): shijima-qt$(EXE)
 	mkdir -p $@
 	@$(call copy_changed,libshimejifinder/build/unarr/libunarr.so.1,$@)
+	if [ $(CONFIG) = release ]; then $(STRIP) $@/libunarr.1.dylib; fi
 	@$(call copy_changed,$<,$@)
 
 publish/macOS/$(CONFIG)/Shijima-Qt.app: publish/macOS/$(CONFIG)
