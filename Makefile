@@ -43,6 +43,10 @@ PKG_LIBS := x11
 TARGET_LDFLAGS += -Wl,-R -Wl,$(shell pwd)/publish/Linux/$(CONFIG)
 endif
 
+ifeq ($(PLATFORM),Windows)
+TARGET_LDFLAGS += -lws2_32
+endif
+
 ifeq ($(SHIJIMA_USE_QTMULTIMEDIA),1)
 QT_LIBS += Multimedia
 CXXFLAGS += -DSHIJIMA_USE_QTMULTIMEDIA=1
