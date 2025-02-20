@@ -404,7 +404,9 @@ int shijimaRunCli(int argc, char **argv) {
     int ret = cliMain(argc, argv);
     #ifdef _WIN32
         std::string output = winOutputStream.str();
-        MessageBoxA(NULL, output.c_str(), argv[0], MB_OK);
+        if (!output.empty()) {
+            MessageBoxA(NULL, output.c_str(), argv[0], MB_OK);
+        }
     #endif
     return ret;
 }
