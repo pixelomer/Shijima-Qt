@@ -103,7 +103,7 @@ static void sendJson(Response &res, QJsonObject const& object) {
 }
 
 ShijimaHttpApi::ShijimaHttpApi(ShijimaManager *manager): m_server(new Server),
-    m_thread(nullptr), m_manager(manager)
+    m_thread(nullptr), m_manager(manager), m_host(""), m_port(-1)
 {
     m_server->Get("/shijima/api/v1/mascots",
         [this](Request const&, Response &res)
@@ -304,9 +304,23 @@ ShijimaHttpApi::ShijimaHttpApi(ShijimaManager *manager): m_server(new Server),
 
 void ShijimaHttpApi::start(std::string const& host, int port) {
     stop();
+    m_host = host;
+    m_port = port;
     m_thread = new std::thread { [this, host, port](){
         m_server->listen(host, port);
     } };
+}
+
+bool ShijimaHttpApi::running() {
+    return m_server->is_running();
+}
+
+int ShijimaHttpApi::port() {
+    return m_port;
+}
+
+std::string const& ShijimaHttpApi::host() {
+    return m_host;
 }
 
 void ShijimaHttpApi::stop() {
