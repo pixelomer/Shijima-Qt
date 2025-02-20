@@ -695,10 +695,14 @@ void ShijimaManager::updateEnvironment(QScreen *screen) {
         if (m_previousWindow.available &&
             m_previousWindow.uid == m_currentWindow.uid)
         {
-            env->active_ie.dy = m_currentWindow.y - m_previousWindow.y +
-                m_currentWindow.height - m_previousWindow.height;
-            env->active_ie.dx = m_currentWindow.x - m_previousWindow.x +
-                m_currentWindow.width - m_previousWindow.width;
+            env->active_ie.dy = m_currentWindow.y - m_previousWindow.y;
+            if (env->active_ie.dy == 0) {
+                env->active_ie.dy = m_currentWindow.height - m_previousWindow.height;
+            }
+            env->active_ie.dx = m_currentWindow.x - m_previousWindow.x;
+            if (env->active_ie.dx == 0) {
+                env->active_ie.dx = m_currentWindow.width - m_previousWindow.width;
+            }
         }
     }
     else {
