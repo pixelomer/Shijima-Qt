@@ -202,37 +202,52 @@ static bool parseShimejiAttributes(QJsonObject &object, QVariant const& behavior
     return true;
 }
 
+static void printMascot(QJsonObject const& object) {
+    cout << "[" << object["id"].toInt() << "] " <<
+        object["name"].toString().toStdString() << std::endl;
+    cout << "  Data ID: " << object["data_id"].toInt() << std::endl;
+    cout << "  Active behavior: " <<
+        object["active_behavior"].toString().toStdString() << std::endl;
+    cout << "  Anchor: {" <<
+        object["anchor"].toObject()["x"].toDouble() << ", " <<
+        object["anchor"].toObject()["y"].toDouble() << "}" << std::endl;
+}
+
 static int cliMain(int argc, char **argv) {
     std::string action = argv[1];
     httplib::Client client { "http://127.0.0.1:32456" };
     if (action == "list") {
-        if (!parseOptions(argc, argv, {})) {
+        QVariant json { false };
+        if (!parseOptions(argc, argv, {
+            { "json", "Print the API response as JSON", &json, QMetaType::Bool, false }
+        })) {
             return EXIT_FAILURE;
         }
         if (auto res = client.Get("/shijima/api/v1/mascots")) {
             QJsonObject object;
             if (!parseAPIResult(res, object)) {
-                return EXIT_FAILURE;
-            }
-            auto mascotsValue = object["mascots"];
-            if (!mascotsValue.isArray()) {
-                cerr << "ERROR: Malformed response" << std::endl;
-                return EXIT_FAILURE;
-            }
-            auto mascots = mascotsValue.toArray();
-            for (auto mascot : mascots) {
-                if (!mascot.isObject()) {
-                    continue;
+                if (json.toBool() && object.contains("error")) {
+                    cout << res->body << std::endl;
                 }
-                auto object = mascot.toObject();
-                cout << "[" << object["id"].toInt() << "] " <<
-                    object["name"].toString().toStdString() << std::endl;
-                cout << "  Data ID: " << object["data_id"].toInt() << std::endl;
-                cout << "  Active behavior: " <<
-                    object["active_behavior"].toString().toStdString() << std::endl;
-                cout << "  Anchor: {" <<
-                    object["anchor"].toObject()["x"].toDouble() << ", " <<
-                    object["anchor"].toObject()["y"].toDouble() << "}" << std::endl;
+                return EXIT_FAILURE;
+            }
+            if (json.toBool()) {
+                cout << res->body << std::endl;
+            }
+            else {
+                auto mascotsValue = object["mascots"];
+                if (!mascotsValue.isArray()) {
+                    cerr << "ERROR: Malformed response" << std::endl;
+                    return EXIT_FAILURE;
+                }
+                auto mascots = mascotsValue.toArray();
+                for (auto mascot : mascots) {
+                    if (!mascot.isObject()) {
+                        continue;
+                    }
+                    auto object = mascot.toObject();
+                    printMascot(object);
+                }
             }
             return EXIT_SUCCESS;
         }
@@ -241,37 +256,56 @@ static int cliMain(int argc, char **argv) {
         }
     }
     else if (action == "list-loaded") {
-        if (!parseOptions(argc, argv, {})) {
+        QVariant json { false }, sortById { false };
+        if (!parseOptions(argc, argv, {
+            { "json", "Print the API response as JSON", &json, QMetaType::Bool, false },
+            { "sort-by-id", "Sort results by ID", &sortById, QMetaType::Bool, false }
+        })) {
+            return EXIT_FAILURE;
+        }
+        if (json.toBool() && sortById.toBool()) {
+            cerr << "ERROR: --json and --sort-by-id cannot be used together." <<
+                std::endl;
             return EXIT_FAILURE;
         }
         if (auto res = client.Get("/shijima/api/v1/loadedMascots")) {
             QJsonObject object;
             if (!parseAPIResult(res, object)) {
-                return EXIT_FAILURE;
-            }
-            auto loadedValue = object["loaded_mascots"];
-            if (!loadedValue.isArray()) {
-                cerr << "ERROR: Malformed response" << std::endl;
-                return EXIT_FAILURE;
-            }
-            QJsonArray loaded = loadedValue.toArray();
-            std::vector<std::pair<int, std::string>> sorted;
-            for (auto mascotValue : loaded) {
-                if (!mascotValue.isObject()) {
-                    continue;
+                if (json.toBool() && object.contains("error")) {
+                    cout << res->body << std::endl;
                 }
-                auto mascot = mascotValue.toObject();
-                sorted.push_back({ mascot["id"].toInt(), 
-                    mascot["name"].toString().toStdString() });
+                return EXIT_FAILURE;
             }
-            std::sort(sorted.begin(), sorted.end(),
-                [](auto &a, auto &b)
-            {
-                return a.first < b.first;
-            });
-            for (auto &item : sorted) {
-                cout << "[" << item.first << "] "
-                    << item.second << std::endl;
+            if (json.toBool()) {
+                cout << res->body << std::endl;
+            }
+            else {
+                auto loadedValue = object["loaded_mascots"];
+                if (!loadedValue.isArray()) {
+                    cerr << "ERROR: Malformed response" << std::endl;
+                    return EXIT_FAILURE;
+                }
+                QJsonArray loaded = loadedValue.toArray();
+                std::vector<std::pair<int, std::string>> sorted;
+                for (auto mascotValue : loaded) {
+                    if (!mascotValue.isObject()) {
+                        continue;
+                    }
+                    auto mascot = mascotValue.toObject();
+                    sorted.push_back({ mascot["id"].toInt(), 
+                        mascot["name"].toString().toStdString() });
+                }
+                if (sortById.toBool()) {
+                    std::sort(sorted.begin(), sorted.end(),
+                        [](auto &a, auto &b)
+                    {
+                        return a.first < b.first;
+                    });
+                }
+                for (auto &item : sorted) {
+                    cout << "[" << item.first << "] "
+                        << item.second << std::endl;
+                }
             }
             return EXIT_SUCCESS;
         }
@@ -280,13 +314,14 @@ static int cliMain(int argc, char **argv) {
         }
     }
     else if (action == "spawn") {
-        QVariant name, dataId, behavior, x, y;
+        QVariant name, dataId, behavior, x, y, printJson { false };
         ArgumentList args = {
             { "data-id", "Data ID of the shimeji to spawn", &dataId, QMetaType::Int, false },
             { "name", "Name of the shimeji to spawn", &name, QMetaType::QString, false },
             { "behavior", "Initial behavior for the shimeji", &behavior, QMetaType::QString, false },
             { "x", "Initial X position for the shimeji", &x, QMetaType::Double, false },
-            { "y", "Initial Y position for the shimeji", &y, QMetaType::Double, false }
+            { "y", "Initial Y position for the shimeji", &y, QMetaType::Double, false },
+            { "json", "Print the API response as JSON", &printJson, QMetaType::Bool, false }
         };
         if (!parseOptions(argc, argv, args)) {
             return EXIT_FAILURE;
@@ -312,24 +347,39 @@ static int cliMain(int argc, char **argv) {
             std::string { &json[0], (size_t)json.size() }, "application/json"))
         {
             QJsonObject object;
+            int ret;
             if (parseAPIResult(res, object)) {
-                return EXIT_SUCCESS;
+                if (!printJson.toBool()) {
+                    auto mascot = object["mascot"];
+                    if (!mascot.isObject()) {
+                        cerr << "ERROR: Malformed response" << std::endl;
+                        ret = EXIT_FAILURE;
+                    }
+                    else {
+                        printMascot(mascot.toObject());
+                    }
+                }
             }
             else {
-                return EXIT_FAILURE;
+                ret = EXIT_FAILURE;
             }
+            if (printJson.toBool()) {
+                cout << res->body << std::endl;
+            }
+            return ret;
         }
         else {
             return notRunning();
         }
     }
     else if (action == "alter") {
-        QVariant id, behavior, x, y;
+        QVariant id, behavior, x, y, printJson { false };
         if (!parseOptions(argc, argv, {
             { "id", "ID of the shimeji to alter", &id, QMetaType::Int, true },
             { "behavior", "New behavior for the shimeji", &behavior, QMetaType::QString, false },
             { "x", "New X position for the shimeji", &x, QMetaType::Double, false },
-            { "y", "New Y position for the shimeji", &y, QMetaType::Double, false }
+            { "y", "New Y position for the shimeji", &y, QMetaType::Double, false },
+            { "json", "Print the API response as JSON", &printJson, QMetaType::Bool, false }
         })) {
             return EXIT_FAILURE;
         }
@@ -343,12 +393,27 @@ static int cliMain(int argc, char **argv) {
             + std::to_string(id.toInt()),
             std::string { &json[0], (size_t)json.size() }, "application/json"))
         {
-            if (parseAPIResult(res)) {
-                return EXIT_SUCCESS;
+            QJsonObject object;
+            int ret;
+            if (parseAPIResult(res, object)) {
+                if (!printJson.toBool()) {
+                    auto mascot = object["mascot"];
+                    if (!mascot.isObject()) {
+                        cerr << "ERROR: Malformed response" << std::endl;
+                        ret = EXIT_FAILURE;
+                    }
+                    else {
+                        printMascot(mascot.toObject());
+                    }
+                }
             }
             else {
-                return EXIT_FAILURE;
+                ret = EXIT_FAILURE;
             }
+            if (printJson.toBool()) {
+                cout << res->body << std::endl;
+            }
+            return ret;
         }
         else {
             return notRunning();

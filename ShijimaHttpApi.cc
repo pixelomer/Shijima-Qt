@@ -184,6 +184,7 @@ ShijimaHttpApi::ShijimaHttpApi(ShijimaManager *manager): m_server(new Server),
             if (manager->mascotsById().count(id) == 1) {
                 auto widget = manager->mascotsById().at(id);
                 applyObjectToWidget(*json, widget);
+                object["mascot"] = mascotToObject(widget);
             }
             else {
                 res.status = 404;
