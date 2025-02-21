@@ -14,10 +14,6 @@ int main(int argc, char **argv) {
         return shijimaRunCli(argc, argv);
     }
     Platform::initialize(argc, argv);
-    #ifdef _WIN32
-        freopen("shijima_stdout.txt", "a", stdout);
-        freopen("shijima_stderr.txt", "a", stderr);
-    #endif
     #ifdef SHIJIMA_LOGGING_ENABLED
         shijima::set_log_level(SHIJIMA_LOG_PARSER | SHIJIMA_LOG_WARNINGS);
     #endif
