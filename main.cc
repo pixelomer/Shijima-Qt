@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
     try {
         httplib::Client pingClient { "http://127.0.0.1:32456" };
         pingClient.set_connection_timeout(0, 500000);
+        pingClient.set_read_timeout(0, 500000);
         auto pingResult = pingClient.Get("/shijima/api/v1/ping");
         if (pingResult != nullptr) {
             throw std::runtime_error("Shijima-Qt is already running!");
