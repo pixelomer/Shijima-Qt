@@ -39,7 +39,7 @@ Returns a list of mascots that are on the screen.
 
 Spawns a new mascot. One of `name` or `data_id` must be specified.
 
-**Format:**
+**Request format:**
 
 ```json
 {
@@ -70,16 +70,16 @@ Spawns a new mascot. One of `name` or `data_id` must be specified.
 
 ```json
 {
-  "mascot": {
-    "active_behavior": null,
-    "anchor": {
-      "x": 150,
-      "y": 150
-    },
-    "data_id": 0,
-    "id": 40,
-    "name": "Default Mascot"
-  }
+    "mascot": {
+        "active_behavior": null,
+        "anchor": {
+            "x": 150,
+            "y": 150
+        },
+        "data_id": 0,
+        "id": 40,
+        "name": "Default Mascot"
+    }
 }
 ```
 
@@ -112,7 +112,7 @@ Gets data for one mascot.
 
 Alters the state of an existing mascot.
 
-**Format:**
+**Request format:**
 
 ```json
 {
@@ -188,12 +188,10 @@ Returns information about a specific loaded mascot.
 
 ```json
 {
-    "loaded_mascot": [
-        {
-            "id": 79,
-            "name": "Jenny"
-        }
-    ]
+    "loaded_mascot": {
+        "id": 79,
+        "name": "Jenny"
+    }
 }
 ```
 
