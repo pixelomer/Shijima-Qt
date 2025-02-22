@@ -63,3 +63,4 @@ DefaultMascot.cc
 !/DefaultMascot/img/shime*.png
 !/cpp-httplib
 !/HTTP-API.md
+!/LICENSE
