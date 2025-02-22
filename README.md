@@ -1,5 +1,7 @@
 # Shijima-Qt
 
+![Shijima-Qt running on Fedora 41](.images/Shijima-Qt-Fedora.jpg)
+
 Cross-platform shimeji desktop pet simulator. Built with Qt6. Supports macOS, Linux and Windows.
 
 - [Download the latest release](https://github.com/pixelomer/Shijima-Qt/releases/latest)

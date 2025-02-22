@@ -64,3 +64,5 @@ DefaultMascot.cc
 !/cpp-httplib
 !/HTTP-API.md
 !/LICENSE
+!/.images/
+!/.images/*.jpg
