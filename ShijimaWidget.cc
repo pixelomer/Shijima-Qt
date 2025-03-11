@@ -39,13 +39,14 @@ using namespace shijima;
 
 ShijimaWidget::ShijimaWidget(MascotData *mascotData,
     std::unique_ptr<shijima::mascot::manager> mascot,
-    int mascotId, QWidget *parent):
+    int mascotId, bool windowedMode, QWidget *parent):
 #if defined(__APPLE__)
     PlatformWidget(nullptr, PlatformWidget::ShowOnAllDesktops),
 #else
     PlatformWidget(parent, PlatformWidget::ShowOnAllDesktops),
 #endif
-    m_data(mascotData), m_inspector(nullptr), m_mascotId(mascotId)
+    m_windowedMode(windowedMode), m_data(mascotData),
+    m_inspector(nullptr), m_mascotId(mascotId)
 {
     m_windowHeight = 128;
     m_windowWidth = 128;
@@ -56,27 +57,39 @@ ShijimaWidget::ShijimaWidget(MascotData *mascotData,
         m_sounds.searchPaths.push_back(dir.path());
     }
     
-    setAttribute(Qt::WA_TranslucentBackground);
-    setAttribute(Qt::WA_NoSystemBackground);
-    setAttribute(Qt::WA_ShowWithoutActivating);
-    setAttribute(Qt::WA_MacShowFocusRect, false);
+    if (!m_windowedMode) {
+        setAttribute(Qt::WA_TranslucentBackground);
+        setAttribute(Qt::WA_NoSystemBackground);
+        setAttribute(Qt::WA_ShowWithoutActivating);
+        setAttribute(Qt::WA_MacShowFocusRect, false);
+        Qt::WindowFlags flags = Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint
+            | Qt::WindowDoesNotAcceptFocus | Qt::NoDropShadowWindowHint
+            | Qt::WindowOverridesSystemGestures;
+        #if defined(__APPLE__)
+        flags |= Qt::Window;
+        #else
+        flags |= Qt::Tool;
+        #endif
+        setWindowFlags(flags);
+    }
     setFixedSize(m_windowWidth, m_windowHeight);
-    Qt::WindowFlags flags = Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint
-        | Qt::WindowDoesNotAcceptFocus | Qt::NoDropShadowWindowHint
-        | Qt::WindowOverridesSystemGestures;
-    #if defined(__APPLE__)
-    flags |= Qt::Window;
-    #else
-    flags |= Qt::Tool;
-    #endif
-    setWindowFlags(flags);
 }
+
+
+ShijimaWidget::ShijimaWidget(ShijimaWidget &old, bool windowedMode,
+    QWidget *parent) : ShijimaWidget(old.mascotData(),
+    std::move(old.m_mascot), old.m_mascotId,
+    windowedMode, parent) {}
 
 void ShijimaWidget::showInspector() {
     if (m_inspector == nullptr) {
         m_inspector = new ShimejiInspectorDialog { this };
     }
     m_inspector->show();
+}
+
+bool ShijimaWidget::inspectorVisible() {
+    return m_inspector != nullptr && m_inspector->isVisible();
 }
 
 Asset const& ShijimaWidget::getActiveAsset() {
@@ -294,7 +307,6 @@ void ShijimaWidget::setDragTarget(ShijimaWidget *target) {
 
 void ShijimaWidget::mousePressEvent(QMouseEvent *event) {
     auto pos = event->pos();
-    auto screenPos = mapToGlobal(pos);
     if (m_dragTarget != nullptr) {
         m_dragTarget->m_mascot->state->dragging = false;
     }
@@ -302,7 +314,14 @@ void ShijimaWidget::mousePressEvent(QMouseEvent *event) {
         setDragTarget(this);
     }
     else {
-        ShijimaWidget *target = ShijimaManager::defaultManager()->hitTest(screenPos);
+        QPoint envPos;
+        if (m_windowedMode) {
+            envPos = mapToParent(pos);
+        }
+        else {
+            envPos = mapToGlobal(pos);
+        }
+        ShijimaWidget *target = ShijimaManager::defaultManager()->hitTest(envPos);
         setDragTarget(target);
         if (target == nullptr) {
             event->ignore();
@@ -313,6 +332,7 @@ void ShijimaWidget::mousePressEvent(QMouseEvent *event) {
         m_dragTarget->m_mascot->state->dragging = true;
     }
     else if (event->button() == Qt::MouseButton::RightButton) {
+        auto screenPos = mapToGlobal(pos);
         m_dragTarget->showContextMenu(screenPos);
         setDragTarget(nullptr);
     }

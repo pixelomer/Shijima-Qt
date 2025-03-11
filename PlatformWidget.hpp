@@ -38,8 +38,10 @@ private:
 protected:
     void showEvent(QShowEvent *event) override {
         T::showEvent(event);
-        if (m_flags & ShowOnAllDesktops) {
-            Platform::showOnAllDesktops(this);
+        if (this->winId() != 0) {
+            if (m_flags & ShowOnAllDesktops) {
+                Platform::showOnAllDesktops(this);
+            }
         }
     }
 };

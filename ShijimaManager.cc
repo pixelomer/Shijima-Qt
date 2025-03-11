@@ -58,10 +58,23 @@
 #include <string>
 #include <QLabel>
 #include <QFormLayout>
+#include <QColorDialog>
+#include <cstring>
+#include <cstdint>
 
 #define SHIJIMAQT_SUBTICK_COUNT 4
 
 using namespace shijima;
+
+static QString colorToString(QColor const& color) {
+    auto rgb = color.toRgb();
+    std::array<char, 8> buf;
+    snprintf(&buf[0], buf.size(), "#%02hhX%02hhX%02hhX",
+        (uint8_t)rgb.red(), (uint8_t)rgb.green(),
+        (uint8_t)rgb.blue());
+    buf[buf.size()-1] = 0;
+    return QString { &buf[0] };
+}
 
 // https://stackoverflow.com/questions/34135624/-/54029758#54029758
 static void dispatchToMainThread(std::function<void()> callback) {
@@ -271,6 +284,13 @@ std::unique_lock<std::mutex> ShijimaManager::acquireLock() {
     return std::unique_lock<std::mutex> { m_mutex };
 }
 
+void ShijimaManager::updateSandboxBackground() {
+    if (m_sandboxWidget != nullptr) {
+        m_sandboxWidget->setStyleSheet("#sandboxWindow { background-color: " +
+            colorToString(m_sandboxBackground) + "; }");
+    }
+}
+
 void ShijimaManager::buildToolbar() {
     QAction *action;
     QMenu *menu;
@@ -309,6 +329,36 @@ void ShijimaManager::buildToolbar() {
                     env->allows_breeding = checked;
                 }
                 m_settings.setValue(key, QVariant::fromValue(checked));
+            });
+        }
+
+        {
+            action = menu->addAction("Windowed mode");
+            m_windowedModeAction = action;
+            action->setCheckable(true);
+            action->setChecked(false);
+            connect(action, &QAction::triggered, [this](bool checked){
+                setWindowedMode(checked);
+            });
+        }
+
+        {
+            static const QString key = "windowedModeBackground";
+
+            QColor initial = m_settings.value(key, "#FF0000").toString();
+
+            action = menu->addAction("Windowed mode background...");
+            m_sandboxBackground = initial;
+            updateSandboxBackground();
+            connect(action, &QAction::triggered, [this](){
+                QColorDialog dialog { this };
+                dialog.setCurrentColor(m_sandboxBackground);
+                int ret = dialog.exec();
+                if (ret == 1) {
+                    m_sandboxBackground = dialog.selectedColor();
+                    m_settings.setValue(key, colorToString(dialog.selectedColor()));
+                    updateSandboxBackground();
+                }
             });
         }
 
@@ -593,8 +643,49 @@ void ShijimaManager::onTickSync(std::function<void(ShijimaManager *)> callback) 
     m_tickCallbackCompletion.wait(lock);
 }
 
+void ShijimaManager::setWindowedMode(bool windowedMode) {
+    if (!!this->windowedMode() == !!windowedMode) {
+        // no change
+        return;
+    }
+    m_windowedModeAction->setChecked(windowedMode);
+    for (auto mascot : m_mascots) {
+        mascot->close();
+        mascot->setParent(nullptr);
+    }
+    if (windowedMode) {
+        m_sandboxWidget = new QWidget { this, Qt::Window };
+        m_sandboxWidget->setAttribute(Qt::WA_StyledBackground, true);
+        m_sandboxWidget->resize(640, 480);
+        m_sandboxWidget->setObjectName("sandboxWindow");
+        m_sandboxWidget->show();
+        updateSandboxBackground();
+    }
+    else {
+        m_sandboxWidget->close();
+        delete m_sandboxWidget;
+        m_sandboxWidget = nullptr;
+    }
+    updateEnvironment();
+    for (auto &mascot : m_mascots) {
+        bool inspectorWasVisible = mascot->inspectorVisible();
+        auto newMascot = new ShijimaWidget(*mascot, windowedMode,
+            mascotParent());
+        newMascot->setEnv(m_env[this->screen()]);
+        delete mascot;
+        mascot = newMascot;
+        m_mascotsById[mascot->mascotId()] = mascot;
+        mascot->mascot().reset_position();
+        mascot->show();
+        if (inspectorWasVisible) {
+            mascot->showInspector();
+        }
+    }
+}
+
 ShijimaManager::ShijimaManager(QWidget *parent):
     PlatformWidget(parent, PlatformWidget::ShowOnAllDesktops),
+    m_sandboxWidget(nullptr),
     m_settings("pixelomer", "Shijima-Qt"),
     m_idCounter(0), m_httpApi(this),
     m_hasTickCallbacks(false)
@@ -682,9 +773,19 @@ void ShijimaManager::updateEnvironment(QScreen *screen) {
         return;
     }
     auto &env = m_env[screen];
-    auto cursor = QCursor::pos();
-    auto geometry = screen->geometry();
-    auto available = screen->availableGeometry();
+    QRect geometry, available;
+    QPoint cursor;
+    if (windowedMode()) {
+        geometry = m_sandboxWidget->geometry();
+        cursor = m_sandboxWidget->cursor().pos() - geometry.topLeft();
+        geometry.setCoords(0, 0, geometry.width(), geometry.height());
+        available = geometry;
+    }
+    else {
+        cursor = QCursor::pos();
+        geometry = screen->geometry();
+        available = screen->availableGeometry();
+    }
     int taskbarHeight = available.bottom() - geometry.bottom();
     int statusBarHeight = geometry.top() - available.top();
     if (taskbarHeight < 0) {
@@ -705,8 +806,8 @@ void ShijimaManager::updateEnvironment(QScreen *screen) {
         (double)geometry.left() };
     env->ceiling = { (double)geometry.top(), (double)geometry.left(),
         (double)geometry.right() };
-    if (m_currentWindow.available && std::fabs(m_currentWindow.x) > 1
-        && std::fabs(m_currentWindow.y) > 1)
+    if (!windowedMode() && m_currentWindow.available &&
+        std::fabs(m_currentWindow.x) > 1 && std::fabs(m_currentWindow.y) > 1)
     {
         env->active_ie = { m_currentWindow.y,
             m_currentWindow.x + m_currentWindow.width,
@@ -799,6 +900,19 @@ void ShijimaManager::setManagerVisible(bool visible) {
     #endif
 }
 
+bool ShijimaManager::windowedMode() {
+    return m_sandboxWidget != nullptr;
+}
+
+QWidget *ShijimaManager::mascotParent() {
+    if (windowedMode()) {
+        return m_sandboxWidget;
+    }
+    else {
+        return this;
+    }
+}
+
 void ShijimaManager::tick() {
     if (m_hasTickCallbacks) {
         auto lock = acquireLock();
@@ -808,6 +922,10 @@ void ShijimaManager::tick() {
         m_tickCallbacks.clear();
         m_hasTickCallbacks = false;
         m_tickCallbackCompletion.notify_all();
+    }
+
+    if (m_sandboxWidget != nullptr && !m_sandboxWidget->isVisible()) {
+        setWindowedMode(false);
     }
 
     #if !defined(__APPLE__)
@@ -871,7 +989,8 @@ void ShijimaManager::tick() {
             if (product.has_value()) {
                 ShijimaWidget *child = new ShijimaWidget(
                     m_loadedMascots[QString::fromStdString(breedRequest.name)],
-                    std::move(product->manager), m_idCounter++, this);
+                    std::move(product->manager), m_idCounter++,
+                    windowedMode(), mascotParent());
                 child->setEnv(shimeji->env());
                 child->show();
                 m_mascots.push_back(child);
@@ -911,7 +1030,8 @@ ShijimaWidget *ShijimaManager::spawn(std::string const& name) {
     product.manager->reset_position();
     ShijimaWidget *shimeji = new ShijimaWidget(
         m_loadedMascots[QString::fromStdString(name)],
-        std::move(product.manager), m_idCounter++, this);
+        std::move(product.manager), m_idCounter++,
+        windowedMode(), mascotParent());
     shimeji->show();
     m_mascots.push_back(shimeji);
     m_mascotsById[shimeji->mascotId()] = shimeji;

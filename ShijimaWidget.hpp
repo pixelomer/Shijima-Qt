@@ -40,12 +40,15 @@ public:
     friend class ShijimaContextMenu;
     explicit ShijimaWidget(MascotData *mascotData,
         std::unique_ptr<shijima::mascot::manager> mascot,
-        int mascotId, QWidget *parent = nullptr);
+        int mascotId, bool windowedMode, QWidget *parent = nullptr);
+    explicit ShijimaWidget(ShijimaWidget &old, bool windowedMode,
+        QWidget *parent = nullptr);
     void tick();
     bool pointInside(QPoint const& point);
     int mascotId() { return m_mascotId; }
     void showInspector();
     void markForDeletion() { m_markedForDeletion = true; }
+    bool inspectorVisible();
     bool paused() const { return m_paused || m_contextMenuVisible; }
     shijima::mascot::manager &mascot() {
         return *m_mascot;
@@ -74,6 +77,7 @@ private:
     void contextMenuClosed(QCloseEvent *);
     void showContextMenu(QPoint const&);
     bool updateOffsets();
+    bool m_windowedMode;
     MascotData *m_data;
     ShimejiInspectorDialog *m_inspector;
     SoundEffectManager m_sounds;
