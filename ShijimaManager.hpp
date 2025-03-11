@@ -31,6 +31,7 @@
 #include "PlatformWidget.hpp"
 #include "MascotData.hpp"
 #include <set>
+#include <list>
 #include <mutex>
 #include "Platform/ActiveWindowObserver.hpp"
 #include "ShijimaWidget.hpp"
@@ -57,7 +58,7 @@ public:
     void importOnShow(QString const& path);
     QMap<QString, MascotData *> const& loadedMascots();
     QMap<int, MascotData *> const& loadedMascotsById();
-    std::vector<ShijimaWidget *> const& mascots();
+    std::list<ShijimaWidget *> const& mascots();
     std::map<int, ShijimaWidget *> const& mascotsById();
     ShijimaWidget *hitTest(QPoint const& screenPos);
     void onTickSync(std::function<void(ShijimaManager *)> callback);
@@ -116,7 +117,7 @@ private:
     QMap<shijima::mascot::environment *, QScreen *> m_reverseEnv;
     shijima::mascot::factory m_factory;
     QString m_importOnShowPath;
-    std::vector<ShijimaWidget *> m_mascots;
+    std::list<ShijimaWidget *> m_mascots;
     std::map<int, ShijimaWidget *> m_mascotsById;
     QString m_mascotsPath;
     QListWidget m_listWidget;
@@ -124,5 +125,5 @@ private:
     bool m_hasTickCallbacks;
     std::mutex m_mutex;
     std::condition_variable m_tickCallbackCompletion;
-    std::vector<std::function<void(ShijimaManager *)>> m_tickCallbacks;
+    std::list<std::function<void(ShijimaManager *)>> m_tickCallbacks;
 };

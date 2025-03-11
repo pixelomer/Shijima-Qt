@@ -170,7 +170,7 @@ QMap<int, MascotData *> const& ShijimaManager::loadedMascotsById() {
     return m_loadedMascotsById;
 }
 
-std::vector<ShijimaWidget *> const& ShijimaManager::mascots() {
+std::list<ShijimaWidget *> const& ShijimaManager::mascots() {
     return m_mascots;
 }
 
@@ -950,12 +950,15 @@ void ShijimaManager::tick() {
 
     updateEnvironment();
 
-    for (int i=m_mascots.size()-1; i>=0; --i) {
-        ShijimaWidget *shimeji = m_mascots[i];
+    for (auto iter = m_mascots.end(); iter != m_mascots.begin(); ) {
+        --iter;
+        ShijimaWidget *shimeji = *iter;
         if (!shimeji->isVisible()) {
             int mascotId = shimeji->mascotId();
             delete shimeji;
-            m_mascots.erase(m_mascots.begin() + i);
+            auto erasePos = iter;
+            ++iter;
+            m_mascots.erase(erasePos);
             m_mascotsById.erase(mascotId);
             continue;
         }
