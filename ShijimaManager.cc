@@ -59,6 +59,8 @@
 #include <QLabel>
 #include <QFormLayout>
 
+#define SHIJIMAQT_SUBTICK_COUNT 4
+
 using namespace shijima;
 
 // https://stackoverflow.com/questions/34135624/-/54029758#54029758
@@ -619,7 +621,7 @@ ShijimaManager::ShijimaManager(QWidget *parent):
     loadAllMascots();
     setAcceptDrops(true);
 
-    m_mascotTimer = startTimer(10);
+    m_mascotTimer = startTimer(40 / SHIJIMAQT_SUBTICK_COUNT);
     if (m_windowObserver.tickFrequency() > 0) {
         m_windowObserverTimer = startTimer(m_windowObserver.tickFrequency());
     }
@@ -728,7 +730,7 @@ void ShijimaManager::updateEnvironment(QScreen *screen) {
     }
     int x = cursor.x(), y = cursor.y();
     env->cursor = { (double)x, (double)y, x - env->cursor.x, y - env->cursor.y };
-    env->subtick_count = 4;
+    env->subtick_count = SHIJIMAQT_SUBTICK_COUNT;
     m_previousWindow = m_currentWindow;
 
     env->set_scale(1.0 / std::sqrt(m_userScale));
