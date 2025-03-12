@@ -1,5 +1,5 @@
 Shijima-Qt - Cross-platform shimeji simulation app for desktop
-Copyright (C) 1024-2025 pixelomer
+Copyright (C) 2025 pixelomer
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
