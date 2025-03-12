@@ -123,16 +123,39 @@ static void badRequest(Request const&, Response &res) {
     sendJson(res, obj);
 }
 
+static bool selectorEval(ShijimaWidget *mascot, std::string const& selector) {
+    if (selector.empty()) {
+        return true;
+    }
+    bool eval;
+    try {
+        mascot->mascot().script_ctx->state = mascot->mascot().state;
+        eval = mascot->mascot().script_ctx->eval_bool(selector);
+    }
+    catch (std::exception &ex) {
+        std::cerr << "selector eval failed: " << ex.what() << std::endl;
+        eval = false;
+    }
+    return eval;
+}
+
 ShijimaHttpApi::ShijimaHttpApi(ShijimaManager *manager): m_server(new Server),
     m_thread(nullptr), m_manager(manager), m_host(""), m_port(-1)
 {
     m_server->Get("/shijima/api/v1/mascots",
-        [this](Request const&, Response &res)
+        [this](Request const& req, Response &res)
     {
         QJsonArray array;
-        m_manager->onTickSync([&array](ShijimaManager *manager){
+        std::string selector;
+        if (req.has_param("selector")) {
+            selector = req.get_param_value("selector");
+        }
+        m_manager->onTickSync([&array, &selector](ShijimaManager *manager){
             auto &mascots = manager->mascots();
             for (auto mascot : mascots) {
+                if (!selectorEval(mascot, selector)) {
+                    continue;
+                }
                 array.append(mascotToObject(mascot));
             }
         });
@@ -245,10 +268,24 @@ ShijimaHttpApi::ShijimaHttpApi(ShijimaManager *manager): m_server(new Server),
         sendJson(res, object);
     });
     m_server->Delete("/shijima/api/v1/mascots",
-        [this](Request const&, Response &res)
+        [this](Request const& req, Response &res)
     {
-        m_manager->onTickSync([](ShijimaManager *manager){
-            manager->killAll();
+        auto json = jsonForRequest(req);
+        std::string selector;
+        if (json.has_value() && json->contains("selector")) {
+            auto value = json->take("selector");
+            if (value.isString()) {
+                selector = value.toString().toStdString();
+            }
+        }
+        m_manager->onTickSync([&selector](ShijimaManager *manager){
+            auto &mascots = manager->mascots();
+            for (auto mascot : mascots) {
+                if (!selectorEval(mascot, selector)) {
+                    continue;
+                }
+                mascot->markForDeletion();
+            }
         });
         sendJson(res, {});
     });

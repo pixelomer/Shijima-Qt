@@ -250,28 +250,36 @@ static bool getMascotIDAtIndex(QJsonArray const& array, QVariant &variant,
     return true;
 }
 
-static int getMascotID(httplib::Client &client, QVariant &variant) {
-    if (variant.typeId() == QMetaType::Int) {
+static int getMascotID(httplib::Client &client, QVariant &idVariant,
+    QVariant const& selector)
+{
+    if (idVariant.typeId() == QMetaType::Int) {
         // already an ID
         return EXIT_SUCCESS;
     }
-    else if (variant.typeId() != QMetaType::QString) {
+    else if (idVariant.typeId() != QMetaType::QString) {
         // this function expects a string
-        return EXIT_FAILURE;
+        throw std::runtime_error("idVariant must be a QString");
     }
 
     bool ok;
-    if (int convertedId = variant.toInt(&ok); ok) {
-        variant = convertedId;
+    if (int convertedId = idVariant.toInt(&ok); ok) {
+        idVariant = convertedId;
+        if (selector.typeId() == QMetaType::QString) {
+            cerr << "ERROR: You can't specify a numeric ID and a selector at" <<
+                " the same time" << std::endl;
+            return EXIT_FAILURE;
+        }
         if (convertedId >= 0) {
             return EXIT_SUCCESS;
         }
         else {
+            cerr << "ERROR: ID must be greater than or equal to 0" << std::endl;
             return EXIT_FAILURE;
         }
     }
 
-    auto str = variant.toString();
+    auto str = idVariant.toString();
     static const QMap<QString, std::function<bool(QJsonArray const&,
         QVariant &)>> parsers =
     {
@@ -292,7 +300,13 @@ static int getMascotID(httplib::Client &client, QVariant &variant) {
         cerr << keys.join(", ").toStdString() << std::endl;
         return EXIT_FAILURE;
     }
-    if (auto res = client.Get("/shijima/api/v1/mascots")) {
+    httplib::Params params;
+    if (selector.typeId() == QMetaType::QString) {
+        params.insert({ "selector", selector.toString().toStdString() });
+    }
+    if (auto res = client.Get("/shijima/api/v1/mascots", params,
+        {}))
+    {
         QJsonObject object;
         if (!parseAPIResult(res, object)) {
             return EXIT_FAILURE;
@@ -303,8 +317,8 @@ static int getMascotID(httplib::Client &client, QVariant &variant) {
             return EXIT_FAILURE;
         }
         auto array = mascots.toArray();
-        if (!array.empty() && parsers[str](array, variant) &&
-            variant.typeId() == QMetaType::Int)
+        if (!array.empty() && parsers[str](array, idVariant) &&
+            idVariant.typeId() == QMetaType::Int)
         {
             return EXIT_SUCCESS;
         }
@@ -323,13 +337,20 @@ static int cliMain(int argc, char **argv) {
     std::string action = argv[1];
     httplib::Client client { "http://127.0.0.1:32456" };
     if (action == "list") {
-        QVariant json { false };
+        QVariant selector, json { false };
         if (!parseOptions(argc, argv, {
-            { "json", "Print the API response as JSON", &json, QMetaType::Bool, false }
+            { "json", "Print the API response as JSON", &json, QMetaType::Bool, false },
+            { "selector", "JavaScript code for filtering shimeji", &selector, QMetaType::QString, false }
         })) {
             return EXIT_FAILURE;
         }
-        if (auto res = client.Get("/shijima/api/v1/mascots")) {
+        httplib::Params params;
+        if (selector.typeId() == QMetaType::QString) {
+            params.insert({ "selector", selector.toString().toStdString() });
+        }
+        if (auto res = client.Get("/shijima/api/v1/mascots",
+            params, {}))
+        {
             QJsonObject object;
             if (!parseAPIResult(res, object)) {
                 if (json.toBool() && object.contains("error")) {
@@ -479,9 +500,10 @@ static int cliMain(int argc, char **argv) {
         }
     }
     else if (action == "alter") {
-        QVariant id, behavior, x, y, printJson { false };
+        QVariant id, selector, behavior, x, y, printJson { false };
         if (!parseOptions(argc, argv, {
             { "id", "ID of the shimeji to alter", &id, QMetaType::QString, true },
+            { "selector", "JavaScript code for filtering shimeji", &selector, QMetaType::QString, false },
             { "behavior", "New behavior for the shimeji", &behavior, QMetaType::QString, false },
             { "x", "New X position for the shimeji", &x, QMetaType::Double, false },
             { "y", "New Y position for the shimeji", &y, QMetaType::Double, false },
@@ -489,7 +511,7 @@ static int cliMain(int argc, char **argv) {
         })) {
             return EXIT_FAILURE;
         }
-        if (int ret = getMascotID(client, id); ret != EXIT_SUCCESS) {
+        if (int ret = getMascotID(client, id, selector); ret != EXIT_SUCCESS) {
             return ret;
         }
         QJsonObject object;
@@ -529,13 +551,14 @@ static int cliMain(int argc, char **argv) {
         }
     }
     else if (action == "dismiss") {
-        QVariant id;
+        QVariant id, selector;
         if (!parseOptions(argc, argv, {
-            { "id", "ID of the shimeji to dismiss", &id, QMetaType::QString, true }
+            { "id", "ID of the shimeji to dismiss", &id, QMetaType::QString, true },
+            { "selector", "JavaScript code for filtering shimeji", &selector, QMetaType::QString, false }
         })) {
             return EXIT_FAILURE;
         }
-        if (int ret = getMascotID(client, id); ret != EXIT_SUCCESS) {
+        if (int ret = getMascotID(client, id, selector); ret != EXIT_SUCCESS) {
             return ret;
         }
         if (auto res = client.Delete("/shijima/api/v1/mascots/"
@@ -553,10 +576,22 @@ static int cliMain(int argc, char **argv) {
         }
     }
     else if (action == "dismiss-all") {
-        if (!parseOptions(argc, argv, {})) {
+        QVariant selector;
+        if (!parseOptions(argc, argv, {
+            { "selector", "JavaScript code for filtering shimeji", &selector, QMetaType::QString, false }
+        })) {
             return EXIT_FAILURE;
         }
-        if (auto res = client.Delete("/shijima/api/v1/mascots")) {
+        QJsonObject obj;
+        if (selector.typeId() == QMetaType::QString) {
+            obj["selector"] = selector.toString();
+        }
+        QJsonDocument doc { obj };
+        auto bytes = doc.toJson();
+        if (auto res = client.Delete("/shijima/api/v1/mascots",
+            std::string { &bytes[0], (size_t)bytes.size() },
+            "application/json" ))
+        {
             if (parseAPIResult(res)) {
                 return EXIT_SUCCESS;
             }
