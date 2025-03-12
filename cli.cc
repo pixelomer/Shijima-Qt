@@ -135,6 +135,7 @@ public:
             const char *typeName;
             switch (arg.type()) {
                 case QMetaType::QString:
+                case QMetaType::QStringList:
                     typeName = " (string)";
                     break;
                 case QMetaType::Int:
