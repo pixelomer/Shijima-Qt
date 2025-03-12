@@ -618,7 +618,7 @@ void ShijimaManager::screenAdded(QScreen *screen) {
 }
 
 void ShijimaManager::screenRemoved(QScreen *screen) {
-    if (m_env.contains(screen)) {
+    if (m_env.contains(screen) && screen != nullptr) {
         auto primary = QGuiApplication::primaryScreen();
         for (auto &mascot : m_mascots) {
             mascot->setEnv(m_env[primary]);
@@ -673,11 +673,18 @@ void ShijimaManager::setWindowedMode(bool windowedMode) {
         m_sandboxWidget = nullptr;
     }
     updateEnvironment();
+    std::shared_ptr<shijima::mascot::environment> env;
+    if (windowedMode) {
+        env = m_env[nullptr];
+    }
+    else {
+        env = m_env[mascotScreen()];
+    }
     for (auto &mascot : m_mascots) {
         bool inspectorWasVisible = mascot->inspectorVisible();
         auto newMascot = new ShijimaWidget(*mascot, windowedMode,
             mascotParent());
-        newMascot->setEnv(m_env[this->screen()]);
+        newMascot->setEnv(env);
         delete mascot;
         mascot = newMascot;
         m_mascotsById[mascot->mascotId()] = mascot;
@@ -699,6 +706,7 @@ ShijimaManager::ShijimaManager(QWidget *parent):
     for (auto screen : QGuiApplication::screens()) {
         screenAdded(screen);
     }
+    screenAdded(nullptr);
 
     connect(qApp, &QGuiApplication::screenAdded,
         this, &ShijimaManager::screenAdded);
@@ -781,11 +789,16 @@ void ShijimaManager::updateEnvironment(QScreen *screen) {
     auto &env = m_env[screen];
     QRect geometry, available;
     QPoint cursor;
-    if (windowedMode()) {
-        geometry = m_sandboxWidget->geometry();
-        cursor = m_sandboxWidget->cursor().pos() - geometry.topLeft();
-        geometry.setCoords(0, 0, geometry.width(), geometry.height());
-        available = geometry;
+    if (screen == nullptr) {
+        if (m_sandboxWidget != nullptr) {
+            geometry = m_sandboxWidget->geometry();
+            cursor = m_sandboxWidget->cursor().pos() - geometry.topLeft();
+            geometry.setCoords(0, 0, geometry.width(), geometry.height());
+            available = geometry;
+        }
+        else {
+            std::cerr << "warning: sandboxWidget is not initialized" << std::endl;
+        }
     }
     else {
         cursor = QCursor::pos();
@@ -845,8 +858,13 @@ void ShijimaManager::updateEnvironment(QScreen *screen) {
 
 void ShijimaManager::updateEnvironment() {
     m_currentWindow = m_windowObserver.getActiveWindow();
-    for (auto screen : QGuiApplication::screens()) {
-        updateEnvironment(screen);
+    if (windowedMode()) {
+        updateEnvironment(nullptr);
+    }
+    else {
+        for (auto screen : QGuiApplication::screens()) {
+            updateEnvironment(screen);
+        }
     }
 }
 
@@ -976,7 +994,7 @@ void ShijimaManager::tick() {
         shimeji->tick();
         auto &mascot = shimeji->mascot();
         auto &breedRequest = mascot.state->breed_request;
-        if (mascot.state->dragging) {
+        if (mascot.state->dragging && !windowedMode()) {
             auto oldScreen = m_reverseEnv[mascot.state->env.get()];
             auto newScreen = QGuiApplication::screenAt(QPoint {
                 (int)mascot.state->anchor.x, (int)mascot.state->anchor.y });
@@ -1035,8 +1053,22 @@ ShijimaWidget *ShijimaManager::hitTest(QPoint const& screenPos) {
     return nullptr;
 }
 
+QScreen *ShijimaManager::mascotScreen() {
+    QScreen *screen;
+    if (windowedMode()) {
+        screen = nullptr;
+    }
+    else {
+        screen = this->screen();
+        if (screen == nullptr) {
+            screen = qApp->primaryScreen();
+        }
+    }
+    return screen;
+}
+
 ShijimaWidget *ShijimaManager::spawn(std::string const& name) {
-    QScreen *screen = this->screen();
+    QScreen *screen = mascotScreen();
     updateEnvironment(screen);
     auto &env = m_env[screen];
     auto product = m_factory.spawn(name, {});

@@ -96,6 +96,7 @@ private:
     std::set<std::string> import(QString const& path) noexcept;
     void importWithDialog(QList<QString> const& paths);
     void tick();
+    QScreen *mascotScreen();
     QColor m_sandboxBackground;
     QAction *m_windowedModeAction;
     QWidget *m_sandboxWidget;
