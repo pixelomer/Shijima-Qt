@@ -24,20 +24,22 @@
 #include <QJsonObject>
 #include <QByteArray>
 #include <QJsonArray>
+#include <fstream>
 #include <QJsonDocument>
 #include <QRandomGenerator>
 
 #ifdef _WIN32
 #include <windows.h>
 #include <sstream>
-static std::stringstream winOutputStream;
-#define cerr winOutputStream
-#define cout winOutputStream
 #else
 #include <iostream>
-#define cerr std::cerr
-#define cout std::cout
 #endif
+
+static std::ostream *coutPt;
+static std::ostream *cerrPt;
+
+#define cout (*coutPt)
+#define cerr (*cerrPt)
 
 class Argument {
 private:
@@ -614,7 +616,8 @@ static int cliMain(int argc, char **argv) {
         }
     }
     else {
-        cerr << "Usage: " << argv[0] << " <command> [options...]" << std::endl;
+        cerr << "Usage: " << argv[0] << " [--quiet] <command> [options...]"
+            << std::endl;
         cerr << "   Possible commands are: list, list-loaded, spawn, "
             "alter, dismiss, dismiss-all" << std::endl;
         return EXIT_FAILURE;
@@ -622,12 +625,55 @@ static int cliMain(int argc, char **argv) {
     return EXIT_SUCCESS;
 }
 
+#undef cout
+#undef cerr
+
 int shijimaRunCli(int argc, char **argv) {
+    #ifdef _WIN32
+        const char *argv0 = argv[0];
+    #endif
+    bool quiet = false;
+    if (argv[1] != NULL && argv[2] != NULL &&
+        strcmp(argv[1], "--quiet") == 0)
+    {
+        quiet = true;
+        argv[1] = argv[0];
+        ++argv;
+        --argc;
+    }
+    if (quiet) {
+        auto stream = new std::ofstream;
+        #ifdef _WIN32
+            stream->open("NUL");
+        #else
+            stream->open("/dev/null");
+        #endif
+        coutPt = stream;
+        cerrPt = stream;
+    }
+    else {
+        #ifdef _WIN32
+            auto stream = new std::stringstream;
+            coutPt = stream;
+            cerrPt = stream;
+        #else
+            coutPt = &std::cout;
+            cerrPt = &std::cerr;
+        #endif
+    }
     int ret = cliMain(argc, argv);
     #ifdef _WIN32
-        std::string output = winOutputStream.str();
-        if (!output.empty()) {
-            MessageBoxA(NULL, output.c_str(), argv[0], MB_OK);
+        if (!quiet) {
+            auto stream = static_cast<std::stringstream *>(coutPt);
+            std::string output = stream->str();
+            if (!output.empty()) {
+                MessageBoxA(NULL, output.c_str(), argv0, MB_OK);
+            }
+        }
+        delete coutPt;
+    #else
+        if (quiet) {
+            delete coutPt;
         }
     #endif
     return ret;
