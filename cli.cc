@@ -70,6 +70,13 @@ public:
                 m_variant->setValue(value);
                 m_fulfilled = true;
                 break;
+            case QMetaType::QStringList:
+                if (m_variant->isNull()) {
+                    m_variant->setValue(QStringList {});
+                }
+                static_cast<QStringList *>(m_variant->data())->append(value);
+                m_fulfilled = true;
+                break;
             case QMetaType::Int:
                 m_variant->setValue(value.toInt(&m_fulfilled));
                 break;
@@ -202,7 +209,7 @@ static int notRunning() {
     return EXIT_FAILURE;
 }
 
-static bool parseShimejiAttributes(QJsonObject &object, QVariant const& behavior,
+static bool parseShimejiAttributes(QJsonObject &object, QVariant const& behaviors,
     QVariant const& x, QVariant const& y)
 {
     if (x.isNull() != y.isNull()) {
@@ -215,8 +222,10 @@ static bool parseShimejiAttributes(QJsonObject &object, QVariant const& behavior
         anchor["y"] = y.toDouble();
         object["anchor"] = anchor;
     }
-    if (!behavior.isNull()) {
-        object["behavior"] = behavior.toString();
+    if (!behaviors.isNull()) {
+        auto &list = *static_cast<const QStringList *>(behaviors.data());
+        object["behavior"] = list[QRandomGenerator::global()->bounded(0,
+            list.size())];
     }
     return true;
 }
@@ -441,11 +450,11 @@ static int cliMain(int argc, char **argv) {
         }
     }
     else if (action == "spawn") {
-        QVariant name, dataId, behavior, x, y, printJson { false };
+        QVariant name, dataId, behaviors, x, y, printJson { false };
         ArgumentList args = {
             { "data-id", "Data ID of the shimeji to spawn", &dataId, QMetaType::Int, false },
             { "name", "Name of the shimeji to spawn", &name, QMetaType::QString, false },
-            { "behavior", "Initial behavior for the shimeji", &behavior, QMetaType::QString, false },
+            { "behavior", "Initial behavior for the shimeji", &behaviors, QMetaType::QStringList, false },
             { "x", "Initial X position for the shimeji", &x, QMetaType::Double, false },
             { "y", "Initial Y position for the shimeji", &y, QMetaType::Double, false },
             { "json", "Print the API response as JSON", &printJson, QMetaType::Bool, false }
@@ -465,7 +474,7 @@ static int cliMain(int argc, char **argv) {
         else {
             object["name"] = name.toString();
         }
-        if (!parseShimejiAttributes(object, behavior, x, y)) {
+        if (!parseShimejiAttributes(object, behaviors, x, y)) {
             return EXIT_FAILURE;
         }
         QJsonDocument doc { object };
@@ -500,11 +509,11 @@ static int cliMain(int argc, char **argv) {
         }
     }
     else if (action == "alter") {
-        QVariant id, selector, behavior, x, y, printJson { false };
+        QVariant id, selector, behaviors, x, y, printJson { false };
         if (!parseOptions(argc, argv, {
             { "id", "ID of the shimeji to alter", &id, QMetaType::QString, true },
             { "selector", "JavaScript code for filtering shimeji", &selector, QMetaType::QString, false },
-            { "behavior", "New behavior for the shimeji", &behavior, QMetaType::QString, false },
+            { "behavior", "New behavior for the shimeji", &behaviors, QMetaType::QStringList, false },
             { "x", "New X position for the shimeji", &x, QMetaType::Double, false },
             { "y", "New Y position for the shimeji", &y, QMetaType::Double, false },
             { "json", "Print the API response as JSON", &printJson, QMetaType::Bool, false }
@@ -515,7 +524,7 @@ static int cliMain(int argc, char **argv) {
             return ret;
         }
         QJsonObject object;
-        if (!parseShimejiAttributes(object, behavior, x, y)) {
+        if (!parseShimejiAttributes(object, behaviors, x, y)) {
             return EXIT_FAILURE;
         }
         QJsonDocument doc { object };
