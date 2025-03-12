@@ -654,7 +654,13 @@ void ShijimaManager::setWindowedMode(bool windowedMode) {
         mascot->setParent(nullptr);
     }
     if (windowedMode) {
-        m_sandboxWidget = new QWidget { this, Qt::Window };
+        QWidget *parent;
+        #if defined(_WIN32)
+            parent = nullptr;
+        #else
+            parent = this;
+        #endif
+        m_sandboxWidget = new QWidget { parent, Qt::Window };
         m_sandboxWidget->setAttribute(Qt::WA_StyledBackground, true);
         m_sandboxWidget->resize(640, 480);
         m_sandboxWidget->setObjectName("sandboxWindow");
