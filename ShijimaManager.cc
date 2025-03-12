@@ -932,6 +932,11 @@ void ShijimaManager::tick() {
 
     if (m_sandboxWidget != nullptr && !m_sandboxWidget->isVisible()) {
         setWindowedMode(false);
+        #if !defined(__APPLE__)
+        if (m_mascots.size() == 0) {
+            setManagerVisible(true);
+        }
+        #endif
     }
 
     #if !defined(__APPLE__)
@@ -946,7 +951,7 @@ void ShijimaManager::tick() {
 
     if (m_mascots.size() == 0) {
         #if !defined(__APPLE__)
-        if (isMinimized() || !m_wasVisible) {
+        if (!windowedMode() && (isMinimized() || !m_wasVisible)) {
             setWindowState(windowState() & ~Qt::WindowMinimized);
             setManagerVisible(true);
         }
@@ -1013,7 +1018,7 @@ void ShijimaManager::tick() {
         env->reset_scale();
     }
 
-    if (m_mascots.size() == 0) {
+    if (m_mascots.size() == 0 && !windowedMode()) {
         // All mascots self-destructed, show manager
         setManagerVisible(true);
     }
