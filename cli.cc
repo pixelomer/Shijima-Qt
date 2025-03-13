@@ -263,7 +263,7 @@ static bool getMascotIDAtIndex(QJsonArray const& array, QVariant &variant,
 }
 
 static int getMascotID(httplib::Client &client, QVariant &idVariant,
-    QVariant const& selector)
+    QVariant const& selectorsVariant)
 {
     if (idVariant.typeId() == QMetaType::Int) {
         // already an ID
@@ -274,10 +274,21 @@ static int getMascotID(httplib::Client &client, QVariant &idVariant,
         throw std::runtime_error("idVariant must be a QString");
     }
 
+    QStringList selectors;
+    if (selectorsVariant.typeId() == QMetaType::QStringList) {
+        selectors = selectorsVariant.toStringList();
+    }
+    else if (selectorsVariant.typeId() == QMetaType::QString) {
+        selectors = { selectorsVariant.toString() };
+    }
+    else {
+        selectors = { "" };
+    }
+
     bool ok;
     if (int convertedId = idVariant.toInt(&ok); ok) {
         idVariant = convertedId;
-        if (selector.typeId() == QMetaType::QString) {
+        if (selectors[0] != "") {
             cerr << "ERROR: You can't specify a numeric ID and a selector at" <<
                 " the same time" << std::endl;
             return EXIT_FAILURE;
@@ -312,37 +323,37 @@ static int getMascotID(httplib::Client &client, QVariant &idVariant,
         cerr << keys.join(", ").toStdString() << std::endl;
         return EXIT_FAILURE;
     }
-    httplib::Params params;
-    if (selector.typeId() == QMetaType::QString) {
-        params.insert({ "selector", selector.toString().toStdString() });
-    }
-    if (auto res = client.Get("/shijima/api/v1/mascots", params,
-        {}))
-    {
-        QJsonObject object;
-        if (!parseAPIResult(res, object)) {
-            return EXIT_FAILURE;
+    for (auto &selector : selectors) {
+        httplib::Params params;
+        if (!selector.isEmpty()) {
+            params.insert({ "selector", selector.toStdString() });
         }
-        auto mascots = object["mascots"];
-        if (!mascots.isArray()) {
-            cerr << "ERROR: Malformed response" << std::endl;
-            return EXIT_FAILURE;
-        }
-        auto array = mascots.toArray();
-        if (!array.empty() && parsers[str](array, idVariant) &&
-            idVariant.typeId() == QMetaType::Int)
+        if (auto res = client.Get("/shijima/api/v1/mascots", params,
+            {}))
         {
-            return EXIT_SUCCESS;
+            QJsonObject object;
+            if (!parseAPIResult(res, object)) {
+                return EXIT_FAILURE;
+            }
+            auto mascots = object["mascots"];
+            if (!mascots.isArray()) {
+                cerr << "ERROR: Malformed response" << std::endl;
+                return EXIT_FAILURE;
+            }
+            auto array = mascots.toArray();
+            if (!array.empty() && parsers[str](array, idVariant) &&
+                idVariant.typeId() == QMetaType::Int)
+            {
+                return EXIT_SUCCESS;
+            }
         }
         else {
-            cerr << "ERROR: Failed to determine ID (are any mascots spawned?)"
-                << std::endl;
-            return EXIT_FAILURE;
+            return notRunning();
         }
     }
-    else {
-        return notRunning();
-    }
+    cerr << "ERROR: Failed to determine ID (are any mascots spawned?)"
+        << std::endl;
+    return EXIT_FAILURE;
 }
 
 static int cliMain(int argc, char **argv) {
@@ -512,10 +523,10 @@ static int cliMain(int argc, char **argv) {
         }
     }
     else if (action == "alter") {
-        QVariant id, selector, behaviors, x, y, printJson { false };
+        QVariant id, selectors, behaviors, x, y, printJson { false };
         if (!parseOptions(argc, argv, {
             { "id", "ID of the shimeji to alter", &id, QMetaType::QString, true },
-            { "selector", "JavaScript code for filtering shimeji", &selector, QMetaType::QString, false },
+            { "selector", "JavaScript code for filtering shimeji", &selectors, QMetaType::QStringList, false },
             { "behavior", "New behavior for the shimeji", &behaviors, QMetaType::QStringList, false },
             { "x", "New X position for the shimeji", &x, QMetaType::Double, false },
             { "y", "New Y position for the shimeji", &y, QMetaType::Double, false },
@@ -523,7 +534,7 @@ static int cliMain(int argc, char **argv) {
         })) {
             return EXIT_FAILURE;
         }
-        if (int ret = getMascotID(client, id, selector); ret != EXIT_SUCCESS) {
+        if (int ret = getMascotID(client, id, selectors); ret != EXIT_SUCCESS) {
             return ret;
         }
         QJsonObject object;
