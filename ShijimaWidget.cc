@@ -109,15 +109,24 @@ void ShijimaWidget::paintEvent(QPaintEvent *event) {
     if (!m_visible) {
         return;
     }
-    QPainter painter(this);
     auto &asset = getActiveAsset();
     auto &image = asset.image(isMirroredRender());
-    painter.drawImage(QRect { m_drawOrigin, image.size() / m_drawScale }, image);
+    auto scaledSize = image.size() / m_drawScale;
+    QPainter painter(this);
+    painter.drawImage(QRect { m_drawOrigin, scaledSize }, image);
 #ifdef __linux__
     m_windowMask = QBitmap::fromPixmap(asset.mask(isMirroredRender())
-        .scaled(image.size() / m_drawScale));
+        .scaled(scaledSize));
     m_windowMask.translate(m_drawOrigin);
-    setMask(m_windowMask);
+    auto bounding = m_windowMask.boundingRect();
+    bounding.setTop(0);
+    bounding.setLeft(0);
+    if (bounding.width() > 0 && bounding.height() > 0) {
+        setMask(m_windowMask);
+    }
+    else {
+        setMask(QRect { 0, 0, m_windowWidth, m_windowHeight });
+    }
 #endif
 }
 
