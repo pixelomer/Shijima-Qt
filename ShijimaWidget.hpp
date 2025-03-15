@@ -20,6 +20,7 @@
 
 #include <QWidget>
 #include <memory>
+#include <QRegion>
 #include "Asset.hpp"
 #include "SoundEffectManager.hpp"
 #include <shijima/mascot/manager.hpp>
@@ -77,6 +78,9 @@ private:
     void contextMenuClosed(QCloseEvent *);
     void showContextMenu(QPoint const&);
     bool updateOffsets();
+#ifdef __linux__
+    QRegion m_windowMask;
+#endif
     bool m_windowedMode;
     MascotData *m_data;
     ShimejiInspectorDialog *m_inspector;

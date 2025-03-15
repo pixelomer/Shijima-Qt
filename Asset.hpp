@@ -20,6 +20,7 @@
 
 #include <QImage>
 #include <QRect>
+#include <QBitmap>
 #include <QPoint>
 
 class Asset {
@@ -29,12 +30,21 @@ private:
     QSize m_originalSize;
     QImage m_image;
     QImage m_mirrored;
+#ifdef __linux__
+    QBitmap m_mask;
+    QBitmap m_mirroredMask;
+#endif
 public:
     QRect const& offset() const { return m_offset; }
     QSize const& originalSize() const { return m_originalSize; }
     QImage const& image(bool mirrored) const { 
         return mirrored ? m_mirrored : m_image;
     }
+#ifdef __linux__
+    QBitmap const& mask(bool mirrored) const { 
+        return mirrored ? m_mirroredMask : m_mask;
+    }
+#endif
     Asset() {}
     void setImage(QImage const& image);
 };

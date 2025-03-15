@@ -113,6 +113,12 @@ void ShijimaWidget::paintEvent(QPaintEvent *event) {
     auto &asset = getActiveAsset();
     auto &image = asset.image(isMirroredRender());
     painter.drawImage(QRect { m_drawOrigin, image.size() / m_drawScale }, image);
+#ifdef __linux__
+    m_windowMask = QBitmap::fromPixmap(asset.mask(isMirroredRender())
+        .scaled(image.size() / m_drawScale));
+    m_windowMask.translate(m_drawOrigin);
+    setMask(m_windowMask);
+#endif
 }
 
 bool ShijimaWidget::updateOffsets() {

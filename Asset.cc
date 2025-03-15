@@ -63,4 +63,8 @@ void Asset::setImage(QImage const& image) {
     m_offset = rect;
     m_image = image.copy(rect);
     m_mirrored = m_image.mirrored(true, false);
+#ifdef __linux__
+    m_mask = QBitmap::fromImage(m_image.createAlphaMask());
+    m_mirroredMask = QBitmap::fromImage(m_mirrored.createAlphaMask());
+#endif
 }
