@@ -19,6 +19,7 @@
 #include "KWin.hpp"
 #include <QDBusMessage>
 #include "DBus.hpp"
+#include "Platform-Linux.hpp"
 
 using namespace Platform::DBus;
 
@@ -72,6 +73,7 @@ bool unloadScript(QString const& pluginName) {
 bool running() {
     try {
         isScriptLoaded("");
+        Platform::windowMasksEnabled = false;
         return true;
     }
     catch (DBusCallError &err) {

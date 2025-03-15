@@ -20,4 +20,5 @@
 
 namespace Platform {
     extern int terminateClientFd;
+    extern bool windowMasksEnabled;
 }

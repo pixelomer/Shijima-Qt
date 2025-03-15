@@ -36,4 +36,8 @@ void showOnAllDesktops(QWidget *widget) {
     }
 }
 
+bool useWindowMasks() {
+    return false;
+}
+
 }

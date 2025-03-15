@@ -29,6 +29,7 @@
 #include <QGuiApplication>
 #include <QTextStream>
 #include <shijima/shijima.hpp>
+#include "Platform/Platform.hpp"
 #include "ShimejiInspectorDialog.hpp"
 #include "AssetLoader.hpp"
 #include "ShijimaContextMenu.hpp"
@@ -115,17 +116,19 @@ void ShijimaWidget::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
     painter.drawImage(QRect { m_drawOrigin, scaledSize }, image);
 #ifdef __linux__
-    m_windowMask = QBitmap::fromPixmap(asset.mask(isMirroredRender())
-        .scaled(scaledSize));
-    m_windowMask.translate(m_drawOrigin);
-    auto bounding = m_windowMask.boundingRect();
-    bounding.setTop(0);
-    bounding.setLeft(0);
-    if (bounding.width() > 0 && bounding.height() > 0) {
-        setMask(m_windowMask);
-    }
-    else {
-        setMask(QRect { 0, 0, m_windowWidth, m_windowHeight });
+    if (Platform::useWindowMasks()) {
+        m_windowMask = QBitmap::fromPixmap(asset.mask(isMirroredRender())
+            .scaled(scaledSize));
+        m_windowMask.translate(m_drawOrigin);
+        auto bounding = m_windowMask.boundingRect();
+        bounding.setTop(0);
+        bounding.setLeft(0);
+        if (bounding.width() > 0 && bounding.height() > 0) {
+            setMask(m_windowMask);
+        }
+        else {
+            setMask(QRect { 0, 0, m_windowWidth, m_windowHeight });
+        }
     }
 #endif
 }

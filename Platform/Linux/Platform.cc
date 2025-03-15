@@ -39,6 +39,7 @@ namespace Platform {
 
 int terminateServerFd = -1;
 int terminateClientFd = -1;
+bool windowMasksEnabled = true;
 
 void handleSignal(int sig) {
     write(terminateServerFd, "\x01", 1);
@@ -133,6 +134,10 @@ void showOnAllDesktops(QWidget *widget) {
         XInternAtom(displayID, "_NET_WM_DESKTOP", False),
         XA_CARDINAL, 32, PropModeReplace,
         reinterpret_cast<unsigned char *>(&data), 1);
+}
+
+bool useWindowMasks() {
+    return windowMasksEnabled;
 }
 
 }
