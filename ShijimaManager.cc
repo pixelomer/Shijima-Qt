@@ -568,13 +568,6 @@ void ShijimaManager::showEvent(QShowEvent *event) {
         importWithDialog({ path });
     }
     else {
-        QMessageBox msgBox { this };
-        msgBox.setText("This is an early alpha version of Shijima-Qt. Please "
-            "report any issues you encounter by pressing Help > Report Issue. "
-            "Your feedback is highly appreciated.");
-        msgBox.addButton(QMessageBox::StandardButton::Ok);
-        msgBox.exec();
-
         if (m_loadedMascots.size() == 1) {
             auto msgBox = new QMessageBox { this };
             msgBox->setText("Welcome to Shijima! Get started by dragging and dropping a "
