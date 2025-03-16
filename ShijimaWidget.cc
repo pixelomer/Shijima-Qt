@@ -127,7 +127,7 @@ void ShijimaWidget::paintEvent(QPaintEvent *event) {
             setMask(m_windowMask);
         }
         else {
-            setMask(QRect { 0, 0, m_windowWidth, m_windowHeight });
+            setMask(QRect { m_windowWidth - 2, m_windowHeight - 2, 1, 1 });
         }
     }
 #endif
