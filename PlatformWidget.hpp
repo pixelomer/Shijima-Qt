@@ -20,6 +20,8 @@
 
 #include <QWidget>
 #include <cstdint>
+#include <QTimer>
+#include <QApplication>
 #include "Platform/Platform.hpp"
 
 template<typename T>
@@ -28,20 +30,29 @@ public:
     enum Flags : uint32_t {
         ShowOnAllDesktops = 0x1
     };
-    PlatformWidget(): T(), m_flags(0) {}
-    PlatformWidget(QWidget *parent): T(parent), m_flags(0) {}
-    PlatformWidget(QWidget *parent, Flags flags): T(parent) {
+    PlatformWidget(QWidget *parent = nullptr, Flags flags = 0): T(parent) {
+        setupDispatchTimer();
         m_flags = flags;
     }
 private:
     uint32_t m_flags;
-protected:
-    void showEvent(QShowEvent *event) override {
-        T::showEvent(event);
+    QTimer m_dispatchTimer;
+    void setupDispatchTimer() {
+        this->connect(&m_dispatchTimer, &QTimer::timeout, this, &PlatformWidget::showEventDispatch);
+        m_dispatchTimer.setInterval(0);
+        m_dispatchTimer.setSingleShot(true);
+        m_dispatchTimer.moveToThread(qApp->thread());
+    }
+    void showEventDispatch() {
         if (this->winId() != 0) {
             if (m_flags & ShowOnAllDesktops) {
                 Platform::showOnAllDesktops(this);
             }
         }
+    }
+protected:
+    void showEvent(QShowEvent *event) override {
+        T::showEvent(event);
+        m_dispatchTimer.start();
     }
 };

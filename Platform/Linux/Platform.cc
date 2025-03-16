@@ -130,10 +130,32 @@ void showOnAllDesktops(QWidget *widget) {
     unsigned long data = 0xFFFFFFFF;
     QNativeInterface::QX11Application *x11App = qApp->nativeInterface<QNativeInterface::QX11Application>();
     Display *displayID = x11App->display();
-    XChangeProperty(displayID, widget->winId(),
+    WId windowID = widget->winId();
+    XChangeProperty(displayID, windowID,
         XInternAtom(displayID, "_NET_WM_DESKTOP", False),
         XA_CARDINAL, 32, PropModeReplace,
         reinterpret_cast<unsigned char *>(&data), 1);
+    Atom stickyAtom = XInternAtom(displayID, "_NET_WM_STATE_STICKY", 1);
+    Atom stateAtom = XInternAtom(displayID, "_NET_WM_STATE", 1);
+    if (stickyAtom != None && stateAtom != None) {
+        XClientMessageEvent xclient;
+        memset(&xclient, 0, sizeof (xclient));
+        xclient.type = ClientMessage;
+        xclient.window = windowID;
+        xclient.message_type = stateAtom;
+        xclient.format = 32;
+        xclient.data.l[0] = 1; // _NET_WM_STATE_ADD
+        xclient.data.l[1] = stickyAtom;
+        xclient.data.l[2] = 0;
+        xclient.data.l[3] = 0;
+        xclient.data.l[4] = 0;
+        XSendEvent(displayID,
+          DefaultRootWindow(displayID),
+          False,
+          SubstructureRedirectMask | SubstructureNotifyMask,
+          (XEvent *)&xclient);
+        XFlush(displayID);
+    }
 }
 
 bool useWindowMasks() {
