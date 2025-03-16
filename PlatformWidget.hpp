@@ -53,6 +53,7 @@ private:
 protected:
     void showEvent(QShowEvent *event) override {
         T::showEvent(event);
+        showEventDispatch();
         m_dispatchTimer.start();
     }
 };
