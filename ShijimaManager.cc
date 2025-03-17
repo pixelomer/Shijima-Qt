@@ -39,6 +39,7 @@
 #include "ShijimaLicensesDialog.hpp"
 #include "ShijimaWidget.hpp"
 #include <QDirIterator>
+#include <QDesktopServices>
 #include <shijima/mascot/factory.hpp>
 #include <shimejifinder/analyze.hpp>
 #include <QStandardPaths>
@@ -300,6 +301,11 @@ void ShijimaManager::buildToolbar() {
     {
         action = menu->addAction("Import shimeji...");
         connect(action, &QAction::triggered, this, &ShijimaManager::importAction);
+
+        action = menu->addAction("Show shimeji folder");
+        connect(action, &QAction::triggered, [this](){
+            QDesktopServices::openUrl(QUrl::fromLocalFile(m_mascotsPath));
+        });
 
         action = menu->addAction("Quit");
         connect(action, &QAction::triggered, this, &ShijimaManager::quitAction);
@@ -711,6 +717,16 @@ ShijimaManager::ShijimaManager(QWidget *parent):
     QDir mascotsDir(mascotsPath);
     if (!mascotsDir.exists()) {
         mascotsDir.mkpath(mascotsPath);
+    }
+    if (QFile readme { mascotsDir.absoluteFilePath("README.txt") };
+        readme.open(QFile::WriteOnly | QFile::NewOnly | QFile::Text))
+    {
+        readme.write(""
+"Manually importing shimeji by copying its contents into this folder may\n"
+"cause problems. You should use the import dialog in Shijima-Qt unless you\n"
+"have a good reason not to.\n"
+        );
+        readme.close();
     }
     m_mascotsPath = mascotsPath;
     std::cout << "Mascots path: " << m_mascotsPath.toStdString() << std::endl;
