@@ -1,6 +1,6 @@
 {
     "uuid": "shijima-helper@pixelomer.github.io",
-    "version-name": "0.0.4",
+    "version-name": "0.0.4-1",
     "name": "Shijima GNOME Helper",
     "description": "Shijima GNOME Helper",
     "shell-version": [ "46", "47" ],

@@ -112,37 +112,35 @@ bool PrivateActiveWindowObserver::handleMessage(const QDBusMessage &message,
         return false;
     }
     auto args = message.arguments();
+
+    #define fail_invalid_args(msg) do { \
+        QString _msg = msg; \
+        auto reply = message.createErrorReply(QDBusError::InvalidArgs, \
+            (_msg)); \
+        connection.send(reply); \
+        return true; \
+    } \
+    while (0)
+
     if (args.size() != 6) {
-        auto reply = message.createErrorReply(QDBusError::InvalidArgs,
-            "Expected 6 arguments");
-        connection.send(reply);
-        return true;
+        fail_invalid_args("Expected 6 arguments");
     }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     // type() is used here because it also works with Qt5
     if (args[0].type() != QVariant::String) {
-        auto reply = message.createErrorReply(QDBusError::InvalidArgs,
-            "Expected args[0] to be an String");
-        connection.send(reply);
-        return true;
+        fail_invalid_args("Expected args[0] to be an String");
     }
     if (args[1].type() != QVariant::Int) {
-        auto reply = message.createErrorReply(QDBusError::InvalidArgs,
-            "Expected args[1] to be an Int");
-        connection.send(reply);
-        return true;
+        fail_invalid_args("Expected args[1] to be an Int");
     }
 #pragma GCC diagnostic pop
     for (int i=2; i<=5; ++i) {
         if (args[i].canConvert<double>()) {
             continue;
         }
-        auto reply = message.createErrorReply(QDBusError::InvalidArgs,
-            QString::fromStdString("Expected args[" + std::to_string(i)
-                + "] to be a Double"));
-        connection.send(reply);
-        return true;
+        fail_invalid_args(QString::fromStdString("Expected args[" + \
+            std::to_string(i) + "] to be a Double"));
     }
     QString uid = args[0].toString();
     int pid = args[1].toInt();

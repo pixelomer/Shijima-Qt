@@ -101,39 +101,46 @@ export default class ShijimaExtension extends Extension {
         if (!focused.is_alive || (!ignoreHidden && focused.is_hidden()) || focused.minimized) {
             return new ActiveIE();
         }
+        if (focused.get_workspace() !== global.workspaceManager.get_active_workspace()) {
+            return new ActiveIE();
+        }
         const rect = focused.get_frame_rect();
         const scale = focused.get_display().get_monitor_scale(focused.get_monitor());
         return new ActiveIE(rect, focused.get_id(), focused.get_pid(), scale);
+    }
+
+    _sendShijimaMessage() {
+        let variant;
+        if (this._activeIE != null && this._activeIE.visible) {
+            variant = new GLib.Variant('(sidddd)', [
+                this._activeIE.uid.toString(),
+                this._activeIE.pid,
+                this._activeIE.x,
+                this._activeIE.y,
+                this._activeIE.width,
+                this._activeIE.height
+            ]);
+        }
+        else {
+            variant = new GLib.Variant('(sidddd)', [ "", -1, -1, -1, -1, -1 ])
+        }
+        Gio.DBus.session.call(
+            'com.pixelomer.ShijimaQt',
+            '/',
+            'com.pixelomer.ShijimaQt',
+            'updateActiveWindow',
+            variant,
+            null,
+            Gio.DBusCallFlags.NONE,
+            -1,
+            null).then(()=>{}).catch((err)=>{ /* console.log(err) */ });
     }
 
     _notifyShijima(ignoreHidden = false) {
         const activeIE = this._getActiveIE(ignoreHidden);
         if (this._activeIE == null || !this._activeIE.isEqual(activeIE)) {
             this._activeIE = activeIE;
-            let variant;
-            if (this._activeIE.visible) {
-                variant = new GLib.Variant('(sidddd)', [
-                    this._activeIE.uid.toString(),
-                    this._activeIE.pid,
-                    this._activeIE.x,
-                    this._activeIE.y,
-                    this._activeIE.width,
-                    this._activeIE.height
-                ]);
-            }
-            else {
-                variant = new GLib.Variant('(sidddd)', [ "", -1, -1, -1, -1, -1 ])
-            }
-            Gio.DBus.session.call(
-                'com.pixelomer.ShijimaQt',
-                '/',
-                'com.pixelomer.ShijimaQt',
-                'updateActiveWindow',
-                variant,
-                null,
-                Gio.DBusCallFlags.NONE,
-                -1,
-                null).then(()=>{}).catch((err)=>{ /* console.log(err) */ });
+            this._sendShijimaMessage();
         }
     }
     
@@ -170,10 +177,18 @@ export default class ShijimaExtension extends Extension {
         }
     }
 
+    _workspaceChanged(workspaceManager) {
+        this._notifyShijima();
+    }
+
     enable() {
-        this._shijimaSignals = [
+        this._shijimaWindowSignals = [
             global.display.connect('window-created', this._windowCreated.bind(this)),
-        ]
+        ];
+        this._shijimaWorkspaceSignals = [
+            global.workspaceManager.connect('active-workspace-changed',
+                this._workspaceChanged.bind(this)),
+        ];
         for (const actor of global.get_window_actors()) {
             if (actor.is_destroyed()) {
                 continue;
@@ -184,11 +199,17 @@ export default class ShijimaExtension extends Extension {
     }
 
     disable() {
-        if (this._shijimaSignals != null) {
-            for (const signal of this._shijimaSignals) {
+        if (this._shijimaWindowSignals != null) {
+            for (const signal of this._shijimaWindowSignals) {
                 global.display.disconnect(signal);
             }
-            delete this._shijimaSignals;
+            delete this._shijimaWindowSignals;
+        }
+        if (this._shijimaWorkspaceSignals != null) {
+            for (const signal of this._shijimaWorkspaceSignals) {
+                global.workspaceManager.disconnect(signal);
+            }
+            delete this._shijimaWorkspaceSignals;
         }
         for (const actor of global.get_window_actors()) {
             if (actor.is_destroyed()) {
