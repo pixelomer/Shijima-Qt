@@ -173,7 +173,9 @@ export default class ShijimaExtension extends Extension {
     _windowClosed(metaWindow) {
         if (metaWindow === this._activeWindow) {
             this._activeWindow = null;
-            this._notifyShijima();
+            this._activeIE = null;
+            this._sendShijimaMessage(); // send null message
+            this._notifyShijima(); // find new active window
         }
     }
 
