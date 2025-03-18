@@ -88,6 +88,10 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get install -y libxcb-cursor0 libarchive-dev
+      - name: Install build dependencies (arm64)
+        if: matrix.runner == 'ubuntu-24.04-arm'
+        run: |
+          sudo apt-get install -y libgstreamer-plugins-bad1.0-0 libgstreamer-plugins-good1.0-0
       - name: Build Linux release build
         env:
           CONFIG: release
