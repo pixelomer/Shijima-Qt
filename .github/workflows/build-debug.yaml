@@ -55,7 +55,10 @@ jobs:
           path: publish/Windows/debug/shijima-qt.exe
           retention-days: 1
   build-linux:
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        runner: [ ubuntu-24.04-arm, ubuntu-20.04 ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -76,29 +79,31 @@ jobs:
           echo "libshijima: $(git rev-list HEAD --count) commits"
           popd
       - name: Install Qt6
-        uses: jurplel/install-qt-action@v3
+        uses: jdpurcell/install-qt-action@v5
         with:
-          aqtversion: '==3.1.*'
-          version: '6.7.3'
-          host: 'linux'
+          use-naqt: true
+          version: '6.8.2'
+          host: ${{ (matrix.runner == 'ubuntu-24.04-arm') && 'linux_arm64' || 'linux' }}
           target: 'desktop'
-          arch: 'linux_gcc_64'
+          arch: ${{ (matrix.runner == 'ubuntu-24.04-arm') && 'linux_gcc_arm64' || 'linux_gcc_64' }}
           modules: 'qtmultimedia'
           cache: true
       - name: Install build dependencies
         run: |
           sudo apt-get install -y libxcb-cursor0 libarchive-dev
-      - name: Build Linux x86_64 debug build
+      - name: Build Linux debug build
         env:
           CONFIG: debug
         run: |
           make clean
           make -j$(nproc)
-      - name: Archive Linux x86_64 debug build
+      - name: Archive Linux debug build
         uses: actions/upload-artifact@v4
         with:
-          name: debug-linux-x86_64
-          path: publish/Linux/debug/shijima-qt
+          name: ${{ (matrix.runner == 'ubuntu-24.04-arm') && 'debug-linux-arm64' || 'debug-linux-x86_64' }}
+          path: |
+            publish/Linux/debug/shijima-qt
+            publish/Linux/debug/libunarr.so.1
           retention-days: 1
   build-macos:
     runs-on: macos-14
