@@ -21,6 +21,17 @@
         <name>pixelomer</name>
     </developer>
     <releases>
+        <release version="0.1.0" date="2025-03-18">
+            <url type="details">https://github.com/pixelomer/Shijima-Qt/releases/tag/v0.1.0</url>
+            <description>
+                <ul>
+                    <li>Transparent areas of shimeji are now pass-through on desktop environments that support non-standard window shapes</li>
+                    <li>Bug fixes related to shimeji floating on air after changing workspaces or closing windows in GNOME</li>
+                    <li>Removed "early alpha" warning</li>
+                </ul>
+                <p>See the release notes on GitHub for more details.</p>
+            </description>
+        </release>
         <release version="0.0.4" date="2025-03-12">
             <url type="details">https://github.com/pixelomer/Shijima-Qt/releases/tag/v0.0.4</url>
             <description>
