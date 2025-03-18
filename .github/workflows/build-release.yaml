@@ -103,7 +103,7 @@ jobs:
       - name: Archive Linux release build
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ (matrix.runner == 'ubuntu-24.04-arm') && 'debug-linux-arm64' || 'debug-linux-x86_64' }}
+          name: ${{ (matrix.runner == 'ubuntu-24.04-arm') && 'release-linux-arm64' || 'release-linux-x86_64' }}
           path: publish/Linux/release
           retention-days: 1
   build-macos:
