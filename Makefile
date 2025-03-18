@@ -59,6 +59,20 @@ CXXFLAGS += -Ilibshijima -Ilibshimejifinder -Icpp-httplib
 PKG_LIBS += libarchive
 PUBLISH_DLL = $(addprefix Qt6,$(QT_LIBS))
 
+define download_linuxdeploy
+@uname_m="$$(uname -m)"; \
+if [ "$${uname_m}" = "$(1)" -o "$${uname_m}" = "$(2)" ]; then \
+	url="https://github.com/linuxdeploy/$(3)/releases/latest/download/$(3)-$(2).AppImage"; \
+	name="$${url##*/}"; \
+	echo "==> $${url}"; \
+	wget -O "$${name}" -c --no-verbose "$${url}"; \
+	touch "$${name}"; \
+	chmod +x "$${name}"; \
+	name2="$${name%-$(2).AppImage}.AppImage"; \
+	ln -s "$${name}" "$${name2}"; \
+fi
+endef
+
 all:: publish/$(PLATFORM)/$(CONFIG)
 
 publish/Windows/$(CONFIG): shijima-qt$(EXE) FORCE
@@ -71,19 +85,24 @@ publish/Windows/$(CONFIG): shijima-qt$(EXE) FORCE
 	if [ $(CONFIG) = release ]; then $(STRIP)  -S $@/libunarr.so.1.1.0; fi
 
 linuxdeploy-plugin-appimage-x86_64.AppImage:
-	wget -O $@ -c --no-verbose https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/latest/download/linuxdeploy-plugin-appimage-x86_64.AppImage
-	touch $@
-	chmod +x linuxdeploy-plugin-appimage-x86_64.AppImage
+	$(call download_linuxdeploy,x86_64,x86_64,linuxdeploy-plugin-appimage)
 
 linuxdeploy-plugin-qt-x86_64.AppImage:
-	wget -O $@ -c --no-verbose https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/latest/download/linuxdeploy-plugin-qt-x86_64.AppImage
-	touch $@
-	chmod +x linuxdeploy-plugin-qt-x86_64.AppImage
+	$(call download_linuxdeploy,x86_64,x86_64,linuxdeploy-plugin-qt)
 
 linuxdeploy-x86_64.AppImage: linuxdeploy-plugin-qt-x86_64.AppImage linuxdeploy-plugin-appimage-x86_64.AppImage
-	wget -O $@ -c --no-verbose https://github.com/linuxdeploy/linuxdeploy/releases/latest/download/linuxdeploy-x86_64.AppImage
-	touch $@
-	chmod +x linuxdeploy-x86_64.AppImage
+	$(call download_linuxdeploy,x86_64,x86_64,linuxdeploy)
+
+linuxdeploy-plugin-appimage-aarch64.AppImage:
+	$(call download_linuxdeploy,arm64,aarch64,linuxdeploy-plugin-appimage)
+
+linuxdeploy-plugin-qt-aarch64.AppImage:
+	$(call download_linuxdeploy,arm64,aarch64,linuxdeploy-plugin-qt)
+
+linuxdeploy-aarch64.AppImage: linuxdeploy-plugin-qt-aarch64.AppImage linuxdeploy-plugin-appimage-aarch64.AppImage
+	$(call download_linuxdeploy,arm64,aarch64,linuxdeploy)
+
+linuxdeploy.AppImage: linuxdeploy-aarch64.AppImage linuxdeploy-x86_64.AppImage
 
 publish/macOS/$(CONFIG): shijima-qt$(EXE)
 	mkdir -p $@
@@ -105,14 +124,15 @@ publish/macOS/$(CONFIG)/Shijima-Qt.app: publish/macOS/$(CONFIG)
 	cp $^/shijima-qt $@/Contents/MacOS/
 	/opt/local/libexec/qt6/bin/macdeployqt $@
 
-publish/Linux/$(CONFIG)/Shijima-Qt-x86_64.AppImage: publish/Linux/$(CONFIG) linuxdeploy-x86_64.AppImage
+publish/Linux/$(CONFIG)/Shijima-Qt.AppImage: publish/Linux/$(CONFIG) linuxdeploy.AppImage
 	rm -rf AppDir
-	NO_STRIP=1 ./linuxdeploy-x86_64.AppImage --appdir AppDir --executable publish/Linux/$(CONFIG)/shijima-qt \
+	NO_STRIP=1 ./linuxdeploy.AppImage --appdir AppDir --executable publish/Linux/$(CONFIG)/shijima-qt \
 		--desktop-file com.pixelomer.ShijimaQt.desktop --output appimage --plugin qt --icon-file \
 		com.pixelomer.ShijimaQt.png
-	cp Shijima-Qt-x86_64.AppImage publish/Linux/$(CONFIG)/
+	mv Shijima-Qt-*.AppImage Shijima-Qt.AppImage
+	cp Shijima-Qt.AppImage publish/Linux/$(CONFIG)/
 
-appimage: publish/Linux/$(CONFIG)/Shijima-Qt-x86_64.AppImage
+appimage: publish/Linux/$(CONFIG)/Shijima-Qt.AppImage
 
 macapp: publish/macOS/$(CONFIG)/Shijima-Qt.app
 
@@ -158,7 +178,7 @@ libshimejifinder/build/libshimejifinder.a: libshimejifinder/build/Makefile
 
 clean::
 	rm -rf publish/$(PLATFORM)/$(CONFIG) libshijima/build libshimejifinder/build
-	rm -f $(OBJECTS) shijima-qt.a shijima-qt$(EXE) Shijima-Qt-x86_64.AppImage
+	rm -f $(OBJECTS) shijima-qt.a shijima-qt$(EXE) Shijima-Qt.AppImage
 	$(MAKE) -C Platform clean
 
 Platform/Platform.a: FORCE
