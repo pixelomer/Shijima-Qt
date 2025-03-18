@@ -22,10 +22,13 @@ Linux.a: $(OBJECTS)
 	$(AR) rcs $@ $(OBJECTS)
 
 .work/node_modules/.bin/minify:
-	rm -rf .work
+	rm -rf .work/node_modules
 	mkdir -p .work/node_modules
-	cd .work && yarn add --modules-folder node_modules minify
-	[ -f .work/node_modules/.bin/minify ]
+	if type yarn 2>/dev/null >&2; then \
+		cd .work; \
+		yarn add --modules-folder node_modules minify; \
+		[ -f node_modules/.bin/minify ]; \
+	fi
 
 gnome_script.zip: .work/gnome_script
 	zip -jr $@ $</*
@@ -43,7 +46,8 @@ KDEWindowObserverBackend.cc: kwin_script.c
 	mv "$@/extension_minified.js" "$@/extension.js"
 
 %_minified.js: %.js .work/node_modules/.bin/minify
-	.work/node_modules/.bin/minify --js < $< > $@
+	(if [ -f .work/node_modules/.bin/minify ]; then \
+		.work/node_modules/.bin/minify --js; else cat; fi) < $< > $@
 
 %.c: %_minified.js
 	$(call bin2c,$<,$@)
