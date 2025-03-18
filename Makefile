@@ -102,7 +102,20 @@ linuxdeploy-plugin-qt-aarch64.AppImage:
 linuxdeploy-aarch64.AppImage: linuxdeploy-plugin-qt-aarch64.AppImage linuxdeploy-plugin-appimage-aarch64.AppImage
 	$(call download_linuxdeploy,arm64,aarch64,linuxdeploy)
 
+define strip_fix
+rm -rf squashfs-root $(1)-root
+./$(1).AppImage --appimage-extract
+mv squashfs-root $(1)-root
+rm -f $(1)-root/usr/bin/strip
+echo -e '#!/usr/bin/env bash\nLD_LIBRARY_PATH="./$(1)-root/usr/lib:$${LD_LIBRARY_PATH}" PATH="./$(1)-root/usr/bin:$${PATH}" ./$(1)-root/usr/bin/$(1) "$${@}"' > $(1).AppImage
+endef
+
+# Fix for stripping binaries
+# https://github.com/linuxdeploy/linuxdeploy/issues/272
 linuxdeploy.AppImage: linuxdeploy-aarch64.AppImage linuxdeploy-x86_64.AppImage
+	$(call strip_fix,linuxdeploy)
+	$(call strip_fix,linuxdeploy-plugin-qt)
+	$(call strip_fix,linuxdeploy-plugin-appimage)
 
 publish/macOS/$(CONFIG): shijima-qt$(EXE)
 	mkdir -p $@
@@ -126,7 +139,7 @@ publish/macOS/$(CONFIG)/Shijima-Qt.app: publish/macOS/$(CONFIG)
 
 publish/Linux/$(CONFIG)/Shijima-Qt.AppImage: publish/Linux/$(CONFIG) linuxdeploy.AppImage
 	rm -rf AppDir
-	NO_STRIP=1 ./linuxdeploy.AppImage --appdir AppDir --executable publish/Linux/$(CONFIG)/shijima-qt \
+	./linuxdeploy.AppImage --appdir AppDir --executable publish/Linux/$(CONFIG)/shijima-qt \
 		--desktop-file com.pixelomer.ShijimaQt.desktop --output appimage --plugin qt --icon-file \
 		com.pixelomer.ShijimaQt.png
 	mv Shijima-Qt-*.AppImage Shijima-Qt.AppImage
