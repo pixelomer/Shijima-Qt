@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+    <id>com.pixelomer.ShijimaQt</id>
+    <metadata_license>CC0-1.0</metadata_license>
+    <project_license>GPL-3.0</project_license>
+    <name>Shijima-Qt</name>
+    <summary>Shimeji desktop pet runner</summary>
+    <description>
+        <p>
+            Shijima-Qt is an easy-to-use and cross-platform shimeji desktop pet
+            runner that aims to be fully compatible with Shimeji-ee.
+        </p>
+    </description>
+    <launchable type="desktop-id">com.pixelomer.ShijimaQt.desktop</launchable>
+    <screenshots>
+        <screenshot type="default">
+            <image>https://github.com/pixelomer/Shijima-Qt/raw/a0fd0569ac84c6016ddff88e4abe0829d264cecd/.images/Shijima-Qt-Fedora.jpg</image>
+        </screenshot>
+    </screenshots>
+    <developer id="com.pixelomer">
+        <name>pixelomer</name>
+    </developer>
+    <url type="homepage">https://getshijima.app/</url>
+    <update_contact>contact_AT_pixelomer.com</update_contact>
+</component>

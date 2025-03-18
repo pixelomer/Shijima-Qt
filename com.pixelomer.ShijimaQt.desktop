@@ -2,8 +2,8 @@
 Type=Application
 Version=1.0
 Name=Shijima-Qt
-Comment=A shimeji simulator made with Qt
+Comment=Shimeji desktop pet runner
 Exec=shijima-qt
-Icon=shijima-qt
+Icon=com.pixelomer.ShijimaQt
 Terminal=false
 Categories=Game

@@ -108,7 +108,8 @@ publish/macOS/$(CONFIG)/Shijima-Qt.app: publish/macOS/$(CONFIG)
 publish/Linux/$(CONFIG)/Shijima-Qt-x86_64.AppImage: publish/Linux/$(CONFIG) linuxdeploy-x86_64.AppImage
 	rm -rf AppDir
 	NO_STRIP=1 ./linuxdeploy-x86_64.AppImage --appdir AppDir --executable publish/Linux/$(CONFIG)/shijima-qt \
-		--desktop-file shijima-qt.desktop --output appimage --plugin qt --icon-file shijima-qt.png
+		--desktop-file com.pixelomer.ShijimaQt.desktop --output appimage --plugin qt --icon-file \
+		com.pixelomer.ShijimaQt.png
 	cp Shijima-Qt-x86_64.AppImage publish/Linux/$(CONFIG)/
 
 appimage: publish/Linux/$(CONFIG)/Shijima-Qt-x86_64.AppImage

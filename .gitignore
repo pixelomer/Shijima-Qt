@@ -43,9 +43,10 @@
 !/Platform/Windows/*.cc
 !/Platform/Windows/*.hpp
 !/find_dlls.sh
-!/shijima-qt.png
+!/com.pixelomer.ShijimaQt.png
 !/shijima-qt.ico
-!/shijima-qt.desktop
+!/com.pixelomer.ShijimaQt.desktop
+!/com.pixelomer.ShijimaQt.metainfo.xml
 !/resources.rc
 !/libshimejifinder
 !/libshijima
