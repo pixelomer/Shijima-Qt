@@ -2,6 +2,8 @@ include common.mk
 
 SHIJIMA_USE_QTMULTIMEDIA ?= 1
 
+PREFIX ?= /usr/local
+
 SOURCES = main.cc \
 	Asset.cc \
 	MascotData.cc \
@@ -181,8 +183,24 @@ clean::
 	rm -f $(OBJECTS) shijima-qt.a shijima-qt$(EXE) Shijima-Qt.AppImage
 	$(MAKE) -C Platform clean
 
+install:
+	install -Dm755 publish/Linux/$(CONFIG)/shijima-qt $(PREFIX)/bin/shijima-qt
+	install -Dm755 publish/Linux/$(CONFIG)/libunarr.so.1 $(PREFIX)/lib/libunarr.so.1
+	install -Dm644 com.pixelomer.ShijimaQt.desktop $(PREFIX)/share/applications/com.pixelomer.ShijimaQt.desktop
+	install -Dm644 com.pixelomer.ShijimaQt.metainfo.xml $(PREFIX)/share/metainfo/com.pixelomer.ShijimaQt.metainfo.xml
+	install -Dm644 com.pixelomer.ShijimaQt.png $(PREFIX)/share/icons/hicolor/512x512/apps/com.pixelomer.ShijimaQt.png
+
+uninstall:
+	rm -f $(PREFIX)/bin/shijima-qt
+	rm -f $(PREFIX)/lib/libunarr.so.1
+	rm -f $(PREFIX)/share/applications/com.pixelomer.ShijimaQt.desktop
+	rm -f $(PREFIX)/share/metainfo/com.pixelomer.ShijimaQt.metainfo.xml
+	rm -f $(PREFIX)/share/icons/hicolor/512x512/apps/com.pixelomer.ShijimaQt.png
+
 Platform/Platform.a: FORCE
 	$(MAKE) -C Platform
 
 shijima-qt.a: $(OBJECTS) Makefile
 	ar rcs $@ $(filter %.o,$^)
+
+.PHONY: install uninstall
