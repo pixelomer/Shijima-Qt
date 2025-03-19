@@ -82,4 +82,5 @@
     <url type="bugtracker">https://github.com/pixelomer/Shijima-Qt/issues</url>
     <url type="donation">https://github.com/sponsors/pixelomer</url>
     <update_contact>contact_AT_pixelomer.com</update_contact>
+    <content_rating type="oars-1.1" />
 </component>
