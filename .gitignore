@@ -67,3 +67,4 @@ DefaultMascot.cc
 !/LICENSE
 !/.images/
 !/.images/*.jpg
+!/.images/*.png
