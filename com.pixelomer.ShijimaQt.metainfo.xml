@@ -14,7 +14,12 @@
     <launchable type="desktop-id">com.pixelomer.ShijimaQt.desktop</launchable>
     <screenshots>
         <screenshot type="default">
-            <image>https://github.com/pixelomer/Shijima-Qt/raw/2aa4850da1a31bdde6513266b827b70f7f9a7c8a/.images/Shijima-Qt-Main-Window.jpg</image>
+            <image>https://github.com/pixelomer/Shijima-Qt/raw/f05a0ef13440857268e78d90ededb0a887bbf2d4/.images/Shijima-Qt-Main-Window.png</image>
+            <caption>Main window of Shijima-Qt with additional imported characters</caption>
+        </screenshot>
+        <screenshot>
+            <image>https://github.com/pixelomer/Shijima-Qt/raw/f05a0ef13440857268e78d90ededb0a887bbf2d4/.images/Shijima-Qt-Windowed-Mode.png</image>
+            <caption>Shijima-Qt in windowed mode with characters from the first screenshot moving around</caption>
         </screenshot>
     </screenshots>
     <developer id="com.pixelomer">
