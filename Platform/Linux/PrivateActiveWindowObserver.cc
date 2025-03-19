@@ -50,6 +50,7 @@ PrivateActiveWindowObserver::PrivateActiveWindowObserver(QObject *obj)
     if (disableWindowTracking) {
         std::cout << "Detected SHIJIMA_NO_WINDOW_TRACKING=1, window tracking " <<
             "is disabled" << std::endl;
+        KWin::running(); // KDE still needs to be detected to disable window masks
         m_backend = nullptr;
     }
     else if (KWin::running()) {
