@@ -469,7 +469,7 @@ void ShijimaManager::buildToolbar() {
 
         action = menu->addAction("Report Issue");
         connect(action, &QAction::triggered, [](){
-            QDesktopServices::openUrl(QUrl { "https://github.com/pixelomer/Shijima-Qt-releases/issues" });
+            QDesktopServices::openUrl(QUrl { "https://github.com/pixelomer/Shijima-Qt/issues" });
         });
     }
 }
