@@ -35,9 +35,11 @@
 #include <QDesktopServices>
 #include <QScreen>
 #include <QRandomGenerator>
+#include "ActiveMascot.hpp"
+#include "MascotBackendWayland.hpp"
+#include "MascotBackendWidgets.hpp"
 #include "PlatformWidget.hpp"
 #include "ShijimaLicensesDialog.hpp"
-#include "ShijimaWidget.hpp"
 #include <QDirIterator>
 #include <QDesktopServices>
 #include <shijima/mascot/factory.hpp>
@@ -119,7 +121,7 @@ void ShijimaManager::killAll(QString const& name) {
     }
 }
 
-void ShijimaManager::killAllButOne(ShijimaWidget *widget) {
+void ShijimaManager::killAllButOne(ActiveMascot *widget) {
     for (auto mascot : m_mascots) {
         if (widget == mascot) {
             continue;
@@ -171,11 +173,11 @@ QMap<int, MascotData *> const& ShijimaManager::loadedMascotsById() {
     return m_loadedMascotsById;
 }
 
-std::list<ShijimaWidget *> const& ShijimaManager::mascots() {
+std::list<ActiveMascot *> const& ShijimaManager::mascots() {
     return m_mascots;
 }
 
-std::map<int, ShijimaWidget *> const& ShijimaManager::mascotsById() {
+std::map<int, ActiveMascot *> const& ShijimaManager::mascotsById() {
     return m_mascotsById;
 }
 
@@ -292,6 +294,34 @@ void ShijimaManager::updateSandboxBackground() {
     }
 }
 
+
+bool ShijimaManager::changeBackend(std::function<MascotBackend *()> backendProvider) {
+    MascotBackend *newBackend;
+    try {
+        newBackend = backendProvider();
+    }
+    catch (std::exception &ex) {
+        std::cerr << "failed to initialize backend: " << ex.what() << std::endl;
+        return false;
+    }
+    for (auto &mascot : m_mascots) {
+        bool inspectorWasVisible = mascot->inspectorVisible();
+        auto newMascot = newBackend->migrate(*mascot);
+        delete mascot;
+        mascot = newMascot;
+        m_mascotsById[mascot->mascotId()] = mascot;
+        mascot->mascot().reset_position();
+        mascot->show();
+        if (inspectorWasVisible) {
+            mascot->showInspector();
+        }
+    }
+    MascotBackend *oldBackend = m_backend;
+    m_backend = newBackend;
+    delete oldBackend;
+    return true;
+}
+
 void ShijimaManager::buildToolbar() {
     QAction *action;
     QMenu *menu;
@@ -338,6 +368,26 @@ void ShijimaManager::buildToolbar() {
             });
         }
 
+        submenu = menu->addMenu("Backend");
+        {
+            action = submenu->addAction("Qt Widgets");
+            action->setCheckable(true);
+            connect(action, &QAction::triggered, [this](bool checked){
+                changeBackend([this](){
+                    return new MascotBackendWidgets { this };
+                });
+            });
+
+            action = submenu->addAction("Wayland");
+            action->setCheckable(true);
+            connect(action, &QAction::triggered, [this](bool checked){
+                changeBackend([this](){
+                    return new MascotBackendWayland { this };
+                });
+            });
+        }
+
+        /*
         {
             action = menu->addAction("Windowed mode");
             m_windowedModeAction = action;
@@ -347,7 +397,9 @@ void ShijimaManager::buildToolbar() {
                 setWindowedMode(checked);
             });
         }
+        */
 
+        /*
         {
             static const QString key = "windowedModeBackground";
 
@@ -367,6 +419,7 @@ void ShijimaManager::buildToolbar() {
                 }
             });
         }
+        */
 
         submenu = menu->addMenu("Scale");
         {
@@ -647,6 +700,7 @@ void ShijimaManager::setWindowedMode(bool windowedMode) {
         // no change
         return;
     }
+    /*
     m_windowedModeAction->setChecked(windowedMode);
     for (auto mascot : m_mascots) {
         mascot->close();
@@ -693,6 +747,7 @@ void ShijimaManager::setWindowedMode(bool windowedMode) {
             mascot->showInspector();
         }
     }
+    */
 }
 
 ShijimaManager::ShijimaManager(QWidget *parent):
@@ -702,6 +757,7 @@ ShijimaManager::ShijimaManager(QWidget *parent):
     m_idCounter(0), m_httpApi(this),
     m_hasTickCallbacks(false)
 {
+    m_backend = new MascotBackendWidgets(this);
     for (auto screen : QGuiApplication::screens()) {
         screenAdded(screen);
     }
@@ -857,8 +913,8 @@ void ShijimaManager::updateEnvironment(QScreen *screen) {
     else {
         env->active_ie = { -50, -50, -50, -50 };
     }
-    int x = cursor.x(), y = cursor.y();
-    env->cursor = { (double)x, (double)y, x - env->cursor.x, y - env->cursor.y };
+    //int x = cursor.x(), y = cursor.y();
+    //env->cursor = { (double)x, (double)y, x - env->cursor.x, y - env->cursor.y };
     env->subtick_count = SHIJIMAQT_SUBTICK_COUNT;
     m_previousWindow = m_currentWindow;
 
@@ -976,6 +1032,8 @@ void ShijimaManager::tick() {
     }
     #endif
 
+    m_backend->tick();
+
     if (m_mascots.size() == 0) {
         #if !defined(__APPLE__)
         if (!windowedMode() && (isMinimized() || !m_wasVisible)) {
@@ -990,8 +1048,8 @@ void ShijimaManager::tick() {
 
     for (auto iter = m_mascots.end(); iter != m_mascots.begin(); ) {
         --iter;
-        ShijimaWidget *shimeji = *iter;
-        if (!shimeji->isVisible()) {
+        ActiveMascot *shimeji = *iter;
+        if (shimeji->mascotClosed()) {
             int mascotId = shimeji->mascotId();
             delete shimeji;
             auto erasePos = iter;
@@ -1028,10 +1086,9 @@ void ShijimaManager::tick() {
                 std::cerr << ex.what() << std::endl;
             }
             if (product.has_value()) {
-                ShijimaWidget *child = new ShijimaWidget(
+                ActiveMascot *child = m_backend->spawn(
                     m_loadedMascots[QString::fromStdString(breedRequest.name)],
-                    std::move(product->manager), m_idCounter++,
-                    windowedMode(), mascotParent());
+                    std::move(product->manager), m_idCounter++);
                 child->setEnv(shimeji->env());
                 child->show();
                 m_mascots.push_back(child);
@@ -1043,6 +1100,7 @@ void ShijimaManager::tick() {
     
     for (auto &env : m_env) {
         env->reset_scale();
+        env->cursor.dx = env->cursor.dy = 0;
     }
 
     if (m_mascots.size() == 0 && !windowedMode()) {
@@ -1051,7 +1109,7 @@ void ShijimaManager::tick() {
     }
 }
 
-ShijimaWidget *ShijimaManager::hitTest(QPoint const& screenPos) {
+ActiveMascot *ShijimaManager::hitTest(QPoint const& screenPos) {
     for (auto mascot : m_mascots) {
         QPoint localPos = { screenPos.x() - mascot->x(),
             screenPos.y() - mascot->y() };
@@ -1076,17 +1134,16 @@ QScreen *ShijimaManager::mascotScreen() {
     return screen;
 }
 
-ShijimaWidget *ShijimaManager::spawn(std::string const& name) {
+ActiveMascot *ShijimaManager::spawn(std::string const& name) {
     QScreen *screen = mascotScreen();
     updateEnvironment(screen);
     auto &env = m_env[screen];
     auto product = m_factory.spawn(name, {});
     product.manager->state->env = env;
     product.manager->reset_position();
-    ShijimaWidget *shimeji = new ShijimaWidget(
+    ActiveMascot *shimeji = m_backend->spawn(
         m_loadedMascots[QString::fromStdString(name)],
-        std::move(product.manager), m_idCounter++,
-        windowedMode(), mascotParent());
+        std::move(product.manager), m_idCounter++);
     shimeji->show();
     m_mascots.push_back(shimeji);
     m_mascotsById[shimeji->mascotId()] = shimeji;

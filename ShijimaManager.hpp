@@ -22,12 +22,12 @@
 #include <QString>
 #include <shijima/mascot/manager.hpp>
 #include <shijima/mascot/factory.hpp>
-#include <vector>
 #include <QMap>
 #include <QListWidgetItem>
 #include <QListWidget>
 #include <QSettings>
 #include <QScreen>
+#include "ActiveMascot.hpp"
 #include "PlatformWidget.hpp"
 #include "MascotData.hpp"
 #include <set>
@@ -40,6 +40,7 @@
 
 class QVBoxLayout;
 class QWidget;
+class MascotBackend;
 
 class ShijimaManager : public PlatformWidget<QMainWindow>
 {
@@ -49,18 +50,19 @@ public:
     void updateEnvironment();
     void updateEnvironment(QScreen *);
     QString const& mascotsPath();
-    ShijimaWidget *spawn(std::string const& name);
+    ActiveMascot *spawn(std::string const& name);
     void killAll();
     void killAll(QString const& name);
-    void killAllButOne(ShijimaWidget *widget);
+    void killAllButOne(ActiveMascot *widget);
     void killAllButOne(QString const& name);
     void setManagerVisible(bool visible);
     void importOnShow(QString const& path);
+    bool changeBackend(std::function<MascotBackend *()> backendProvider);
     QMap<QString, MascotData *> const& loadedMascots();
     QMap<int, MascotData *> const& loadedMascotsById();
-    std::list<ShijimaWidget *> const& mascots();
-    std::map<int, ShijimaWidget *> const& mascotsById();
-    ShijimaWidget *hitTest(QPoint const& screenPos);
+    std::list<ActiveMascot *> const& mascots();
+    std::map<int, ActiveMascot *> const& mascotsById();
+    ActiveMascot *hitTest(QPoint const& screenPos);
     void onTickSync(std::function<void(ShijimaManager *)> callback);
     ~ShijimaManager();
 protected:
@@ -118,8 +120,8 @@ private:
     QMap<shijima::mascot::environment *, QScreen *> m_reverseEnv;
     shijima::mascot::factory m_factory;
     QString m_importOnShowPath;
-    std::list<ShijimaWidget *> m_mascots;
-    std::map<int, ShijimaWidget *> m_mascotsById;
+    std::list<ActiveMascot *> m_mascots;
+    std::map<int, ActiveMascot *> m_mascotsById;
     QString m_mascotsPath;
     QListWidget m_listWidget;
     ShijimaHttpApi m_httpApi;
@@ -127,4 +129,5 @@ private:
     std::mutex m_mutex;
     std::condition_variable m_tickCallbackCompletion;
     std::list<std::function<void(ShijimaManager *)>> m_tickCallbacks;
+    MascotBackend *m_backend;
 };

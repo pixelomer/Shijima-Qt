@@ -4,6 +4,10 @@ SHIJIMA_USE_QTMULTIMEDIA ?= 1
 
 PREFIX ?= /usr/local
 
+WAYLAND_PROTOCOLS_DIR ?= $(shell pkg-config wayland-protocols --variable=pkgdatadir)
+WAYLAND_SCANNER = $(shell pkg-config --variable=wayland_scanner wayland-scanner)
+WL_PROTO_DIR = wayland-protocols
+
 SOURCES = main.cc \
 	Asset.cc \
 	MascotData.cc \
@@ -18,7 +22,12 @@ SOURCES = main.cc \
 	DefaultMascot.cc \
 	ShijimaHttpApi.cc \
 	cli.cc \
-	resources.rc
+	resources.rc \
+	MascotBackend.cc \
+	MascotBackendWidgets.cc \
+	ActiveMascot.cc \
+	MascotBackendWayland.cc \
+	WaylandShimeji.cc
 
 DEFAULT_MASCOT_FILES := $(addsuffix .png,$(addprefix DefaultMascot/img/shime,$(shell seq -s ' ' 1 1 46))) \
 	DefaultMascot/behaviors.xml DefaultMascot/actions.xml
@@ -42,7 +51,7 @@ TARGET_LDFLAGS := -Llibshimejifinder/build/unarr -lunarr
 
 ifeq ($(PLATFORM),Linux)
 QT_LIBS += DBus
-PKG_LIBS := x11
+PKG_LIBS := x11 wayland-client wayland-cursor
 TARGET_LDFLAGS += -Wl,-R -Wl,$(shell pwd)/publish/Linux/$(CONFIG)
 endif
 
@@ -71,11 +80,28 @@ if [ "$${uname_m}" = "$(1)" -o "$${uname_m}" = "$(2)" ]; then \
 	touch "$${name}"; \
 	chmod +x "$${name}"; \
 	name2="$${name%-$(2).AppImage}.AppImage"; \
+	rm -f "$${name2}"; \
 	ln -s "$${name}" "$${name2}"; \
 fi
 endef
 
 all:: publish/$(PLATFORM)/$(CONFIG)
+
+protocols-autogen:
+	$(WAYLAND_SCANNER) client-header $(WAYLAND_PROTOCOLS_DIR)/staging/cursor-shape/cursor-shape-v1.xml         $(WL_PROTO_DIR)/cursor-shape-v1.h
+	$(WAYLAND_SCANNER) private-code  $(WAYLAND_PROTOCOLS_DIR)/staging/cursor-shape/cursor-shape-v1.xml         $(WL_PROTO_DIR)/cursor-shape-v1.c
+	$(WAYLAND_SCANNER) client-header $(WAYLAND_PROTOCOLS_DIR)/stable/viewporter/viewporter.xml                 $(WL_PROTO_DIR)/viewporter.h
+	$(WAYLAND_SCANNER) private-code  $(WAYLAND_PROTOCOLS_DIR)/stable/viewporter/viewporter.xml                 $(WL_PROTO_DIR)/viewporter.c
+	$(WAYLAND_SCANNER) client-header $(WAYLAND_PROTOCOLS_DIR)/stable/tablet/tablet-v2.xml                      $(WL_PROTO_DIR)/tablet-v2.h
+	$(WAYLAND_SCANNER) private-code  $(WAYLAND_PROTOCOLS_DIR)/stable/tablet/tablet-v2.xml                      $(WL_PROTO_DIR)/tablet-v2.c
+	$(WAYLAND_SCANNER) client-header $(WAYLAND_PROTOCOLS_DIR)/stable/xdg-shell/xdg-shell.xml                   $(WL_PROTO_DIR)/xdg-shell.h
+	$(WAYLAND_SCANNER) private-code  $(WAYLAND_PROTOCOLS_DIR)/stable/xdg-shell/xdg-shell.xml                   $(WL_PROTO_DIR)/xdg-shell.c
+	$(WAYLAND_SCANNER) client-header $(WAYLAND_PROTOCOLS_DIR)/staging/fractional-scale/fractional-scale-v1.xml $(WL_PROTO_DIR)/fractional-scale-v1.h
+	$(WAYLAND_SCANNER) private-code  $(WAYLAND_PROTOCOLS_DIR)/staging/fractional-scale/fractional-scale-v1.xml $(WL_PROTO_DIR)/fractional-scale-v1.c
+	$(WAYLAND_SCANNER) client-header $(WAYLAND_PROTOCOLS_DIR)/unstable/xdg-output/xdg-output-unstable-v1.xml   $(WL_PROTO_DIR)/xdg-output.h
+	$(WAYLAND_SCANNER) private-code  $(WAYLAND_PROTOCOLS_DIR)/unstable/xdg-output/xdg-output-unstable-v1.xml   $(WL_PROTO_DIR)/xdg-output.c
+	$(WAYLAND_SCANNER) client-header wlr-layer-shell-unstable-v1.xml                             $(WL_PROTO_DIR)/wlr-layer-shell.h
+	$(WAYLAND_SCANNER) private-code  wlr-layer-shell-unstable-v1.xml                             $(WL_PROTO_DIR)/wlr-layer-shell.c
 
 publish/Windows/$(CONFIG): shijima-qt$(EXE) FORCE
 	mkdir -p $@

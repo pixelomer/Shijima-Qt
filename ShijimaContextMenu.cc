@@ -17,18 +17,19 @@
 // 
 
 #include "ShijimaContextMenu.hpp"
+#include "ActiveMascot.hpp"
 #include "ShijimaWidget.hpp"
 #include "ShijimaManager.hpp"
 
-ShijimaContextMenu::ShijimaContextMenu(ShijimaWidget *parent)
-    : QMenu("Context menu", parent)
+ShijimaContextMenu::ShijimaContextMenu(ActiveMascot *mascot, QWidget *parent)
+    : QMenu("Context menu", parent), m_mascot(mascot)
 {
     QAction *action;
 
     // Behaviors menu   
     {
         std::vector<std::string> behaviors;
-        auto &list = parent->m_mascot->initial_behavior_list();
+        auto &list = m_mascot->m_mascot->initial_behavior_list();
         auto flat = list.flatten_unconditional();
         for (auto &behavior : flat) {
             if (!behavior->hidden) {
@@ -39,7 +40,7 @@ ShijimaContextMenu::ShijimaContextMenu(ShijimaWidget *parent)
         for (std::string &behavior : behaviors) {
             action = behaviorsMenu->addAction(QString::fromStdString(behavior));
             connect(action, &QAction::triggered, [this, behavior](){
-                shijimaParent()->m_mascot->next_behavior(behavior);
+                m_mascot->m_mascot->next_behavior(behavior);
             });
         }
     }
@@ -53,28 +54,28 @@ ShijimaContextMenu::ShijimaContextMenu(ShijimaWidget *parent)
     // Inspect
     action = addAction("Inspect");
     connect(action, &QAction::triggered, [this](){
-        shijimaParent()->showInspector();
+        m_mascot->showInspector();
     });
 
     // Pause checkbox
     action = addAction("Pause");
     action->setCheckable(true);
-    action->setChecked(parent->m_paused);
+    action->setChecked(m_mascot->m_paused);
     connect(action, &QAction::triggered, [this](bool checked){
-        shijimaParent()->m_paused = checked;
+        m_mascot->m_paused = checked;
     });
 
     // Call another
     action = addAction("Call another");
     connect(action, &QAction::triggered, [this](){
-        ShijimaManager::defaultManager()->spawn(this->shijimaParent()->mascotName()
+        ShijimaManager::defaultManager()->spawn(this->m_mascot->mascotName()
             .toStdString());
     });
 
     // Dismiss all but one
     action = addAction("Dismiss all but one");
     connect(action, &QAction::triggered, [this](){
-        ShijimaManager::defaultManager()->killAllButOne(this->shijimaParent());
+        ShijimaManager::defaultManager()->killAllButOne(this->m_mascot);
     });
 
     // Dismiss all
@@ -85,11 +86,13 @@ ShijimaContextMenu::ShijimaContextMenu(ShijimaWidget *parent)
 
     // Dismiss
     action = addAction("Dismiss");
-    connect(action, &QAction::triggered, parent, &ShijimaWidget::closeAction);
+    connect(action, &QAction::triggered, [this]{
+        this->m_mascot->markForDeletion();
+    });
 }
 
 void ShijimaContextMenu::closeEvent(QCloseEvent *event) {
-    shijimaParent()->contextMenuClosed(event);
+    m_mascot->contextMenuClosed(event);
     QMenu::closeEvent(event);
 }
 

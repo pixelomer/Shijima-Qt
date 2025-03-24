@@ -21,42 +21,41 @@
 #include <QWidget>
 #include <memory>
 #include <QRegion>
-#include "Asset.hpp"
-#include "SoundEffectManager.hpp"
 #include <shijima/mascot/manager.hpp>
 #include <shijima/mascot/environment.hpp>
-#include "PlatformWidget.hpp"
+#include <wayland-client-protocol.h>
 #include "MascotData.hpp"
 #include "ActiveMascot.hpp"
+#include "MascotBackendWayland.hpp"
 
-class QPushButton;
-class QPaintEvent;
-class QMouseEvent;
-class QCloseEvent;
-class ShijimaContextMenu;
-class ShimejiInspectorDialog;
-
-class ShijimaWidget : public PlatformWidget<QWidget>, public ActiveMascot
+class WaylandShimeji : public ActiveMascot, public WaylandClient
 {
 public:
     friend class ShijimaContextMenu;
-    explicit ShijimaWidget(MascotData *mascotData,
+    explicit WaylandShimeji(MascotData *mascotData,
         std::unique_ptr<shijima::mascot::manager> mascot,
-        int mascotId, QWidget *parent = nullptr);
-    explicit ShijimaWidget(ActiveMascot &old,
-        QWidget *parent = nullptr);
+        int mascotId, MascotBackendWayland *wayland);
+    explicit WaylandShimeji(ActiveMascot &old,
+        MascotBackendWayland *wayland);
     virtual bool tick() override;
-    virtual ~ShijimaWidget();
+    virtual ~WaylandShimeji();
     virtual bool mascotClosed() override;
-    virtual bool updateOffsets() override;
-    virtual void show() override;
-protected:
-    void paintEvent(QPaintEvent *) override;
-    void mousePressEvent(QMouseEvent *) override;
-    void mouseReleaseEvent(QMouseEvent *) override;
+    virtual void updateRegion(::wl_region *region) override;
+    virtual void mouseMove(QPointF pos) override;
+    virtual void mouseDown(Qt::MouseButton button) override;
+    virtual void mouseUp(Qt::MouseButton button) override;
+    virtual bool pointInside(QPointF point) override;
 private:
-    void widgetSetup();
-#ifdef __linux__
-    QRegion m_windowMask;
-#endif
+    void init();
+    void resetSurface();
+    void redraw();
+    bool m_closed;
+    ::wl_subsurface *m_subsurface;
+    ::wl_surface *m_surface;
+    ::wl_surface *m_cursorSurface;
+    MascotBackendWayland *m_wayland;
+    QImage m_image;
+    WaylandBuffer m_buffer;
+    ::wl_region *m_region = NULL;
+    QRegion m_parentRegion;
 };

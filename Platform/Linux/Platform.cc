@@ -122,8 +122,7 @@ void initialize(int argc, char **argv) {
     sigaction(SIGHUP, &action, NULL);
 
     // Wayland does not allow windows to reposition themselves.
-    // Set WAYLAND_DISPLAY to an invalid value to prevent its use.
-    setenv("WAYLAND_DISPLAY", "", 1);
+    setenv("QT_QPA_PLATFORM", "xcb", 0);
 }
 
 void showOnAllDesktops(QWidget *widget) {
