@@ -100,8 +100,8 @@ protocols-autogen:
 	$(WAYLAND_SCANNER) private-code  $(WAYLAND_PROTOCOLS_DIR)/staging/fractional-scale/fractional-scale-v1.xml $(WL_PROTO_DIR)/fractional-scale-v1.c
 	$(WAYLAND_SCANNER) client-header $(WAYLAND_PROTOCOLS_DIR)/unstable/xdg-output/xdg-output-unstable-v1.xml   $(WL_PROTO_DIR)/xdg-output.h
 	$(WAYLAND_SCANNER) private-code  $(WAYLAND_PROTOCOLS_DIR)/unstable/xdg-output/xdg-output-unstable-v1.xml   $(WL_PROTO_DIR)/xdg-output.c
-	$(WAYLAND_SCANNER) client-header wlr-layer-shell-unstable-v1.xml                             $(WL_PROTO_DIR)/wlr-layer-shell.h
-	$(WAYLAND_SCANNER) private-code  wlr-layer-shell-unstable-v1.xml                             $(WL_PROTO_DIR)/wlr-layer-shell.c
+	$(WAYLAND_SCANNER) client-header wlr-layer-shell-unstable-v1.xml                                           $(WL_PROTO_DIR)/wlr-layer-shell.h
+	$(WAYLAND_SCANNER) private-code  wlr-layer-shell-unstable-v1.xml                                           $(WL_PROTO_DIR)/wlr-layer-shell.c
 
 publish/Windows/$(CONFIG): shijima-qt$(EXE) FORCE
 	mkdir -p $@
