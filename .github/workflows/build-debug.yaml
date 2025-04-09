@@ -2,8 +2,9 @@ name: Build debug
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   build-windows:
