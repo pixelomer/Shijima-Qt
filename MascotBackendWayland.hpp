@@ -126,6 +126,7 @@ public:
     void invalidateRegion() { m_regionValid = false; }
     bool leftMouseDown() { return m_leftMouseDown; }
     int32_t scaleFactor() { return m_scaleFactor; }
+    void requestNullRegion() { m_nullRegionRequested = true; }
 private:
     friend void MascotBackendWayland_register_global(void *data,
         struct wl_registry *wl_registry,
@@ -196,4 +197,5 @@ private:
     std::shared_ptr<shijima::mascot::environment> m_env;
     std::list<WaylandClient *> m_clients;
     double m_scaleFactor;
+    bool m_nullRegionRequested;
 };

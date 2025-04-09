@@ -97,6 +97,9 @@ bool WaylandShimeji::tick() {
     auto container = this->container();
     auto asset = getActiveAsset();
     bool changed = ActiveMascot::tick();
+    if (ActiveMascot::contextMenuVisible()) {
+        m_wayland->requestNullRegion();
+    }
     //if (changed) {
         auto newContainer = this->container();
         if (container.size() != newContainer.size()) {

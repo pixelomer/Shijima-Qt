@@ -85,6 +85,7 @@ protected:
     virtual bool updateOffsets();
     bool markedForDeletion() { return m_markedForDeletion; }
     Asset const& getActiveAsset();
+    bool contextMenuVisible() const { return m_contextMenuVisible; }
 private:
     MascotData *m_data;
     ShimejiInspectorDialog *m_inspector;

@@ -297,7 +297,7 @@ void MascotBackendWayland_preferred_scale(void *data,
 MascotBackendWayland::MascotBackendWayland(ShijimaManager *manager):
     MascotBackend(manager),
     m_env(std::make_shared<shijima::mascot::environment>()),
-    m_scaleFactor(1)
+    m_scaleFactor(1), m_nullRegionRequested(false)
 {
     // connect to compositor
     m_display = wl_display_connect(NULL);
@@ -449,7 +449,14 @@ void MascotBackendWayland::finalizeEnvironment() {
 
 
 void MascotBackendWayland::postTick() {
-    if (!m_regionValid) {
+    if (m_nullRegionRequested) {
+        wl_region_subtract(m_layerRegion, 0, 0, INT32_MAX, INT32_MAX);
+        wl_surface_set_input_region(m_surface, m_layerRegion);
+        wl_surface_commit(m_surface);
+        m_regionValid = false;
+        m_nullRegionRequested = false;
+    }
+    else if (!m_regionValid) {
         wl_region_subtract(m_layerRegion, 0, 0, INT32_MAX, INT32_MAX);
         if (m_leftMouseDown) {
             wl_region_add(m_layerRegion, 0, 0, m_activeOutput->width(),
