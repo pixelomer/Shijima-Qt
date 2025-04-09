@@ -998,7 +998,7 @@ void ShijimaManager::tick() {
             if (product.has_value()) {
                 ActiveMascot *child = m_backend->spawn(
                     m_loadedMascots[QString::fromStdString(breedRequest.name)],
-                    std::move(product->manager), m_idCounter++);
+                    std::move(product->manager), m_idCounter++, false);
                 child->setEnv(shimeji->env());
                 child->show();
                 m_mascots.push_back(child);
@@ -1047,7 +1047,7 @@ ActiveMascot *ShijimaManager::spawn(std::string const& name) {
     auto product = m_factory.spawn(name, {});
     ActiveMascot *shimeji = m_backend->spawn(
         m_loadedMascots[QString::fromStdString(name)],
-        std::move(product.manager), m_idCounter++);
+        std::move(product.manager), m_idCounter++, true);
     shimeji->show();
     m_mascots.push_back(shimeji);
     m_mascotsById[shimeji->mascotId()] = shimeji;

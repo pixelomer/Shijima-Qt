@@ -495,12 +495,14 @@ MascotBackendWayland::~MascotBackendWayland() {
 
 ActiveMascot *MascotBackendWayland::spawn(MascotData *mascotData,
     std::unique_ptr<shijima::mascot::manager> mascot,
-    int mascotId)
+    int mascotId, bool resetPosition)
 {
-    initEnvironment();
     mascot->state->env = m_env;
-    mascot->reset_position();
-    finalizeEnvironment();
+    if (resetPosition) {
+        initEnvironment();
+        mascot->reset_position();
+        finalizeEnvironment();
+    }
     auto shimeji = new WaylandShimeji(mascotData, std::move(mascot), mascotId,
         this);
     return shimeji;

@@ -11,7 +11,7 @@ public:
     virtual ~MascotBackendWidgets() override;
     virtual ActiveMascot *spawn(MascotData *mascotData,
         std::unique_ptr<shijima::mascot::manager> mascot,
-        int mascotId) override;
+        int mascotId, bool resetPosition) override;
     virtual ActiveMascot *migrate(ActiveMascot &old) override;
     virtual void preTick() override;
     virtual void postTick() override;

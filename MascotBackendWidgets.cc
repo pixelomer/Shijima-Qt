@@ -25,14 +25,16 @@ MascotBackendWidgets::~MascotBackendWidgets() {
 
 ActiveMascot *MascotBackendWidgets::spawn(MascotData *mascotData,
     std::unique_ptr<shijima::mascot::manager> mascot,
-    int mascotId)
+    int mascotId, bool resetPosition)
 {
     QScreen *screen = spawnScreen();
-    updateEnvironment(screen);
     auto &env = m_env[screen];
     mascot->state->env = env;
-    mascot->reset_position();
-    env->reset_scale();
+    if (resetPosition) {
+        updateEnvironment(screen);
+        mascot->reset_position();
+        env->reset_scale();
+    }
     return new ShijimaWidget(this, mascotData, std::move(mascot),
         mascotId, manager());
 }
