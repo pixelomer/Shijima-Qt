@@ -128,7 +128,13 @@ void initialize(int argc, char **argv) {
 void showOnAllDesktops(QWidget *widget) {
     unsigned long data = 0xFFFFFFFF;
     QNativeInterface::QX11Application *x11App = qApp->nativeInterface<QNativeInterface::QX11Application>();
+    if (x11App == nullptr) {
+        return;
+    }
     Display *displayID = x11App->display();
+    if (displayID == nullptr) {
+        return;
+    }
     WId windowID = widget->winId();
     XChangeProperty(displayID, windowID,
         XInternAtom(displayID, "_NET_WM_DESKTOP", False),
