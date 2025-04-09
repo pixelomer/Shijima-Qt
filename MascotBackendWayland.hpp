@@ -1,6 +1,7 @@
 #pragma once
 #include "MascotBackend.hpp"
 #include "wayland-protocols/wlr-layer-shell.h"
+#include "wayland-protocols/fractional-scale-v1.h"
 #include <cstdint>
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
@@ -57,6 +58,10 @@ public:
     int32_t y() { return m_y; }
     int32_t width() { return m_width; }
     int32_t height() { return m_height; }
+    int32_t top() { return y(); }
+    int32_t right() { return x() + width(); }
+    int32_t bottom() { return y() + height(); }
+    int32_t left() { return x(); }
     int32_t subpixel() { return m_subpixel; }
     int32_t refresh() { return m_refresh; }
     int32_t factor() { return m_factor; }
@@ -107,7 +112,10 @@ public:
         std::unique_ptr<shijima::mascot::manager> mascot,
         int mascotId) override;
     virtual ActiveMascot *migrate(ActiveMascot &old) override;
-    virtual void tick() override;
+    virtual void preTick() override;
+    virtual void postTick() override;
+    virtual void updateEnvironments(
+        std::function<void(shijima::mascot::environment &)> cb) override;
     WaylandBuffer createBuffer(int width, int height);
     ::wl_compositor *compositor() { return m_compositor; }
     ::wl_display *display() { return m_display; }
@@ -117,7 +125,7 @@ public:
     void removeClient(WaylandClient *client);
     void invalidateRegion() { m_regionValid = false; }
     bool leftMouseDown() { return m_leftMouseDown; }
-    virtual bool multiMonitorAware() override;
+    int32_t scaleFactor() { return m_scaleFactor; }
 private:
     friend void MascotBackendWayland_register_global(void *data,
         struct wl_registry *wl_registry,
@@ -155,6 +163,11 @@ private:
         uint32_t time,
         uint32_t button,
         uint32_t state);
+    friend void MascotBackendWayland_preferred_scale(void *data,
+        struct wp_fractional_scale_v1 *wp_fractional_scale_v1,
+        uint32_t scale);
+    void initEnvironment();
+    void finalizeEnvironment();
     ::wl_display *m_display = NULL;
     ::wl_registry *m_registry = NULL;
     ::wl_shm *m_shm = NULL;
@@ -171,6 +184,8 @@ private:
     ::wl_pointer *m_pointer = NULL;
     ::wl_surface *m_pointerSurface = NULL;
     ::wl_region *m_layerRegion = NULL;
+    ::wp_fractional_scale_manager_v1 *m_fractionalScaleManager = NULL;
+    ::wp_fractional_scale_v1 *m_fractionalScale = NULL;
     WaylandOutput *m_activeOutput = NULL;
     WaylandBuffer m_layerBuffer;
     WaylandClient *m_activeMouseListener = NULL;
@@ -178,5 +193,7 @@ private:
     bool m_regionValid = false;
     QPointF m_cursorPosition;
     std::map<::wl_output *, WaylandOutput *> m_outputs;
+    std::shared_ptr<shijima::mascot::environment> m_env;
     std::list<WaylandClient *> m_clients;
+    double m_scaleFactor;
 };

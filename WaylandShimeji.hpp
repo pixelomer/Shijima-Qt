@@ -58,4 +58,5 @@ private:
     WaylandBuffer m_buffer;
     ::wl_region *m_region = NULL;
     QRegion m_parentRegion;
+    shijima::mascot::environment::dvec2 m_cursor;
 };

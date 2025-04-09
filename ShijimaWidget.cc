@@ -33,13 +33,15 @@
 #include "Platform/Platform.hpp"
 #include "ShimejiInspectorDialog.hpp"
 #include "AssetLoader.hpp"
+#include "MascotBackendWidgets.hpp"
 #include "ShijimaContextMenu.hpp"
 #include "ShijimaManager.hpp"
 #include <shimejifinder/utils.hpp>
 
 using namespace shijima;
 
-ShijimaWidget::ShijimaWidget(MascotData *mascotData,
+ShijimaWidget::ShijimaWidget(MascotBackendWidgets *backend,
+    MascotData *mascotData,
     std::unique_ptr<shijima::mascot::manager> mascot,
     int mascotId, QWidget *parent):
 #if defined(__APPLE__)
@@ -47,18 +49,20 @@ ShijimaWidget::ShijimaWidget(MascotData *mascotData,
 #else
     PlatformWidget(parent, PlatformWidget::ShowOnAllDesktops),
 #endif
-    ActiveMascot(mascotData, std::move(mascot), mascotId)
+    ActiveMascot(mascotData, std::move(mascot), mascotId),
+    m_backend(backend)
 {
     widgetSetup();
 }
 
-ShijimaWidget::ShijimaWidget(ActiveMascot &old, QWidget *parent):
+ShijimaWidget::ShijimaWidget(MascotBackendWidgets *backend,
+    ActiveMascot &old, QWidget *parent):
 #if defined(__APPLE__)
     PlatformWidget(nullptr, PlatformWidget::ShowOnAllDesktops),
 #else
     PlatformWidget(parent, PlatformWidget::ShowOnAllDesktops),
 #endif
-    ActiveMascot(old)
+    ActiveMascot(old), m_backend(backend)
 {
     widgetSetup();
 }
@@ -113,9 +117,24 @@ bool ShijimaWidget::tick() {
         close();
         return false;
     }
+    auto &reverseEnv = m_backend->reverseEnv();
+    if (!reverseEnv.contains(mascot().state->env.get())) {
+        mascot().state->env = m_backend->env()[m_backend->spawnScreen()];
+    }
     if (ActiveMascot::tick()) {
         repaint();
         update();
+
+        if (mascot().state->dragging) {
+            auto &reverseEnv = m_backend->reverseEnv();
+            auto &env = m_backend->env();
+            auto oldScreen = reverseEnv[mascot().state->env.get()];
+            auto newScreen = QGuiApplication::screenAt(QPoint {
+                (int)mascot().state->anchor.x, (int)mascot().state->anchor.y });
+            if (newScreen != nullptr && oldScreen != newScreen) {
+                mascot().state->env = env[newScreen];
+            }
+        }
         return true;
     }
     return false;

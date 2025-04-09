@@ -5,6 +5,3 @@ MascotBackend::~MascotBackend() {}
 ShijimaManager *MascotBackend::manager() {
     return m_manager;
 }
-
-void MascotBackend::tick() {
-}

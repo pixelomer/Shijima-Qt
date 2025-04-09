@@ -47,8 +47,6 @@ class ShijimaManager : public PlatformWidget<QMainWindow>
 public:
     static ShijimaManager *defaultManager();
     static void finalize();
-    void updateEnvironment();
-    void updateEnvironment(QScreen *);
     QString const& mascotsPath();
     ActiveMascot *spawn(std::string const& name);
     void killAll();
@@ -65,6 +63,11 @@ public:
     ActiveMascot *hitTest(QPoint const& screenPos);
     void onTickSync(std::function<void(ShijimaManager *)> callback);
     ~ShijimaManager();
+    Platform::ActiveWindow const& previousActiveWindow();
+    Platform::ActiveWindow const& currentActiveWindow();
+    void applyActiveIE(shijima::mascot::environment &env);
+    double userScale();
+    int subtickCount();
 protected:
     void timerEvent(QTimerEvent *event) override;
     void showEvent(QShowEvent *event) override;
@@ -89,18 +92,12 @@ private:
     void importAction();
     void deleteAction();
     void updateSandboxBackground();
-    bool windowedMode();
     QWidget *mascotParent();
-    void setWindowedMode(bool windowedMode);
-    void screenAdded(QScreen *);
-    void screenRemoved(QScreen *);
     void quitAction();
     std::set<std::string> import(QString const& path) noexcept;
     void importWithDialog(QList<QString> const& paths);
     void tick();
-    QScreen *mascotScreen();
     QColor m_sandboxBackground;
-    QAction *m_windowedModeAction;
     QWidget *m_sandboxWidget;
     QSettings m_settings;
     Platform::ActiveWindow m_previousWindow;
@@ -116,8 +113,6 @@ private:
     QMap<QString, MascotData *> m_loadedMascots;
     QMap<int, MascotData *> m_loadedMascotsById;
     QSet<QString> m_listItemsToRefresh;
-    QMap<QScreen *, std::shared_ptr<shijima::mascot::environment>> m_env;
-    QMap<shijima::mascot::environment *, QScreen *> m_reverseEnv;
     shijima::mascot::factory m_factory;
     QString m_importOnShowPath;
     std::list<ActiveMascot *> m_mascots;

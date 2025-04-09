@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <functional>
 
 class ShijimaManager;
 class ActiveMascot;
@@ -7,6 +8,7 @@ class MascotData;
 namespace shijima {
 namespace mascot {
     class manager;
+    class environment;
 }
 }
 
@@ -21,6 +23,8 @@ public:
         std::unique_ptr<shijima::mascot::manager> mascot,
         int mascotId) = 0;
     virtual ActiveMascot *migrate(ActiveMascot &old) = 0;
-    virtual void tick();
-    virtual bool multiMonitorAware() = 0;
+    virtual void preTick() = 0;
+    virtual void postTick() = 0;
+    virtual void updateEnvironments(
+        std::function<void(shijima::mascot::environment &)> cb) = 0;
 };

@@ -126,8 +126,8 @@ bool WaylandShimeji::mascotClosed() {
 }
 
 void WaylandShimeji::mouseMove(QPointF pos) {
-    mascot().state->env->cursor.move({ (double)pos.x(),
-        (double)pos.y() });
+    /*mascot().state->env->cursor.move({ (double)pos.x(),
+        (double)pos.y() });*/
 }
 
 void WaylandShimeji::mouseDown(Qt::MouseButton button) {

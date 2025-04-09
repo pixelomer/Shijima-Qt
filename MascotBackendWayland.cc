@@ -121,7 +121,7 @@ void MascotBackendWayland_register_global(void *data,
         version >= 4)
     {
 		backend->m_compositor = (::wl_compositor *)wl_registry_bind(wl_registry, name,
-			&wl_compositor_interface, 4);
+			&wl_compositor_interface, 6);
 	}
     else if (strcmp(interface, wl_shm_interface.name) == 0) {
 		backend->m_shm = (::wl_shm *)wl_registry_bind(wl_registry, name,
@@ -145,6 +145,11 @@ void MascotBackendWayland_register_global(void *data,
 		backend->m_seat = (::wl_seat *)wl_registry_bind(wl_registry, name,
 			&wl_seat_interface, 1);
 	}
+    else if (strcmp(interface, wp_fractional_scale_manager_v1_interface.name) == 0) {
+        backend->m_fractionalScaleManager = 
+            (::wp_fractional_scale_manager_v1 *)wl_registry_bind(wl_registry, name,
+            &wp_fractional_scale_manager_v1_interface, 1);
+    }
 }
 
 void MascotBackendWayland_deregister_global(void *data,
@@ -210,6 +215,7 @@ void MascotBackendWayland_pointer_motion(void *data,
     double y = wl_fixed_to_double(surface_y);
     auto wayland = (MascotBackendWayland *)data;
     wayland->m_cursorPosition = { x, y };
+    wayland->m_env->cursor.move({ x, y });
     if (wayland->m_activeMouseListener != nullptr) {
         wayland->m_activeMouseListener->mouseMove(wayland->m_cursorPosition);
     }
@@ -280,8 +286,18 @@ void MascotBackendWayland_pointer_button(void *data,
     }
 }
 
+void MascotBackendWayland_preferred_scale(void *data,
+    struct wp_fractional_scale_v1 *wp_fractional_scale_v1,
+    uint32_t scale)
+{
+    auto wayland = (MascotBackendWayland *)data;
+    wayland->m_scaleFactor = scale / 120.0;
+}
+
 MascotBackendWayland::MascotBackendWayland(ShijimaManager *manager):
-    MascotBackend(manager)
+    MascotBackend(manager),
+    m_env(std::make_shared<shijima::mascot::environment>()),
+    m_scaleFactor(1)
 {
     // connect to compositor
     m_display = wl_display_connect(NULL);
@@ -320,15 +336,26 @@ MascotBackendWayland::MascotBackendWayland(ShijimaManager *manager):
         else if (m_seat == NULL) {
             error = "wl_seat not available";
         }
+        else if (m_fractionalScaleManager == NULL) {
+            error = "wp_fractional_scale_manager_v1 not available";
+        }
         if (error != NULL) {
             wl_registry_destroy(m_registry);
             throw std::runtime_error(error);
         }
     }
 
+    static const ::wp_fractional_scale_v1_listener fractional_scale_listener = {
+        MascotBackendWayland_preferred_scale
+    };
+
     // create surface
     m_surface = wl_compositor_create_surface(m_compositor);
     wl_surface_commit(m_surface);
+    m_fractionalScale = wp_fractional_scale_manager_v1_get_fractional_scale(
+        m_fractionalScaleManager, m_surface);
+    wp_fractional_scale_v1_add_listener(m_fractionalScale, 
+        &fractional_scale_listener, this);
     wl_display_roundtrip(m_display);
     WaylandOutput *firstOutput;
     for (auto &entry : m_outputs) {
@@ -364,8 +391,9 @@ MascotBackendWayland::MascotBackendWayland(ShijimaManager *manager):
     wl_surface_set_input_region(m_surface, m_layerRegion);
     wl_display_roundtrip(m_display);
 
-    m_layerBuffer = createBuffer(firstOutput->width(),
-        firstOutput->height());
+    m_layerBuffer = createBuffer(
+        firstOutput->width() * m_scaleFactor,
+        firstOutput->height() * m_scaleFactor);
     for (size_t i=0; i<m_layerBuffer.size(); i+=4) {
         m_layerBuffer[i] = 0x10;
         m_layerBuffer[i+1] = 0x10;
@@ -397,7 +425,30 @@ MascotBackendWayland::MascotBackendWayland(ShijimaManager *manager):
     wl_surface_commit(m_pointerSurface);
 }
 
-void MascotBackendWayland::tick() {
+void MascotBackendWayland::preTick() {
+    initEnvironment();
+}
+
+void MascotBackendWayland::initEnvironment() {
+    auto &env = *m_env;
+    env.screen = { (double)m_activeOutput->top(), (double)m_activeOutput->right(),
+        (double)m_activeOutput->bottom(), (double)m_activeOutput->left() };
+    env.screen /= m_scaleFactor;
+    env.work_area = env.screen;
+    env.floor = { env.screen.bottom, env.screen.left, env.screen.right };
+    env.ceiling = { env.screen.top, env.screen.left, env.screen.right };
+    manager()->applyActiveIE(*m_env);
+    env.subtick_count = manager()->subtickCount();
+    env.set_scale(1.0 / std::sqrt(manager()->userScale()));
+}
+
+void MascotBackendWayland::finalizeEnvironment() {
+    m_env->cursor.dx = m_env->cursor.dy = 0;
+    m_env->reset_scale();
+}
+
+
+void MascotBackendWayland::postTick() {
     if (!m_regionValid) {
         wl_region_subtract(m_layerRegion, 0, 0, INT32_MAX, INT32_MAX);
         if (m_leftMouseDown) {
@@ -413,8 +464,15 @@ void MascotBackendWayland::tick() {
         wl_surface_set_input_region(m_surface, m_layerRegion);
         wl_surface_commit(m_surface);
     }
+    finalizeEnvironment();
     wl_display_roundtrip(m_display);
     wl_display_dispatch_pending(m_display);
+}
+
+void MascotBackendWayland::updateEnvironments(
+    std::function<void(shijima::mascot::environment &)> cb)
+{
+    cb(*m_env);
 }
 
 MascotBackendWayland::~MascotBackendWayland() {
@@ -432,12 +490,22 @@ ActiveMascot *MascotBackendWayland::spawn(MascotData *mascotData,
     std::unique_ptr<shijima::mascot::manager> mascot,
     int mascotId)
 {
-    return new WaylandShimeji(mascotData, std::move(mascot), mascotId,
+    initEnvironment();
+    mascot->state->env = m_env;
+    mascot->reset_position();
+    finalizeEnvironment();
+    auto shimeji = new WaylandShimeji(mascotData, std::move(mascot), mascotId,
         this);
+    return shimeji;
 }
 
 ActiveMascot *MascotBackendWayland::migrate(ActiveMascot &old) {
-    return new WaylandShimeji(old, this);
+    initEnvironment();
+    old.mascot().state->env = m_env;
+    old.mascot().reset_position();
+    finalizeEnvironment();
+    auto shimeji = new WaylandShimeji(old, this);
+    return shimeji;
 }
 
 void MascotBackendWayland_Output_geometry(void *data,
@@ -458,8 +526,8 @@ void MascotBackendWayland_Output_geometry(void *data,
     output->m_subpixel = subpixel;
     output->m_make = make;
     output->m_model = model;
-    printf("output %p: x=%d, y=%d, pw=%d, ph=%d, make=%s\n",
-        (void *)wl_output, x, y, physical_width, physical_height, make);
+    printf("output %p: x=%d, y=%d, pw=%d, ph=%d, subpixel=%d, make=%s\n",
+        (void *)wl_output, x, y, physical_width, physical_height, subpixel, make);
 }
 
 void MascotBackendWayland_Output_mode(void *data,
@@ -490,6 +558,9 @@ void MascotBackendWayland_Output_scale(void *data,
     struct wl_output *wl_output,
     int32_t factor)
 {
+    // This should NOT be used to scale content
+    // See wl_surface.preferred_surface_scale instead
+    
     auto *output = (WaylandOutput *)data;
     //output->ready = false;
     output->m_factor = factor;
@@ -538,8 +609,4 @@ void MascotBackendWayland::addClient(WaylandClient *client) {
 
 void MascotBackendWayland::removeClient(WaylandClient *client) {
     m_clients.remove(client);
-}
-
-bool MascotBackendWayland::multiMonitorAware() {
-    return true;
 }

@@ -35,16 +35,18 @@ class QMouseEvent;
 class QCloseEvent;
 class ShijimaContextMenu;
 class ShimejiInspectorDialog;
+class MascotBackendWidgets;
 
 class ShijimaWidget : public PlatformWidget<QWidget>, public ActiveMascot
 {
 public:
     friend class ShijimaContextMenu;
-    explicit ShijimaWidget(MascotData *mascotData,
+    explicit ShijimaWidget(MascotBackendWidgets *backend,
+        MascotData *mascotData,
         std::unique_ptr<shijima::mascot::manager> mascot,
         int mascotId, QWidget *parent = nullptr);
-    explicit ShijimaWidget(ActiveMascot &old,
-        QWidget *parent = nullptr);
+    explicit ShijimaWidget(MascotBackendWidgets *backend,
+        ActiveMascot &old, QWidget *parent = nullptr);
     virtual bool tick() override;
     virtual ~ShijimaWidget();
     virtual bool mascotClosed() override;
@@ -56,6 +58,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent *) override;
 private:
     void widgetSetup();
+    MascotBackendWidgets *m_backend;
 #ifdef __linux__
     QRegion m_windowMask;
 #endif
