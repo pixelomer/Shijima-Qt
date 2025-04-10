@@ -36,7 +36,6 @@
 #include <QScreen>
 #include <QRandomGenerator>
 #include "ActiveMascot.hpp"
-#include "MascotBackendWayland.hpp"
 #include "MascotBackendWidgets.hpp"
 #include "PlatformWidget.hpp"
 #include "ShijimaLicensesDialog.hpp"
@@ -64,6 +63,7 @@
 #include <QColorDialog>
 #include <cstring>
 #include <cstdint>
+#include "Platform/Platform.hpp"
 
 #define SHIJIMAQT_SUBTICK_COUNT 4
 
@@ -229,6 +229,19 @@ void ShijimaManager::quitAction() {
     close();
 }
 
+std::map<std::string, std::function<MascotBackend *(ShijimaManager *)>>
+    ShijimaManager::m_backends;
+std::string ShijimaManager::m_defaultBackendName;
+
+void ShijimaManager::registerBackends() {
+    m_backends.clear();
+    m_backends["Qt Widgets"] = [](ShijimaManager *manager){
+        return new MascotBackendWidgets { manager };
+    };
+    m_defaultBackendName = "Qt Widgets";
+    Platform::registerBackends(m_backends);
+}
+
 void ShijimaManager::deleteAction() {
     if (m_loadedMascots.size() == 0) {
         return;
@@ -371,20 +384,12 @@ void ShijimaManager::buildToolbar() {
         }
 
         submenu = menu->addMenu("Backend");
-        {
-            action = submenu->addAction("Qt Widgets");
-            action->setCheckable(true);
-            connect(action, &QAction::triggered, [this](bool checked){
-                changeBackend([this](){
-                    return new MascotBackendWidgets { this };
-                });
-            });
-
-            action = submenu->addAction("Wayland");
-            action->setCheckable(true);
-            connect(action, &QAction::triggered, [this](bool checked){
-                changeBackend([this](){
-                    return new MascotBackendWayland { this };
+        for (auto &pair : m_backends) {
+            action = submenu->addAction(QString::fromStdString(pair.first));
+            auto make = pair.second;
+            connect(action, &QAction::triggered, [this, make](){
+                changeBackend([this, make](){
+                    return make(this);
                 });
             });
         }
@@ -730,7 +735,7 @@ ShijimaManager::ShijimaManager(QWidget *parent):
     m_idCounter(0), m_httpApi(this),
     m_hasTickCallbacks(false)
 {
-    m_backend = new MascotBackendWidgets(this);
+    m_backend = m_backends[m_defaultBackendName](this);
 
     QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
     QString mascotsPath = QDir::cleanPath(dataPath + QDir::separator() + "mascots");

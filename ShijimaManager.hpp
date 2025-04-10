@@ -33,6 +33,7 @@
 #include <set>
 #include <list>
 #include <mutex>
+#include <map>
 #include "Platform/ActiveWindowObserver.hpp"
 #include "ShijimaWidget.hpp"
 #include "ShijimaHttpApi.hpp"
@@ -67,6 +68,7 @@ public:
     Platform::ActiveWindow const& currentActiveWindow();
     void applyActiveIE(shijima::mascot::environment &env);
     double userScale();
+    static void registerBackends();
     int subtickCount();
 protected:
     void timerEvent(QTimerEvent *event) override;
@@ -76,6 +78,9 @@ protected:
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
 private:
+    static std::map<std::string,
+        std::function<MascotBackend *(ShijimaManager *)>> m_backends;
+    static std::string m_defaultBackendName;
     explicit ShijimaManager(QWidget *parent = nullptr);
     static std::string imgRootForTemplatePath(std::string const& path);
     std::unique_lock<std::mutex> acquireLock();

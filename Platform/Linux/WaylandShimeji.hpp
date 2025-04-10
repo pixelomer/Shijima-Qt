@@ -24,8 +24,8 @@
 #include <shijima/mascot/manager.hpp>
 #include <shijima/mascot/environment.hpp>
 #include <wayland-client-protocol.h>
-#include "MascotData.hpp"
-#include "ActiveMascot.hpp"
+#include "../../MascotData.hpp"
+#include "../../ActiveMascot.hpp"
 #include "MascotBackendWayland.hpp"
 
 class WaylandShimeji : public ActiveMascot, public WaylandClient

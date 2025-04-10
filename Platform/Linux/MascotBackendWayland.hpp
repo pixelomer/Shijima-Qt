@@ -1,6 +1,6 @@
 #pragma once
-#include "MascotBackend.hpp"
-#include "wayland-protocols/wlr-layer-shell.h"
+#include "../../MascotBackend.hpp"
+#include "wayland-protocols/wlr-layer-shell-unstable-v1.h"
 #include "wayland-protocols/fractional-scale-v1.h"
 #include <cstdint>
 #include <wayland-client-protocol.h>

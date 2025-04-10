@@ -4,10 +4,6 @@ SHIJIMA_USE_QTMULTIMEDIA ?= 1
 
 PREFIX ?= /usr/local
 
-WAYLAND_PROTOCOLS_DIR ?= $(shell pkg-config wayland-protocols --variable=pkgdatadir)
-WAYLAND_SCANNER = $(shell pkg-config --variable=wayland_scanner wayland-scanner)
-WL_PROTO_DIR = wayland-protocols
-
 SOURCES = main.cc \
 	Asset.cc \
 	MascotData.cc \
@@ -25,9 +21,7 @@ SOURCES = main.cc \
 	resources.rc \
 	MascotBackend.cc \
 	MascotBackendWidgets.cc \
-	ActiveMascot.cc \
-	MascotBackendWayland.cc \
-	WaylandShimeji.cc
+	ActiveMascot.cc
 
 DEFAULT_MASCOT_FILES := $(addsuffix .png,$(addprefix DefaultMascot/img/shime,$(shell seq -s ' ' 1 1 46))) \
 	DefaultMascot/behaviors.xml DefaultMascot/actions.xml
@@ -86,23 +80,6 @@ fi
 endef
 
 all:: publish/$(PLATFORM)/$(CONFIG)
-
-protocols-autogen:
-	mkdir -p $(WAYLAND_PROTOCOLS_DIR)
-	$(WAYLAND_SCANNER) client-header $(WAYLAND_PROTOCOLS_DIR)/staging/cursor-shape/cursor-shape-v1.xml         $(WL_PROTO_DIR)/cursor-shape-v1.h
-	$(WAYLAND_SCANNER) private-code  $(WAYLAND_PROTOCOLS_DIR)/staging/cursor-shape/cursor-shape-v1.xml         $(WL_PROTO_DIR)/cursor-shape-v1.c
-	$(WAYLAND_SCANNER) client-header $(WAYLAND_PROTOCOLS_DIR)/stable/viewporter/viewporter.xml                 $(WL_PROTO_DIR)/viewporter.h
-	$(WAYLAND_SCANNER) private-code  $(WAYLAND_PROTOCOLS_DIR)/stable/viewporter/viewporter.xml                 $(WL_PROTO_DIR)/viewporter.c
-	$(WAYLAND_SCANNER) client-header $(WAYLAND_PROTOCOLS_DIR)/stable/tablet/tablet-v2.xml                      $(WL_PROTO_DIR)/tablet-v2.h
-	$(WAYLAND_SCANNER) private-code  $(WAYLAND_PROTOCOLS_DIR)/stable/tablet/tablet-v2.xml                      $(WL_PROTO_DIR)/tablet-v2.c
-	$(WAYLAND_SCANNER) client-header $(WAYLAND_PROTOCOLS_DIR)/stable/xdg-shell/xdg-shell.xml                   $(WL_PROTO_DIR)/xdg-shell.h
-	$(WAYLAND_SCANNER) private-code  $(WAYLAND_PROTOCOLS_DIR)/stable/xdg-shell/xdg-shell.xml                   $(WL_PROTO_DIR)/xdg-shell.c
-	$(WAYLAND_SCANNER) client-header $(WAYLAND_PROTOCOLS_DIR)/staging/fractional-scale/fractional-scale-v1.xml $(WL_PROTO_DIR)/fractional-scale-v1.h
-	$(WAYLAND_SCANNER) private-code  $(WAYLAND_PROTOCOLS_DIR)/staging/fractional-scale/fractional-scale-v1.xml $(WL_PROTO_DIR)/fractional-scale-v1.c
-	$(WAYLAND_SCANNER) client-header $(WAYLAND_PROTOCOLS_DIR)/unstable/xdg-output/xdg-output-unstable-v1.xml   $(WL_PROTO_DIR)/xdg-output.h
-	$(WAYLAND_SCANNER) private-code  $(WAYLAND_PROTOCOLS_DIR)/unstable/xdg-output/xdg-output-unstable-v1.xml   $(WL_PROTO_DIR)/xdg-output.c
-	$(WAYLAND_SCANNER) client-header wlr-layer-shell-unstable-v1.xml                                           $(WL_PROTO_DIR)/wlr-layer-shell.h
-	$(WAYLAND_SCANNER) private-code  wlr-layer-shell-unstable-v1.xml                                           $(WL_PROTO_DIR)/wlr-layer-shell.c
 
 publish/Windows/$(CONFIG): shijima-qt$(EXE) FORCE
 	mkdir -p $@

@@ -17,7 +17,7 @@
 // 
 
 #include "WaylandShimeji.hpp"
-#include "ActiveMascot.hpp"
+#include "../../ActiveMascot.hpp"
 #include "MascotBackendWayland.hpp"
 #include <QPixmap>
 #include <wayland-cursor.h>

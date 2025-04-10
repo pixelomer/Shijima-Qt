@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/socket.h>
+#include "MascotBackendWayland.hpp"
 
 namespace Platform {
 
@@ -165,6 +166,14 @@ void showOnAllDesktops(QWidget *widget) {
 
 bool useWindowMasks() {
     return windowMasksEnabled;
+}
+
+void registerBackends(std::map<std::string,
+    std::function<MascotBackend *(ShijimaManager *)>> &backends)
+{
+    backends["Wayland"] = [](ShijimaManager *manager){
+        return new MascotBackendWayland { manager };
+    };
 }
 
 }
