@@ -1,9 +1,20 @@
 include ../../common.mk
 
-SOURCES = Platform.cc ActiveWindowObserver.cc KWin.cc PrivateActiveWindowObserver.cc \
-	DBus.cc GNOME.cc GNOMEWindowObserverBackend.cc KDEWindowObserverBackend.cc \
-	ExtensionFile.cc
-QT_LIBS = Core DBus Widgets
+
+WAYLAND_PROTOCOLS_DIR ?= $(shell pkg-config wayland-protocols --variable=pkgdatadir)
+WAYLAND_SCANNER = $(shell pkg-config --variable=wayland_scanner wayland-scanner)
+PROTOCOL_SOURCES := wayland-protocols/cursor-shape-v1.c wayland-protocols/viewporter.c \
+	wayland-protocols/tablet-v2.c wayland-protocols/xdg-shell.c \
+	wayland-protocols/fractional-scale-v1.c wayland-protocols/xdg-output-unstable-v1.c \
+	wayland-protocols/wlr-layer-shell-unstable-v1.c
+WL_PROTO_DIR = wayland-protocols
+SOURCES = Platform.cc ActiveWindowObserver.cc KWin.cc \
+	PrivateActiveWindowObserver.cc DBus.cc GNOME.cc GNOMEWindowObserverBackend.cc \
+	KDEWindowObserverBackend.cc ExtensionFile.cc MascotBackendWayland.cc \
+	WaylandShimeji.cc
+QT_LIBS := Core DBus Widgets
+CXXFLAGS += -I../../libshijima
+PKG_LIBS := x11 wayland-client wayland-cursor
 
 define bin2c
 echo "#include <stddef.h>" > $(2)
@@ -17,7 +28,7 @@ endef
 
 all:: Linux.a
 
-Linux.a: $(OBJECTS)
+Linux.a: $(PROTOCOL_SOURCES) $(OBJECTS)
 	rm -f $@
 	$(AR) rcs $@ $(OBJECTS)
 
@@ -29,6 +40,18 @@ Linux.a: $(OBJECTS)
 		yarn add --modules-folder node_modules minify; \
 		[ -f node_modules/.bin/minify ]; \
 	fi
+
+wayland-protocols/wlr-layer-shell-unstable-v1.c: wlr-layer-shell-unstable-v1.xml
+	mkdir -p wayland-protocols
+	target="$@"; $(WAYLAND_SCANNER) client-header $^ "$${target%.*}.h"
+	target="$@"; $(WAYLAND_SCANNER) private-code $^ "$${target}"
+
+wayland-protocols/%.c:
+	mkdir -p wayland-protocols
+	target="$@"; base="$$(basename "$${target}")"; $(WAYLAND_SCANNER) client-header $(WAYLAND_PROTOCOLS_DIR)/*/*/"$${base%.*}.xml" "$${target%.*}.h"
+	target="$@"; base="$$(basename "$${target}")"; $(WAYLAND_SCANNER) private-code $(WAYLAND_PROTOCOLS_DIR)/*/*/"$${base%.*}.xml" "$${target}"
+
+protocols-autogen: $(PROTOCOL_SOURCES)
 
 gnome_script.zip: .work/gnome_script
 	zip -jr $@ $</*
@@ -56,6 +79,7 @@ KDEWindowObserverBackend.cc: kwin_script.c
 	$(call bin2c,$<,$@)
 
 clean::
+	rm -f $(PROTOCOL_SOURCES)
 	rm -rf .work/gnome_script
 	rm -f $(OBJECTS) Linux.a gnome_script.zip kwin_script.c \
 		kwin_script_minified.js gnome_script/extension_minified.js \

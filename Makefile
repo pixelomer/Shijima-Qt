@@ -18,7 +18,10 @@ SOURCES = main.cc \
 	DefaultMascot.cc \
 	ShijimaHttpApi.cc \
 	cli.cc \
-	resources.rc
+	resources.rc \
+	MascotBackend.cc \
+	MascotBackendWidgets.cc \
+	ActiveMascot.cc
 
 DEFAULT_MASCOT_FILES := $(addsuffix .png,$(addprefix DefaultMascot/img/shime,$(shell seq -s ' ' 1 1 46))) \
 	DefaultMascot/behaviors.xml DefaultMascot/actions.xml
@@ -42,7 +45,7 @@ TARGET_LDFLAGS := -Llibshimejifinder/build/unarr -lunarr
 
 ifeq ($(PLATFORM),Linux)
 QT_LIBS += DBus
-PKG_LIBS := x11
+PKG_LIBS := x11 wayland-client wayland-cursor
 TARGET_LDFLAGS += -Wl,-R -Wl,$(shell pwd)/publish/Linux/$(CONFIG)
 endif
 
@@ -71,6 +74,7 @@ if [ "$${uname_m}" = "$(1)" -o "$${uname_m}" = "$(2)" ]; then \
 	touch "$${name}"; \
 	chmod +x "$${name}"; \
 	name2="$${name%-$(2).AppImage}.AppImage"; \
+	rm -f "$${name2}"; \
 	ln -s "$${name}" "$${name2}"; \
 fi
 endef
