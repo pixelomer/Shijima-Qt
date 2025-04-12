@@ -75,6 +75,9 @@ jobs:
           git remote set-url origin "git@github.com:pixelomer/libshijima"
           echo "libshijima: $(git rev-list HEAD --count) commits"
           popd
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - name: Install Qt6
         uses: jdpurcell/install-qt-action@v5
         with:
