@@ -7,6 +7,14 @@
 #include <string>
 #include <ostream>
 
+//FIXME: x and y are received from wl_output, but this appears to be the
+// wrong way to determine monitor positioning. (should xdg_output be used
+// instead?)
+//
+//REPRO: this implementation works fine with KDE Plasma but will fail in
+// Hyprland. Shijima-Qt will detect all monitors as being at (x,y)=(0,0).
+// meanwhile, wlr-randr will detect the monitor positions correctly.
+
 class WaylandOutput {
 public:
     WaylandOutput();

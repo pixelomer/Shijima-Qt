@@ -21,51 +21,54 @@
 #include "MascotBackendWayland.hpp"
 #include <QPixmap>
 #include <wayland-cursor.h>
-#include <cstdint>
 #include <wayland-client-protocol.h>
 #include <QPainter>
 
 WaylandShimeji::WaylandShimeji(MascotData *mascotData,
     std::unique_ptr<shijima::mascot::manager> mascot,
-    int mascotId, MascotBackendWayland *wayland): 
-    ActiveMascot(mascotData, std::move(mascot), mascotId),
-    m_wayland(wayland)
+    int mascotId, std::shared_ptr<WaylandEnvironment> environment): 
+    ActiveMascot(mascotData, std::move(mascot), mascotId)
 {
+    setEnvironment(environment);
     init();
 }
 
-WaylandShimeji::WaylandShimeji(ActiveMascot &old, MascotBackendWayland *wayland):
-    ActiveMascot(old), m_wayland(wayland)
+WaylandShimeji::WaylandShimeji(ActiveMascot &old,
+    std::shared_ptr<WaylandEnvironment> environment):
+    ActiveMascot(old)
 {
+    setEnvironment(environment);
     init();
 }
 
 void WaylandShimeji::init() {
-    m_wayland->addClient(this);
     m_closed = false;
-    m_region = wl_compositor_create_region(m_wayland->compositor());
-    m_surface = wl_compositor_create_surface(m_wayland->compositor());
+    m_region = wl_compositor_create_region(m_env->backend()->compositor());
+    initSurface();   
+}
+
+void WaylandShimeji::initSurface() {
+    m_surface = wl_compositor_create_surface(m_env->backend()->compositor());
     wl_surface_set_input_region(m_surface, m_region);
     wl_surface_commit(m_surface);
-    wl_display_roundtrip(m_wayland->display());
-    m_subsurface = wl_subcompositor_get_subsurface(m_wayland->subcompositor(),
-        m_surface, m_wayland->overlaySurface());
+    wl_display_roundtrip(m_env->backend()->display());
+    m_subsurface = wl_subcompositor_get_subsurface(
+        m_env->backend()->subcompositor(),
+        m_surface, m_env->surface());
     wl_subsurface_set_desync(m_subsurface);
     resetSurface();
-    m_cursorSurface = wl_compositor_create_surface(m_wayland->compositor());
-    showInspector();
 }
 
 void WaylandShimeji::resetSurface() {
     auto container = this->container();
-    m_buffer = m_wayland->createBuffer(container.width(),
+    m_buffer = m_env->backend()->createBuffer(container.width(),
         container.height());
     wl_surface_attach(m_surface, m_buffer, 0, 0);
     wl_subsurface_set_position(m_subsurface, container.x(),
         container.y());
     wl_surface_commit(m_surface);
-    wl_surface_commit(m_wayland->overlaySurface());
-    wl_display_roundtrip(m_wayland->display());
+    wl_surface_commit(m_env->surface());
+    wl_display_roundtrip(m_env->backend()->display());
 }
 
 void WaylandShimeji::redraw() {
@@ -85,10 +88,14 @@ void WaylandShimeji::redraw() {
     wl_surface_damage_buffer(m_surface, 0, 0, m_buffer.width(),
         m_buffer.height());
     wl_surface_commit(m_surface);
-    wl_surface_commit(m_wayland->overlaySurface());
+    wl_surface_commit(m_env->surface());
 }
 
 bool WaylandShimeji::tick() {
+    if (!m_env->valid()) {
+        mascot().state->dragging = false;
+        m_env->backend()->reassignEnvironment(this);
+    }
     if (markedForDeletion()) {
         m_closed = true;
         return false;
@@ -97,7 +104,7 @@ bool WaylandShimeji::tick() {
     auto asset = getActiveAsset();
     bool changed = ActiveMascot::tick();
     if (ActiveMascot::contextMenuVisible()) {
-        m_wayland->requestNullRegion();
+        m_env->requestNullRegion();
     }
     //if (changed) {
         auto newContainer = this->container();
@@ -110,14 +117,14 @@ bool WaylandShimeji::tick() {
             wl_subsurface_set_desync(m_subsurface);
         }
         redraw();
-        m_wayland->invalidateRegion();
+        m_env->invalidateRegion();
         return true;
     //}
     //return false;
 }
 
 WaylandShimeji::~WaylandShimeji() {
-    m_wayland->removeClient(this);
+    m_env->removeClient(this);
     wl_subsurface_destroy(m_subsurface);
     wl_surface_destroy(m_surface);
     wl_region_destroy(m_region);
@@ -125,11 +132,6 @@ WaylandShimeji::~WaylandShimeji() {
 
 bool WaylandShimeji::mascotClosed() {
     return m_closed;
-}
-
-void WaylandShimeji::mouseMove(QPointF pos) {
-    /*mascot().state->env->cursor.move({ (double)pos.x(),
-        (double)pos.y() });*/
 }
 
 void WaylandShimeji::mouseDown(Qt::MouseButton button) {
@@ -140,6 +142,21 @@ void WaylandShimeji::mouseDown(Qt::MouseButton button) {
 
 void WaylandShimeji::mouseUp(Qt::MouseButton button) {
     ActiveMascot::mouseReleaseEvent(button);
+}
+
+void WaylandShimeji::mouseMove() {
+    auto cursor = mascot().state->env->cursor;
+    if (mascot().state->dragging &&
+        (cursor.x < 0 || cursor.x >= m_env->env()->screen.right ||
+        cursor.y < 0 || cursor.y >= m_env->env()->screen.bottom))
+    {
+        // move to a different monitor if necessary
+        if (m_env->backend()->reassignEnvironment(this)) {
+            wl_subsurface_destroy(m_subsurface);
+            wl_surface_destroy(m_surface);
+            initSurface();
+        }
+    }
 }
 
 void WaylandShimeji::updateRegion(::wl_region *region) {
@@ -164,6 +181,15 @@ void WaylandShimeji::updateRegion(::wl_region *region) {
         wl_region_add(region, rect.x(), rect.y(),
             rect.width(), rect.height());
     }
+}
+
+void WaylandShimeji::setEnvironment(std::shared_ptr<WaylandEnvironment> env) {
+    if (m_env != nullptr) {
+        m_env->removeClient(this);
+    }
+    m_env = env;
+    env->addClient(this);
+    setEnv(m_env->env());
 }
 
 bool WaylandShimeji::pointInside(QPointF point) {

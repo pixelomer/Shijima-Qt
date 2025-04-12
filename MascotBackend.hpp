@@ -21,7 +21,7 @@ public:
     virtual ~MascotBackend();
     virtual ActiveMascot *spawn(MascotData *mascotData,
         std::unique_ptr<shijima::mascot::manager> mascot,
-        int mascotId, bool resetPosition) = 0;
+        ActiveMascot *parent, int mascotId, bool resetPosition) = 0;
     virtual ActiveMascot *migrate(ActiveMascot &old) = 0;
     virtual void preTick() = 0;
     virtual void postTick() = 0;

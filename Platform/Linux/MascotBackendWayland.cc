@@ -8,6 +8,7 @@
 #include <syscall.h>
 #include <sys/mman.h>
 #include <linux/input-event-codes.h>
+#include "WaylandEnvironment.hpp"
 #include "WaylandShimeji.hpp"
 #include "wayland-protocols/wlr-layer-shell-unstable-v1.h"
 #include "wayland-protocols/tablet-v2.h"
@@ -72,7 +73,10 @@ void MascotBackendWayland_register_global(void *data,
     else if (strcmp(interface, wl_output_interface.name) == 0) {
         ::wl_output *output = (::wl_output *)wl_registry_bind(wl_registry, name,
             &wl_output_interface, 1);
-        backend->m_outputs[output] = new WaylandOutput { output };
+        auto outputWrapper = new WaylandOutput { output };
+        backend->m_outputs[output] = outputWrapper;
+        backend->m_env[outputWrapper] = std::make_shared<WaylandEnvironment>(
+            backend, outputWrapper);
 	}
     else if (strcmp(interface, wl_subcompositor_interface.name) == 0) {
 		backend->m_subcompositor = (::wl_subcompositor *)wl_registry_bind(wl_registry, name,
@@ -97,25 +101,6 @@ void MascotBackendWayland_deregister_global(void *data,
     //printf("removed: %u\n", name);
 }
 
-void MascotBackendWayland_layer_surface_configure(void *data,
-    struct zwlr_layer_surface_v1 *zwlr_layer_surface_v1,
-    uint32_t serial,
-    uint32_t width,
-    uint32_t height)
-{
-    (void)data;
-    printf("layer-surface width=%u height=%u\n",
-        width, height);
-    zwlr_layer_surface_v1_ack_configure(zwlr_layer_surface_v1, serial);
-}
-
-void MascotBackendWayland_layer_surface_closed(void *data,
-    struct zwlr_layer_surface_v1 *zwlr_layer_surface_v1)
-{
-    (void)data; (void)zwlr_layer_surface_v1;
-    printf("layer-surface closed\n");
-}
-
 void MascotBackendWayland_pointer_enter(void *data,
     struct wl_pointer *wl_pointer,
     uint32_t serial,
@@ -123,8 +108,18 @@ void MascotBackendWayland_pointer_enter(void *data,
     wl_fixed_t surface_x,
     wl_fixed_t surface_y)
 {
-    (void)wl_pointer; (void)surface; (void)surface_x; (void)surface_y;
+    (void)wl_pointer; (void)surface_x; (void)surface_y;
     auto wayland = (MascotBackendWayland *)data;
+    if (wayland->m_pointedEnvironment != nullptr) {
+        wayland->m_pointedEnvironment->pointerLeave();
+    }
+    wayland->m_pointedEnvironment = nullptr;
+    for (auto &pair : wayland->m_env) {
+        if (pair.second->surface() == surface) {
+            wayland->m_pointedEnvironment = pair.second;
+            break;
+        }
+    }
     wl_pointer_set_cursor(wayland->m_pointer, serial,
         wayland->m_pointerSurface,
         wayland->m_leftCursorImage->hotspot_x,
@@ -136,13 +131,13 @@ void MascotBackendWayland_pointer_leave(void *data,
     uint32_t serial,
     struct wl_surface *surface)
 {
-    (void)wl_pointer; (void)serial; (void)surface;
+    (void)wl_pointer; (void)serial;
     auto wayland = (MascotBackendWayland *)data;
-    if (wayland->m_activeMouseListener != nullptr) {
-        wayland->m_activeMouseListener->mouseUp(Qt::MouseButton::LeftButton);
-        wayland->m_leftMouseDown = false;
-        wayland->m_activeMouseListener = nullptr;
-        wayland->m_regionValid = false;
+    if (wayland->m_pointedEnvironment != nullptr &&
+        wayland->m_pointedEnvironment->surface() == surface)
+    {
+        wayland->m_pointedEnvironment->pointerLeave();
+        wayland->m_pointedEnvironment = nullptr;
     }
 }
 
@@ -153,18 +148,37 @@ void MascotBackendWayland_pointer_motion(void *data,
     wl_fixed_t surface_y)
 {
     (void)wl_pointer; (void)time;
-    double x = wl_fixed_to_double(surface_x);
-    double y = wl_fixed_to_double(surface_y);
     auto wayland = (MascotBackendWayland *)data;
-    wayland->m_cursorPosition = { x, y };
-    wayland->m_env->cursor.move({ x, y });
-    if (wayland->m_activeMouseListener != nullptr) {
-        wayland->m_activeMouseListener->mouseMove(wayland->m_cursorPosition);
+    auto &env = wayland->m_pointedEnvironment;
+    if (env != nullptr) {
+        double x = wl_fixed_to_double(surface_x) + wayland->m_cursorOffset.x;
+        double y = wl_fixed_to_double(surface_y) + wayland->m_cursorOffset.y;
+        env->pointerMove(x, y);
     }
-    else if (!wayland->m_clients.empty()) {
-        auto client = *wayland->m_clients.begin();
-        client->mouseMove(wayland->m_cursorPosition);
+}
+
+std::shared_ptr<WaylandEnvironment> MascotBackendWayland::environmentAt(QPoint point) {
+    for (auto &pair : m_env) {
+        auto output = pair.first;
+        auto &env = pair.second;
+        if (output->left() <= point.x() &&
+            (output->left() + env->env()->screen.right) > point.x() &&
+            output->top() <= point.y() &&
+            (output->top() + env->env()->screen.bottom) > point.y())
+        {
+            return env;
+        }
     }
+    return {};
+}
+
+std::shared_ptr<WaylandEnvironment> MascotBackendWayland::spawnEnvironment() {
+    if (m_env.size() == 0) {
+        return {};
+    }
+    auto iter = m_env.begin();
+    auto &pair = *iter;
+    return pair.second;
 }
 
 void MascotBackendWayland_pointer_button(void *data,
@@ -176,71 +190,14 @@ void MascotBackendWayland_pointer_button(void *data,
 {
     (void)wl_pointer; (void)serial; (void)time;
     auto wayland = (MascotBackendWayland *)data;
-    WaylandClient *client = nullptr;
-    bool down = (state == WL_POINTER_BUTTON_STATE_PRESSED);
-    if (down) {
-        for (auto option : wayland->m_clients) {
-            if (option->pointInside(wayland->m_cursorPosition)) {
-                client = option;
-                break;
-            }
-        }
-        if (client == nullptr) {
-            std::cerr << "warning: found no client at this point?" << std::endl;
-            return;
-        }
+    if (wayland->m_pointedEnvironment != nullptr) {
+        wayland->m_cursorOffset = { 0, 0 };
+        wayland->m_pointedEnvironment->pointerButton(button, state);
     }
-    Qt::MouseButton qtButton;
-    if (button == BTN_RIGHT) {
-        qtButton = Qt::MouseButton::RightButton;
-    }
-    else {
-        qtButton = Qt::MouseButton::LeftButton;
-    }
-    if (qtButton == Qt::MouseButton::LeftButton) {
-        if (down) {
-            wl_region_add(wayland->m_layerRegion, 0, 0, 
-                wayland->m_activeOutput->width(),
-                wayland->m_activeOutput->height());
-            wayland->m_leftMouseDown = true;
-            wl_surface_set_input_region(wayland->m_surface,
-                wayland->m_layerRegion);
-            wl_surface_commit(wayland->m_surface);
-            wayland->m_regionValid = false;
-        }
-        else {
-            wayland->m_regionValid = false;
-            wayland->m_leftMouseDown = false;
-        }
-    }
-    if (down) {
-        client->mouseDown(qtButton);
-        if (qtButton == Qt::MouseButton::LeftButton) {
-            wayland->m_activeMouseListener = client;
-            wayland->m_regionValid = false;
-        }
-    }
-    else {
-        if (wayland->m_activeMouseListener != nullptr) {
-            wayland->m_activeMouseListener->mouseUp(qtButton);
-            wayland->m_regionValid = false;
-            wayland->m_activeMouseListener = nullptr;
-        }
-    }
-}
-
-void MascotBackendWayland_preferred_scale(void *data,
-    struct wp_fractional_scale_v1 *wp_fractional_scale_v1,
-    uint32_t scale)
-{
-    (void)wp_fractional_scale_v1;
-    auto wayland = (MascotBackendWayland *)data;
-    wayland->m_scaleFactor = scale / 120.0;
 }
 
 MascotBackendWayland::MascotBackendWayland(ShijimaManager *manager):
     MascotBackend(manager),
-    m_env(std::make_shared<shijima::mascot::environment>()),
     m_scaleFactor(1), m_nullRegionRequested(false)
 {
     // connect to compositor
@@ -289,64 +246,6 @@ MascotBackendWayland::MascotBackendWayland(ShijimaManager *manager):
         }
     }
 
-    static const ::wp_fractional_scale_v1_listener fractional_scale_listener = {
-        MascotBackendWayland_preferred_scale
-    };
-
-    // create surface
-    m_surface = wl_compositor_create_surface(m_compositor);
-    wl_surface_commit(m_surface);
-    m_fractionalScale = wp_fractional_scale_manager_v1_get_fractional_scale(
-        m_fractionalScaleManager, m_surface);
-    wp_fractional_scale_v1_add_listener(m_fractionalScale, 
-        &fractional_scale_listener, this);
-    wl_display_roundtrip(m_display);
-    WaylandOutput *firstOutput;
-    for (auto &entry : m_outputs) {
-        firstOutput = entry.second;
-        break;
-    }
-    m_activeOutput = firstOutput;
-    m_layer_surface = zwlr_layer_shell_v1_get_layer_surface(
-        m_layer_shell, m_surface, firstOutput->output(),
-        ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, "ShijimaQt");
-    zwlr_layer_surface_v1_set_size(m_layer_surface,
-        firstOutput->width(), firstOutput->height());
-    zwlr_layer_surface_v1_set_anchor(m_layer_surface,
-        ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
-        ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
-    zwlr_layer_surface_v1_set_exclusive_zone(m_layer_surface,
-        -1);
-    zwlr_layer_surface_v1_set_margin(m_layer_surface,
-        0, 0, 0, 0);
-    
-    static ::zwlr_layer_surface_v1_listener layer_surface_listener = {
-        MascotBackendWayland_layer_surface_configure,
-        MascotBackendWayland_layer_surface_closed
-    };
-    
-    zwlr_layer_surface_v1_set_keyboard_interactivity(
-        m_layer_surface,
-        ZWLR_LAYER_SURFACE_V1_KEYBOARD_INTERACTIVITY_NONE);
-    zwlr_layer_surface_v1_add_listener(m_layer_surface,
-        &layer_surface_listener, m_surface);
-    wl_surface_commit(m_surface);
-    m_layerRegion = wl_compositor_create_region(m_compositor);
-    wl_surface_set_input_region(m_surface, m_layerRegion);
-    wl_display_roundtrip(m_display);
-
-    m_layerBuffer = createBuffer(firstOutput->width(),
-        firstOutput->height());
-    for (size_t i=0; i<m_layerBuffer.size(); i+=4) {
-        m_layerBuffer[i] = 0x10;
-        m_layerBuffer[i+1] = 0x10;
-        m_layerBuffer[i+2] = 0x10;
-        m_layerBuffer[i+3] = 0x10;
-    }
-
-    wl_surface_attach(m_surface, m_layerBuffer, 0, 0);
-    wl_surface_commit(m_surface);
-
     m_cursorTheme = wl_cursor_theme_load(NULL, 24, m_shm);
     m_leftCursor = wl_cursor_theme_get_cursor(m_cursorTheme, "left_ptr");
     m_leftCursorImage = m_leftCursor->images[0];
@@ -369,64 +268,27 @@ MascotBackendWayland::MascotBackendWayland(ShijimaManager *manager):
 }
 
 void MascotBackendWayland::preTick() {
-    initEnvironment();
+    for (auto &pair : m_env) {
+        pair.second->preTick();
+    }
 }
-
-void MascotBackendWayland::initEnvironment() {
-    auto &env = *m_env;
-    env.screen = { 0, (double)m_activeOutput->width(),
-        (double)m_activeOutput->height(), 0 };
-    env.screen /= m_scaleFactor;
-    env.work_area = env.screen;
-    env.floor = { env.screen.bottom, env.screen.left, env.screen.right };
-    env.ceiling = { env.screen.top, env.screen.left, env.screen.right };
-    manager()->applyActiveIE(*m_env);
-    env.subtick_count = manager()->subtickCount();
-    env.set_scale(1.0 / std::sqrt(manager()->userScale()));
-}
-
-void MascotBackendWayland::finalizeEnvironment() {
-    m_env->cursor.dx = m_env->cursor.dy = 0;
-    m_env->reset_scale();
-}
-
 
 void MascotBackendWayland::postTick() {
-    if (m_nullRegionRequested) {
-        wl_region_subtract(m_layerRegion, 0, 0, INT32_MAX, INT32_MAX);
-        wl_surface_set_input_region(m_surface, m_layerRegion);
-        wl_surface_commit(m_surface);
-        m_regionValid = false;
-        m_nullRegionRequested = false;
+    for (auto &pair : m_env) {
+        pair.second->postTick();
     }
-    else if (!m_regionValid) {
-        wl_region_subtract(m_layerRegion, 0, 0, INT32_MAX, INT32_MAX);
-        if (m_leftMouseDown) {
-            wl_region_add(m_layerRegion, 0, 0, m_activeOutput->width(),
-                m_activeOutput->height());
-        }
-        else {
-            for (auto client : m_clients) {
-                client->updateRegion(m_layerRegion);
-            }
-        }
-        m_regionValid = true;
-        wl_surface_set_input_region(m_surface, m_layerRegion);
-        wl_surface_commit(m_surface);
-    }
-    finalizeEnvironment();
-    wl_display_roundtrip(m_display);
-    wl_display_dispatch_pending(m_display);
 }
 
 void MascotBackendWayland::updateEnvironments(
     std::function<void(shijima::mascot::environment &)> cb)
 {
-    cb(*m_env);
+    for (auto &pair : m_env) {
+        cb(*pair.second->env());
+    }
 }
 
 MascotBackendWayland::~MascotBackendWayland() {
-    wl_surface_destroy(m_surface);
+    m_env.clear();
     wl_surface_destroy(m_pointerSurface);
     //wl_buffer_destroy(m_leftCursorBuffer);
     wl_cursor_theme_destroy(m_cursorTheme);
@@ -438,32 +300,75 @@ MascotBackendWayland::~MascotBackendWayland() {
 
 ActiveMascot *MascotBackendWayland::spawn(MascotData *mascotData,
     std::unique_ptr<shijima::mascot::manager> mascot,
-    int mascotId, bool resetPosition)
+    ActiveMascot *parent, int mascotId, bool resetPosition)
 {
-    mascot->state->env = m_env;
-    if (resetPosition) {
-        initEnvironment();
-        mascot->reset_position();
-        finalizeEnvironment();
+    std::shared_ptr<WaylandEnvironment> env;
+    if (parent != nullptr) {
+        auto waylandParent = dynamic_cast<WaylandShimeji *>(parent);
+        env = waylandParent->waylandEnv();
     }
-    auto shimeji = new WaylandShimeji(mascotData, std::move(mascot), mascotId,
-        this);
+    else {
+        env = spawnEnvironment();
+    }
+    mascot->state->env = env->env();
+    if (resetPosition) {
+        env->preTick();
+        mascot->reset_position();
+        env->postTick();
+    }
+    auto shimeji = new WaylandShimeji(mascotData,
+        std::move(mascot), mascotId, env);
     return shimeji;
 }
 
 ActiveMascot *MascotBackendWayland::migrate(ActiveMascot &old) {
-    initEnvironment();
-    old.mascot().state->env = m_env;
+    auto env = spawnEnvironment();
+    env->preTick();
+    old.mascot().state->env = env->env();
     old.mascot().reset_position();
-    finalizeEnvironment();
-    auto shimeji = new WaylandShimeji(old, this);
+    env->postTick();
+    auto shimeji = new WaylandShimeji(old, env);
     return shimeji;
 }
 
-void MascotBackendWayland::addClient(WaylandClient *client) {
-    m_clients.push_front(client);
-}
+bool MascotBackendWayland::reassignEnvironment(WaylandShimeji *shimeji) {
+    auto &mascot = shimeji->mascot();
+    if (mascot.state->dragging) {
+        // move to monitor with cursor
+        auto cursor = mascot.state->env->cursor;
+        auto oldEnv = shimeji->waylandEnv();
+        cursor.x += oldEnv->output()->x();
+        cursor.y += oldEnv->output()->y();
+        auto env = environmentAt({ (int)cursor.x, (int)cursor.y });
+        if (env != nullptr && env != oldEnv) {
+            // make this environment this mascot's new owner
+            cursor.x -= env->output()->x();
+            cursor.y -= env->output()->y();
+            env->env()->cursor = cursor;
+            shimeji->setEnvironment(env);
 
-void MascotBackendWayland::removeClient(WaylandClient *client) {
-    m_clients.remove(client);
+            // this new environment needs to start receiving events now
+            if (m_pointedEnvironment != nullptr) {
+                m_pointedEnvironment->pointerLeave();
+            }
+            m_pointedEnvironment = env;
+            m_pointedEnvironment->pointerEnter();
+            m_pointedEnvironment->pointerButton(shimeji,
+                BTN_LEFT, WL_POINTER_BUTTON_STATE_PRESSED);
+            
+            // the old surface will continue receiving move events
+            // apply an offset to these events
+            m_cursorOffset.y += oldEnv->output()->y() - env->output()->y();
+            m_cursorOffset.x += oldEnv->output()->x() - env->output()->x();
+                
+            return true;
+        }
+        return false;
+    }
+    else {
+        // move to default monitor
+        auto env = spawnEnvironment();
+        shimeji->setEnvironment(env);
+        return true;
+    }
 }

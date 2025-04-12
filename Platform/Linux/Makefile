@@ -12,7 +12,7 @@ WL_PROTO_DIR = wayland-protocols
 SOURCES = $(PROTOCOL_SOURCES) Platform.cc ActiveWindowObserver.cc KWin.cc \
 	PrivateActiveWindowObserver.cc DBus.cc GNOME.cc GNOMEWindowObserverBackend.cc \
 	KDEWindowObserverBackend.cc ExtensionFile.cc MascotBackendWayland.cc \
-	WaylandShimeji.cc WaylandBuffer.cc WaylandOutput.cc 
+	WaylandShimeji.cc WaylandBuffer.cc WaylandOutput.cc WaylandEnvironment.cc
 QT_LIBS := Core DBus Widgets
 CXXFLAGS += -I../../libshijima
 PKG_LIBS := x11 wayland-client wayland-cursor

@@ -26,7 +26,8 @@
 #include <wayland-client-protocol.h>
 #include "../../MascotData.hpp"
 #include "../../ActiveMascot.hpp"
-#include "MascotBackendWayland.hpp"
+#include "WaylandEnvironment.hpp"
+#include "WaylandClient.hpp"
 
 class WaylandShimeji : public ActiveMascot, public WaylandClient
 {
@@ -34,26 +35,28 @@ public:
     friend class ShijimaContextMenu;
     explicit WaylandShimeji(MascotData *mascotData,
         std::unique_ptr<shijima::mascot::manager> mascot,
-        int mascotId, MascotBackendWayland *wayland);
+        int mascotId, std::shared_ptr<WaylandEnvironment> environment);
     explicit WaylandShimeji(ActiveMascot &old,
-        MascotBackendWayland *wayland);
+        std::shared_ptr<WaylandEnvironment> environment);
     virtual bool tick() override;
     virtual ~WaylandShimeji();
     virtual bool mascotClosed() override;
     virtual void updateRegion(::wl_region *region) override;
-    virtual void mouseMove(QPointF pos) override;
     virtual void mouseDown(Qt::MouseButton button) override;
     virtual void mouseUp(Qt::MouseButton button) override;
+    virtual void mouseMove() override;
     virtual bool pointInside(QPointF point) override;
+    void setEnvironment(std::shared_ptr<WaylandEnvironment> env);
+    std::shared_ptr<WaylandEnvironment> waylandEnv() { return m_env; }
 private:
     void init();
+    void initSurface();
     void resetSurface();
     void redraw();
     bool m_closed;
     ::wl_subsurface *m_subsurface;
     ::wl_surface *m_surface;
-    ::wl_surface *m_cursorSurface;
-    MascotBackendWayland *m_wayland;
+    std::shared_ptr<WaylandEnvironment> m_env;
     QImage m_image;
     WaylandBuffer m_buffer;
     ::wl_region *m_region = NULL;

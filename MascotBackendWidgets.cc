@@ -25,9 +25,16 @@ MascotBackendWidgets::~MascotBackendWidgets() {
 
 ActiveMascot *MascotBackendWidgets::spawn(MascotData *mascotData,
     std::unique_ptr<shijima::mascot::manager> mascot,
-    int mascotId, bool resetPosition)
+    ActiveMascot *parent, int mascotId, bool resetPosition)
 {
-    QScreen *screen = spawnScreen();
+    QScreen *screen;
+    if (parent != nullptr) {
+        auto widgetParent = dynamic_cast<ShijimaWidget *>(parent);
+        screen = widgetParent->screen();
+    }
+    else {
+        screen = spawnScreen();
+    }
     auto &env = m_env[screen];
     mascot->state->env = env;
     if (resetPosition) {
