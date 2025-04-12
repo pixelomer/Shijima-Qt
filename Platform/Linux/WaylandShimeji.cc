@@ -52,9 +52,8 @@ void WaylandShimeji::init() {
         m_surface, m_wayland->overlaySurface());
     wl_subsurface_set_desync(m_subsurface);
     resetSurface();
-
     m_cursorSurface = wl_compositor_create_surface(m_wayland->compositor());
-
+    showInspector();
 }
 
 void WaylandShimeji::resetSurface() {

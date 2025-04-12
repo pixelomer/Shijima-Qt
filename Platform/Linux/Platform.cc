@@ -28,13 +28,13 @@
 #include <stdlib.h>
 #include <QWidget>
 #include <QApplication>
-#include <X11/Xlib.h>
 #include <iostream>
-#include <X11/Xatom.h>
 #include <unistd.h>
 #include <signal.h>
 #include <sys/socket.h>
 #include "MascotBackendWayland.hpp"
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
 
 namespace Platform {
 

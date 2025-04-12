@@ -9,7 +9,6 @@
 #include <sys/mman.h>
 #include <linux/input-event-codes.h>
 #include "WaylandShimeji.hpp"
-#include "qnamespace.h"
 #include "wayland-protocols/wlr-layer-shell-unstable-v1.h"
 #include "wayland-protocols/tablet-v2.h"
 #include "wayland-protocols/xdg-shell.h"
@@ -17,49 +16,24 @@
 #include "wayland-protocols/cursor-shape-v1.h"
 #include "wayland-protocols/viewporter.h"
 #include "wayland-protocols/xdg-output-unstable-v1.h"
-#include "wayland-protocols/wlr-layer-shell-unstable-v1.c"
-#include "wayland-protocols/tablet-v2.c"
-#include "wayland-protocols/xdg-shell.c"
-#include "wayland-protocols/fractional-scale-v1.c"
-#include "wayland-protocols/cursor-shape-v1.c"
-#include "wayland-protocols/viewporter.c"
-#include "wayland-protocols/xdg-output-unstable-v1.c"
-#include <fcntl.h>
-#include <wayland-util.h>
-#include "os-compatibility.cc"
-
-std::ostream &operator<<(std::ostream &lhs, WaylandOutput &rhs) {
-    lhs << "<WaylandOutput "
-        << "wl_output=" << rhs.output() << " "
-        << "name=\"" << rhs.name() << "\" "
-        << "description=\"" << rhs.description() << "\" "
-        << "make=\"" << rhs.make() << "\" "
-        << "model=\"" << rhs.model() << "\" "
-        << "width=" << rhs.width() << " "
-        << "height=" << rhs.height() << " "
-        << "x=" << rhs.x() << " "
-        << "y=" << rhs.y() << " "
-        << "factor=" << rhs.factor() << " "
-        << "refresh=" << rhs.refresh() / 1000.0
-        << ">";
-    return lhs;
-}
+#include "os-compatibility.hpp"
+#include <iostream>
 
 WaylandBuffer MascotBackendWayland::createBuffer(int width, int height) {
     struct wl_shm_pool *pool;
-    int stride = width * 4; // 4 bytes per pixel in our ARGB8888 format.
+    int stride = width * 4;
     int size = stride * height;
 
     int fd = os_create_anonymous_file(size);
     if (fd < 0) {
-        fprintf(stderr, "Failed to create a buffer. size: %d\n", size);
+        std::cerr << "Failed to create a buffer. size: " << size << std::endl;
         return {};
     }
 
     uint8_t *data = (uint8_t *)mmap(NULL, size, PROT_READ | PROT_WRITE,
         MAP_SHARED, fd, 0);
     if (data == MAP_FAILED) {
-        fprintf(stderr, "mmap failed!\n");
+        std::cerr << "mmap failed!" << std::endl;
         close(fd);
         return {};
     }
@@ -70,43 +44,6 @@ WaylandBuffer MascotBackendWayland::createBuffer(int width, int height) {
     wl_shm_pool_destroy(pool);
 
     return { width, height, buffer, data, fd };
-}
-
-WaylandBuffer::WaylandBuffer(): m_valid(false) {}
-
-WaylandBuffer::WaylandBuffer(int width, int height, ::wl_buffer *buffer,
-    uint8_t *data, int fd): m_width(width), m_height(height),
-    m_valid(true), m_buffer(buffer), m_data(data), m_fd(fd) {}
-
-void WaylandBuffer::destroy() {
-    if (m_valid) {
-        wl_buffer_destroy(m_buffer);
-        munmap(m_data, size());
-        close(m_fd);
-        m_valid = false;
-    }
-}
-
-WaylandBuffer &WaylandBuffer::operator=(WaylandBuffer &&rhs) {
-    if (this != &rhs) {
-        destroy();
-        m_buffer = rhs.m_buffer;
-        m_data = rhs.m_data;
-        m_fd = rhs.m_fd;
-        m_width = rhs.m_width;
-        m_height = rhs.m_height;
-        m_valid = true;
-        rhs.m_valid = false;
-    }
-    return *this;
-}
-
-WaylandBuffer::WaylandBuffer(WaylandBuffer &&rhs) {
-    *this = std::move(rhs);
-}
-
-WaylandBuffer::~WaylandBuffer() {
-    destroy();
 }
 
 void MascotBackendWayland_register_global(void *data,
@@ -156,8 +93,8 @@ void MascotBackendWayland_deregister_global(void *data,
     struct wl_registry *wl_registry,
     uint32_t name)
 {
-    MascotBackendWayland *backend = static_cast<MascotBackendWayland *>(data);
-    printf("removed: %u\n", name);
+    (void)data; (void)wl_registry; (void)name;
+    //printf("removed: %u\n", name);
 }
 
 void MascotBackendWayland_layer_surface_configure(void *data,
@@ -166,6 +103,7 @@ void MascotBackendWayland_layer_surface_configure(void *data,
     uint32_t width,
     uint32_t height)
 {
+    (void)data;
     printf("layer-surface width=%u height=%u\n",
         width, height);
     zwlr_layer_surface_v1_ack_configure(zwlr_layer_surface_v1, serial);
@@ -174,6 +112,7 @@ void MascotBackendWayland_layer_surface_configure(void *data,
 void MascotBackendWayland_layer_surface_closed(void *data,
     struct zwlr_layer_surface_v1 *zwlr_layer_surface_v1)
 {
+    (void)data; (void)zwlr_layer_surface_v1;
     printf("layer-surface closed\n");
 }
 
@@ -184,6 +123,7 @@ void MascotBackendWayland_pointer_enter(void *data,
     wl_fixed_t surface_x,
     wl_fixed_t surface_y)
 {
+    (void)wl_pointer; (void)surface; (void)surface_x; (void)surface_y;
     auto wayland = (MascotBackendWayland *)data;
     wl_pointer_set_cursor(wayland->m_pointer, serial,
         wayland->m_pointerSurface,
@@ -196,6 +136,7 @@ void MascotBackendWayland_pointer_leave(void *data,
     uint32_t serial,
     struct wl_surface *surface)
 {
+    (void)wl_pointer; (void)serial; (void)surface;
     auto wayland = (MascotBackendWayland *)data;
     if (wayland->m_activeMouseListener != nullptr) {
         wayland->m_activeMouseListener->mouseUp(Qt::MouseButton::LeftButton);
@@ -211,6 +152,7 @@ void MascotBackendWayland_pointer_motion(void *data,
     wl_fixed_t surface_x,
     wl_fixed_t surface_y)
 {
+    (void)wl_pointer; (void)time;
     double x = wl_fixed_to_double(surface_x);
     double y = wl_fixed_to_double(surface_y);
     auto wayland = (MascotBackendWayland *)data;
@@ -232,6 +174,7 @@ void MascotBackendWayland_pointer_button(void *data,
     uint32_t button,
     uint32_t state)
 {
+    (void)wl_pointer; (void)serial; (void)time;
     auto wayland = (MascotBackendWayland *)data;
     WaylandClient *client = nullptr;
     bool down = (state == WL_POINTER_BUTTON_STATE_PRESSED);
@@ -290,6 +233,7 @@ void MascotBackendWayland_preferred_scale(void *data,
     struct wp_fractional_scale_v1 *wp_fractional_scale_v1,
     uint32_t scale)
 {
+    (void)wp_fractional_scale_v1;
     auto wayland = (MascotBackendWayland *)data;
     wayland->m_scaleFactor = scale / 120.0;
 }
@@ -391,9 +335,8 @@ MascotBackendWayland::MascotBackendWayland(ShijimaManager *manager):
     wl_surface_set_input_region(m_surface, m_layerRegion);
     wl_display_roundtrip(m_display);
 
-    m_layerBuffer = createBuffer(
-        firstOutput->width() * m_scaleFactor,
-        firstOutput->height() * m_scaleFactor);
+    m_layerBuffer = createBuffer(firstOutput->width(),
+        firstOutput->height());
     for (size_t i=0; i<m_layerBuffer.size(); i+=4) {
         m_layerBuffer[i] = 0x10;
         m_layerBuffer[i+1] = 0x10;
@@ -431,8 +374,8 @@ void MascotBackendWayland::preTick() {
 
 void MascotBackendWayland::initEnvironment() {
     auto &env = *m_env;
-    env.screen = { (double)m_activeOutput->top(), (double)m_activeOutput->right(),
-        (double)m_activeOutput->bottom(), (double)m_activeOutput->left() };
+    env.screen = { 0, (double)m_activeOutput->width(),
+        (double)m_activeOutput->height(), 0 };
     env.screen /= m_scaleFactor;
     env.work_area = env.screen;
     env.floor = { env.screen.bottom, env.screen.left, env.screen.right };
@@ -515,101 +458,6 @@ ActiveMascot *MascotBackendWayland::migrate(ActiveMascot &old) {
     finalizeEnvironment();
     auto shimeji = new WaylandShimeji(old, this);
     return shimeji;
-}
-
-void MascotBackendWayland_Output_geometry(void *data,
-    struct wl_output *wl_output,
-    int32_t x,
-    int32_t y,
-    int32_t physical_width,
-    int32_t physical_height,
-    int32_t subpixel,
-    const char *make,
-    const char *model,
-    int32_t transform)
-{
-    auto *output = (WaylandOutput *)data;
-    //output->ready = false;
-    output->m_x = x;
-    output->m_y = y;
-    output->m_subpixel = subpixel;
-    output->m_make = make;
-    output->m_model = model;
-    printf("output %p: x=%d, y=%d, pw=%d, ph=%d, subpixel=%d, make=%s\n",
-        (void *)wl_output, x, y, physical_width, physical_height, subpixel, make);
-}
-
-void MascotBackendWayland_Output_mode(void *data,
-    struct wl_output *wl_output,
-    uint32_t flags,
-    int32_t width,
-    int32_t height,
-    int32_t refresh)
-{
-    auto *output = (WaylandOutput *)data;
-    //output->ready = false;
-    output->m_width = width;
-    output->m_height = height;
-    output->m_refresh = refresh;
-    printf("output %p: w=%d, h=%d, r=%d\n",
-        (void *)wl_output, width, height, refresh);
-}
-
-void MascotBackendWayland_Output_done(void *data,
-    struct wl_output *wl_output)
-{
-    auto *output = (WaylandOutput *)data;
-    //output->ready = true;
-    printf("output %p: done\n", (void *)wl_output);
-}
-
-void MascotBackendWayland_Output_scale(void *data,
-    struct wl_output *wl_output,
-    int32_t factor)
-{
-    // This should NOT be used to scale content
-    // See wl_surface.preferred_surface_scale instead
-    
-    auto *output = (WaylandOutput *)data;
-    //output->ready = false;
-    output->m_factor = factor;
-    printf("output %p: f=%d\n", (void *)wl_output, factor);
-}
-
-void MascotBackendWayland_Output_name(void *data,
-    struct wl_output *wl_output,
-    const char *name)
-{
-    auto *output = (WaylandOutput *)data;
-    //output->ready = false;
-    output->m_name = name;
-    printf("output %p: n=%s\n", (void *)wl_output, name);
-}
-
-void MascotBackendWayland_Output_description(void *data,
-    struct wl_output *wl_output,
-    const char *description)
-{
-    auto *output = (WaylandOutput *)data;
-    //output->ready = false;
-    output->m_name = description;
-    printf("output %p: d=%s\n", (void *)wl_output, description);
-}
-
-WaylandOutput::WaylandOutput(::wl_output *output): m_output(output) {
-    static const ::wl_output_listener listener = {
-        MascotBackendWayland_Output_geometry,
-        MascotBackendWayland_Output_mode,
-        MascotBackendWayland_Output_done,
-        MascotBackendWayland_Output_scale,
-        MascotBackendWayland_Output_name,
-        MascotBackendWayland_Output_description
-    };
-    wl_output_add_listener(output, &listener, this);
-}
-
-WaylandOutput::~WaylandOutput() {
-    //wl_output_release(m_output);
 }
 
 void MascotBackendWayland::addClient(WaylandClient *client) {

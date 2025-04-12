@@ -7,11 +7,12 @@ PROTOCOL_SOURCES := wayland-protocols/cursor-shape-v1.c wayland-protocols/viewpo
 	wayland-protocols/tablet-v2.c wayland-protocols/xdg-shell.c \
 	wayland-protocols/fractional-scale-v1.c wayland-protocols/xdg-output-unstable-v1.c \
 	wayland-protocols/wlr-layer-shell-unstable-v1.c
+PROTOCOL_OBJECTS := $(patsubst %.c,%.o,$(PROTOCOL_SOURCES))
 WL_PROTO_DIR = wayland-protocols
-SOURCES = Platform.cc ActiveWindowObserver.cc KWin.cc \
+SOURCES = $(PROTOCOL_SOURCES) Platform.cc ActiveWindowObserver.cc KWin.cc \
 	PrivateActiveWindowObserver.cc DBus.cc GNOME.cc GNOMEWindowObserverBackend.cc \
 	KDEWindowObserverBackend.cc ExtensionFile.cc MascotBackendWayland.cc \
-	WaylandShimeji.cc
+	WaylandShimeji.cc WaylandBuffer.cc WaylandOutput.cc 
 QT_LIBS := Core DBus Widgets
 CXXFLAGS += -I../../libshijima
 PKG_LIBS := x11 wayland-client wayland-cursor
@@ -28,7 +29,7 @@ endef
 
 all:: Linux.a
 
-Linux.a: $(PROTOCOL_SOURCES) $(OBJECTS)
+Linux.a: $(OBJECTS)
 	rm -f $@
 	$(AR) rcs $@ $(OBJECTS)
 
