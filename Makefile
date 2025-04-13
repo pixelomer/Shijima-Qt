@@ -21,7 +21,9 @@ SOURCES = main.cc \
 	resources.rc \
 	MascotBackend.cc \
 	MascotBackendWidgets.cc \
-	ActiveMascot.cc
+	ActiveMascot.cc \
+	MascotBackendWindowed.cc \
+	WindowedShimeji.cc
 
 DEFAULT_MASCOT_FILES := $(addsuffix .png,$(addprefix DefaultMascot/img/shime,$(shell seq -s ' ' 1 1 46))) \
 	DefaultMascot/behaviors.xml DefaultMascot/actions.xml

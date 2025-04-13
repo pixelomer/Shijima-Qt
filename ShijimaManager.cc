@@ -64,6 +64,7 @@
 #include <cstring>
 #include <cstdint>
 #include "Platform/Platform.hpp"
+#include "MascotBackendWindowed.hpp"
 
 #define SHIJIMAQT_SUBTICK_COUNT 4
 
@@ -237,6 +238,9 @@ void ShijimaManager::registerBackends() {
     m_backends.clear();
     m_backends["Qt Widgets"] = [](ShijimaManager *manager){
         return new MascotBackendWidgets { manager };
+    };
+    m_backends["Windowed"] = [](ShijimaManager *manager){
+        return new MascotBackendWindowed { manager };
     };
     m_defaultBackendName = "Qt Widgets";
     Platform::registerBackends(m_backends);
