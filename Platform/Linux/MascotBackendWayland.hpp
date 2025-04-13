@@ -109,6 +109,7 @@ private:
     WaylandBuffer m_layerBuffer;
     bool m_leftMouseDown = false;
     bool m_regionValid = false;
+    std::map<uint32_t, ::wl_output *> m_outputsByName;
     std::map<::wl_output *, WaylandOutput *> m_outputs;
     std::map<WaylandOutput *, std::shared_ptr<WaylandEnvironment>> m_env;
     double m_scaleFactor;

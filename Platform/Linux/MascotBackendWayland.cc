@@ -69,6 +69,7 @@ void MascotBackendWayland_register_global(void *data,
     else if (strcmp(interface, wl_output_interface.name) == 0) {
         ::wl_output *output = (::wl_output *)wl_registry_bind(wl_registry, name,
             &wl_output_interface, 1);
+        backend->m_outputsByName[name] = output;
         auto outputWrapper = new WaylandOutput { output };
         if (backend->m_xdgOutputManager != NULL) {
             outputWrapper->setXdgOutput(zxdg_output_manager_v1_get_xdg_output(
@@ -102,7 +103,17 @@ void MascotBackendWayland_deregister_global(void *data,
     struct wl_registry *wl_registry,
     uint32_t name)
 {
-    (void)data; (void)wl_registry; (void)name;
+    (void)wl_registry;
+    MascotBackendWayland *backend = static_cast<MascotBackendWayland *>(data);
+    if (backend->m_outputsByName.count(name) != 0) {
+        auto output = backend->m_outputsByName[name];
+        backend->m_outputsByName.erase(name);
+        auto outputWrapper = backend->m_outputs[output];
+        delete outputWrapper;
+        auto env = backend->m_env[outputWrapper];
+        env->invalidate();
+        backend->m_env.erase(outputWrapper);
+    }
     //printf("removed: %u\n", name);
 }
 
@@ -382,6 +393,14 @@ void MascotBackendWayland::updateEnvironments(
 }
 
 MascotBackendWayland::~MascotBackendWayland() {
+    m_outputsByName.clear();
+    for (auto &pair : m_outputs) {
+        delete pair.second;
+    }
+    m_outputs.clear();
+    for (auto &pair : m_env) {
+        pair.second->invalidate();
+    }
     m_env.clear();
     wl_surface_destroy(m_pointerSurface);
     //wl_buffer_destroy(m_leftCursorBuffer);
