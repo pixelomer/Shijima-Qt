@@ -68,4 +68,4 @@ DefaultMascot.cc
 !/.images/
 !/.images/*.jpg
 !/.images/*.png
-!wlr-layer-shell-unstable-v1.xml
+!/Platform/Linux/*.xml

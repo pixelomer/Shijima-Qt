@@ -12,8 +12,6 @@
 #include "WaylandShimeji.hpp"
 #include "wayland-protocols/wlr-layer-shell-unstable-v1.h"
 #include "wayland-protocols/fractional-scale-v1.h"
-#include "wayland-protocols/cursor-shape-v1.h"
-#include "wayland-protocols/viewporter.h"
 #include "os-compatibility.hpp"
 #include "wayland-protocols/xdg-output-unstable-v1.h"
 #include <iostream>
