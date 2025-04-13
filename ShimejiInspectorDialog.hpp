@@ -18,6 +18,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 // 
 
+#include "ActiveMascot.hpp"
 #include <QDialog>
 #include <QString>
 #include <functional>
@@ -35,6 +36,7 @@ namespace shijima {
 
 class ShimejiInspectorDialog : public QDialog {
 private:
+    ActiveMascot *m_mascot;
     std::vector<std::function<void()>> m_tickCallbacks;
     QFormLayout *m_formLayout;
     void addRow(QString const& label,
@@ -42,7 +44,6 @@ private:
 protected:
     void showEvent(QShowEvent *event) override;
 public:
-    ShijimaWidget *shijimaParent();
-    ShimejiInspectorDialog(ShijimaWidget *parent);
+    ShimejiInspectorDialog(ActiveMascot *mascot, QWidget *parent = nullptr);
     void tick();
 };
