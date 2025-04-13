@@ -135,8 +135,8 @@ bool WaylandShimeji::mascotClosed() {
 }
 
 void WaylandShimeji::mouseDown(Qt::MouseButton button) {
-    QPoint global = { (int)mascot().state->env->cursor.x,
-        (int)mascot().state->env->cursor.y };
+    QPoint global = { ((int)mascot().state->env->cursor.x + m_env->output()->logicalX()) * m_env->scaleFactor(),
+        ((int)mascot().state->env->cursor.y + m_env->output()->logicalY()) * m_env->scaleFactor() };
     ActiveMascot::mousePressEvent(button, global);
 }
 

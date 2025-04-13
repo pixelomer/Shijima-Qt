@@ -17,11 +17,10 @@ public:
     ::wl_output *output() { return m_output; }
     ::zxdg_output_v1 *xdgOutput() { return m_xdgOutput; }
     void setXdgOutput(::zxdg_output_v1 *);
-    // Should not be used
-    //int32_t x() { return m_x; }
-    //int32_t y() { return m_y; }
-    //int32_t width() { return m_width; }
-    //int32_t height() { return m_height; }
+    int32_t x() { return m_x; }
+    int32_t y() { return m_y; }
+    int32_t width() { return m_width; }
+    int32_t height() { return m_height; }
     int32_t logicalX() { return m_logicalX; }
     int32_t logicalY() { return m_logicalY; }
     int32_t logicalWidth() { return m_logicalWidth; }
