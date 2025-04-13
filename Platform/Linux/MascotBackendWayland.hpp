@@ -2,6 +2,7 @@
 #include "../../MascotBackend.hpp"
 #include "wayland-protocols/wlr-layer-shell-unstable-v1.h"
 #include "wayland-protocols/fractional-scale-v1.h"
+#include "wayland-protocols/xdg-output-unstable-v1.h"
 #include "WaylandBuffer.hpp"
 #include "WaylandOutput.hpp"
 #include "WaylandClient.hpp"
@@ -77,6 +78,7 @@ private:
     ::wl_pointer *m_pointer = NULL;
     ::wl_surface *m_pointerSurface = NULL;
     ::wp_fractional_scale_manager_v1 *m_fractionalScaleManager = NULL;
+    ::zxdg_output_manager_v1 *m_xdgOutputManager;
     std::shared_ptr<WaylandEnvironment> m_pointedEnvironment = NULL;
     WaylandBuffer m_layerBuffer;
     bool m_leftMouseDown = false;

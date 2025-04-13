@@ -1,4 +1,5 @@
 #include "WaylandOutput.hpp"
+#include "wayland-protocols/xdg-output-unstable-v1.h"
 
 std::ostream &operator<<(std::ostream &lhs, WaylandOutput &rhs) {
     lhs << "<WaylandOutput "
@@ -7,10 +8,10 @@ std::ostream &operator<<(std::ostream &lhs, WaylandOutput &rhs) {
         << "description=\"" << rhs.description() << "\" "
         << "make=\"" << rhs.make() << "\" "
         << "model=\"" << rhs.model() << "\" "
-        << "width=" << rhs.width() << " "
-        << "height=" << rhs.height() << " "
-        << "x=" << rhs.x() << " "
-        << "y=" << rhs.y() << " "
+        << "logical_width=" << rhs.logicalWidth() << " "
+        << "logical_height=" << rhs.logicalHeight() << " "
+        << "logical_x=" << rhs.logicalX() << " "
+        << "logical_y=" << rhs.logicalY() << " "
         << "factor=" << rhs.factor() << " "
         << "refresh=" << rhs.refresh() / 1000.0
         << ">";
@@ -101,8 +102,65 @@ void MascotBackendWayland_Output_description(void *data,
     printf("output %p: d=%s\n", (void *)wl_output, description);
 }
 
+void MascotBackendWayland_Output_logical_position(void *data,
+    struct zxdg_output_v1 *zxdg_output_v1,
+    int32_t x,
+    int32_t y)
+{
+    (void)zxdg_output_v1;
+    auto *output = (WaylandOutput *)data;
+    output->m_logicalX = x;
+    output->m_logicalY = y;
+}
+
+void MascotBackendWayland_Output_logical_size(void *data,
+    struct zxdg_output_v1 *zxdg_output_v1,
+    int32_t width,
+    int32_t height)
+{
+    (void)zxdg_output_v1;
+    auto *output = (WaylandOutput *)data;
+    output->m_logicalWidth = width;
+    output->m_logicalHeight = height;
+}
+
+void MascotBackendWayland_Output_xdg_done(void *data,
+    struct zxdg_output_v1 *zxdg_output_v1)
+{
+    // Deprecated
+    (void)data; (void)zxdg_output_v1;
+}
+
+void MascotBackendWayland_Output_xdg_name(void *data,
+    struct zxdg_output_v1 *zxdg_output_v1,
+    const char *name)
+{
+    // Deprecated
+    (void)data; (void)zxdg_output_v1; (void)name;
+}
+
+void MascotBackendWayland_Output_xdg_description(void *data,
+    struct zxdg_output_v1 *zxdg_output_v1,
+    const char *description)
+{
+    // Deprecated
+    (void)data; (void)zxdg_output_v1; (void)description;
+}
+
+void WaylandOutput::setXdgOutput(::zxdg_output_v1 *output) {
+    m_xdgOutput = output;
+    static const ::zxdg_output_v1_listener xdgOutputListener = {
+        MascotBackendWayland_Output_logical_position,
+        MascotBackendWayland_Output_logical_size,
+        MascotBackendWayland_Output_xdg_done,
+        MascotBackendWayland_Output_xdg_name,
+        MascotBackendWayland_Output_xdg_description
+    };
+    zxdg_output_v1_add_listener(output, &xdgOutputListener, this);
+}
+
 WaylandOutput::WaylandOutput(::wl_output *output): m_output(output) {
-    static const ::wl_output_listener listener = {
+    static const ::wl_output_listener outputListener = {
         MascotBackendWayland_Output_geometry,
         MascotBackendWayland_Output_mode,
         MascotBackendWayland_Output_done,
@@ -110,7 +168,7 @@ WaylandOutput::WaylandOutput(::wl_output *output): m_output(output) {
         MascotBackendWayland_Output_name,
         MascotBackendWayland_Output_description
     };
-    wl_output_add_listener(output, &listener, this);
+    wl_output_add_listener(output, &outputListener, this);
 }
 
 WaylandOutput::~WaylandOutput() {

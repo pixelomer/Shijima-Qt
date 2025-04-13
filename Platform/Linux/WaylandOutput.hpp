@@ -6,14 +6,7 @@
 #include <wayland-cursor.h>
 #include <string>
 #include <ostream>
-
-//FIXME: x and y are received from wl_output, but this appears to be the
-// wrong way to determine monitor positioning. (should xdg_output be used
-// instead?)
-//
-//REPRO: this implementation works fine with KDE Plasma but will fail in
-// Hyprland. Shijima-Qt will detect all monitors as being at (x,y)=(0,0).
-// meanwhile, wlr-randr will detect the monitor positions correctly.
+#include "wayland-protocols/xdg-output-unstable-v1.h"
 
 class WaylandOutput {
 public:
@@ -22,14 +15,17 @@ public:
     WaylandOutput(WaylandOutput const&) = delete;
     ~WaylandOutput();
     ::wl_output *output() { return m_output; }
-    int32_t x() { return m_x; }
-    int32_t y() { return m_y; }
-    int32_t width() { return m_width; }
-    int32_t height() { return m_height; }
-    int32_t top() { return y(); }
-    int32_t right() { return x() + width(); }
-    int32_t bottom() { return y() + height(); }
-    int32_t left() { return x(); }
+    ::zxdg_output_v1 *xdgOutput() { return m_xdgOutput; }
+    void setXdgOutput(::zxdg_output_v1 *);
+    // Should not be used
+    //int32_t x() { return m_x; }
+    //int32_t y() { return m_y; }
+    //int32_t width() { return m_width; }
+    //int32_t height() { return m_height; }
+    int32_t logicalX() { return m_logicalX; }
+    int32_t logicalY() { return m_logicalY; }
+    int32_t logicalWidth() { return m_logicalWidth; }
+    int32_t logicalHeight() { return m_logicalHeight; }
     int32_t subpixel() { return m_subpixel; }
     int32_t refresh() { return m_refresh; }
     int32_t factor() { return m_factor; }
@@ -65,10 +61,28 @@ private:
     friend void MascotBackendWayland_Output_description(void *data,
         struct wl_output *wl_output,
         const char *description);
+    friend void MascotBackendWayland_Output_logical_position(void *data,
+        struct zxdg_output_v1 *zxdg_output_v1,
+        int32_t x,
+        int32_t y);
+    friend void MascotBackendWayland_Output_logical_size(void *data,
+        struct zxdg_output_v1 *zxdg_output_v1,
+        int32_t width,
+        int32_t height);
+    friend void MascotBackendWayland_Output_xdg_done(void *data,
+        struct zxdg_output_v1 *zxdg_output_v1);
+    friend void MascotBackendWayland_Output_xdg_name(void *data,
+        struct zxdg_output_v1 *zxdg_output_v1,
+        const char *name);
+    friend void MascotBackendWayland_Output_xdg_description(void *data,
+        struct zxdg_output_v1 *zxdg_output_v1,
+        const char *description);
     ::wl_output *m_output = NULL;
     int32_t m_x = 0, m_y = 0, m_width = 0, m_height = 0, m_subpixel = 0,
-        m_refresh = 0, m_factor = 0;
+        m_refresh = 0, m_factor = 0, m_logicalX = 0, m_logicalY = 0,
+        m_logicalWidth = 0, m_logicalHeight = 0;
     std::string m_make, m_model, m_name, m_description;
+    ::zxdg_output_v1 *m_xdgOutput = NULL;
 };
 
 std::ostream &operator<<(std::ostream &lhs, WaylandOutput &rhs);

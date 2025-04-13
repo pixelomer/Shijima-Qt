@@ -11,13 +11,11 @@
 #include "WaylandEnvironment.hpp"
 #include "WaylandShimeji.hpp"
 #include "wayland-protocols/wlr-layer-shell-unstable-v1.h"
-#include "wayland-protocols/tablet-v2.h"
-#include "wayland-protocols/xdg-shell.h"
 #include "wayland-protocols/fractional-scale-v1.h"
 #include "wayland-protocols/cursor-shape-v1.h"
 #include "wayland-protocols/viewporter.h"
-#include "wayland-protocols/xdg-output-unstable-v1.h"
 #include "os-compatibility.hpp"
+#include "wayland-protocols/xdg-output-unstable-v1.h"
 #include <iostream>
 
 WaylandBuffer MascotBackendWayland::createBuffer(int width, int height) {
@@ -74,9 +72,13 @@ void MascotBackendWayland_register_global(void *data,
         ::wl_output *output = (::wl_output *)wl_registry_bind(wl_registry, name,
             &wl_output_interface, 1);
         auto outputWrapper = new WaylandOutput { output };
+        if (backend->m_xdgOutputManager != NULL) {
+            outputWrapper->setXdgOutput(zxdg_output_manager_v1_get_xdg_output(
+                backend->m_xdgOutputManager, output));
+            backend->m_env[outputWrapper] = std::make_shared<WaylandEnvironment>(
+                backend, outputWrapper);
+        }
         backend->m_outputs[output] = outputWrapper;
-        backend->m_env[outputWrapper] = std::make_shared<WaylandEnvironment>(
-            backend, outputWrapper);
 	}
     else if (strcmp(interface, wl_subcompositor_interface.name) == 0) {
 		backend->m_subcompositor = (::wl_subcompositor *)wl_registry_bind(wl_registry, name,
@@ -90,6 +92,11 @@ void MascotBackendWayland_register_global(void *data,
         backend->m_fractionalScaleManager = 
             (::wp_fractional_scale_manager_v1 *)wl_registry_bind(wl_registry, name,
             &wp_fractional_scale_manager_v1_interface, 1);
+    }
+    else if (strcmp(interface, zxdg_output_manager_v1_interface.name) == 0) {
+        backend->m_xdgOutputManager =
+            (::zxdg_output_manager_v1 *)wl_registry_bind(wl_registry, name,
+            &zxdg_output_manager_v1_interface, 1);
     }
 }
 
@@ -161,10 +168,10 @@ std::shared_ptr<WaylandEnvironment> MascotBackendWayland::environmentAt(QPoint p
     for (auto &pair : m_env) {
         auto output = pair.first;
         auto &env = pair.second;
-        if (output->left() <= point.x() &&
-            (output->left() + env->env()->screen.right) > point.x() &&
-            output->top() <= point.y() &&
-            (output->top() + env->env()->screen.bottom) > point.y())
+        if (output->logicalX() <= point.x() &&
+            (output->logicalX() + env->env()->screen.right) > point.x() &&
+            output->logicalY() <= point.y() &&
+            (output->logicalY() + env->env()->screen.bottom) > point.y())
         {
             return env;
         }
@@ -240,9 +247,24 @@ MascotBackendWayland::MascotBackendWayland(ShijimaManager *manager):
         else if (m_fractionalScaleManager == NULL) {
             error = "wp_fractional_scale_manager_v1 not available";
         }
+        else if (m_xdgOutputManager == NULL) {
+            error = "xdg_output_manager not available";
+        }
         if (error != NULL) {
             wl_registry_destroy(m_registry);
             throw std::runtime_error(error);
+        }
+    }
+
+    // attach xdg outputs and build environments
+    for (auto &pair : m_outputs) {
+        auto output = pair.first;
+        auto outputWrapper = pair.second;
+        if (outputWrapper->xdgOutput() == NULL) {
+            outputWrapper->setXdgOutput(zxdg_output_manager_v1_get_xdg_output(
+                m_xdgOutputManager, output));
+            m_env[outputWrapper] = std::make_shared<WaylandEnvironment>(
+                this, outputWrapper);
         }
     }
 
@@ -337,13 +359,13 @@ bool MascotBackendWayland::reassignEnvironment(WaylandShimeji *shimeji) {
         // move to monitor with cursor
         auto cursor = mascot.state->env->cursor;
         auto oldEnv = shimeji->waylandEnv();
-        cursor.x += oldEnv->output()->x();
-        cursor.y += oldEnv->output()->y();
+        cursor.x += oldEnv->output()->logicalX();
+        cursor.y += oldEnv->output()->logicalY();
         auto env = environmentAt({ (int)cursor.x, (int)cursor.y });
         if (env != nullptr && env != oldEnv) {
             // make this environment this mascot's new owner
-            cursor.x -= env->output()->x();
-            cursor.y -= env->output()->y();
+            cursor.x -= env->output()->logicalX();
+            cursor.y -= env->output()->logicalY();
             env->env()->cursor = cursor;
             shimeji->setEnvironment(env);
 
@@ -358,8 +380,8 @@ bool MascotBackendWayland::reassignEnvironment(WaylandShimeji *shimeji) {
             
             // the old surface will continue receiving move events
             // apply an offset to these events
-            m_cursorOffset.y += oldEnv->output()->y() - env->output()->y();
-            m_cursorOffset.x += oldEnv->output()->x() - env->output()->x();
+            m_cursorOffset.y += oldEnv->output()->logicalY() - env->output()->logicalY();
+            m_cursorOffset.x += oldEnv->output()->logicalX() - env->output()->logicalX();
                 
             return true;
         }

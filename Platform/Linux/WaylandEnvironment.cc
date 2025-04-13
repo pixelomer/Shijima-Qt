@@ -1,3 +1,4 @@
+#include "WaylandClient.hpp"
 #include "WaylandEnvironment.hpp"
 #include "MascotBackendWayland.hpp"
 #include "../../ShijimaManager.hpp"
@@ -55,7 +56,7 @@ WaylandEnvironment::WaylandEnvironment(MascotBackendWayland *backend,
         m_output->output(), ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,
         "ShijimaQt");
     zwlr_layer_surface_v1_set_size(m_layerSurface,
-        output->width(), output->height());
+        output->logicalWidth(), output->logicalHeight());
     zwlr_layer_surface_v1_set_anchor(m_layerSurface,
         ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
         ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
@@ -79,13 +80,13 @@ WaylandEnvironment::WaylandEnvironment(MascotBackendWayland *backend,
     wl_surface_set_input_region(m_surface, m_layerRegion);
     wl_display_roundtrip(m_backend->display());
 
-    m_layerBuffer = m_backend->createBuffer(output->width(),
-        output->height());
+    m_layerBuffer = m_backend->createBuffer(output->logicalWidth(),
+        output->logicalHeight());
     for (size_t i=0; i<m_layerBuffer.size(); i+=4) {
-        m_layerBuffer[i] = 0x10;
-        m_layerBuffer[i+1] = 0x10;
-        m_layerBuffer[i+2] = 0x10;
-        m_layerBuffer[i+3] = 0x10;
+        m_layerBuffer[i] = 0x30;
+        m_layerBuffer[i+1] = 0x00;
+        m_layerBuffer[i+2] = 0x00;
+        m_layerBuffer[i+3] = 0x08;
     }
 
     wl_surface_attach(m_surface, m_layerBuffer, 0, 0);
@@ -94,8 +95,8 @@ WaylandEnvironment::WaylandEnvironment(MascotBackendWayland *backend,
 
 void WaylandEnvironment::initEnvironment() {
     auto &env = *m_env;
-    env.screen = { 0, (double)m_output->width(),
-        (double)m_output->height(), 0 };
+    env.screen = { 0, (double)m_output->logicalWidth() * m_scaleFactor,
+        (double)m_output->logicalHeight() * m_scaleFactor, 0 };
     env.screen /= m_scaleFactor;
     env.work_area = env.screen;
     env.floor = { env.screen.bottom, env.screen.left, env.screen.right };
@@ -160,6 +161,7 @@ void WaylandEnvironment::pointerButton(WaylandClient *client, uint32_t button,
 
 void WaylandEnvironment::pointerButton(uint32_t button, uint32_t state) {
     releaseDragTarget();
+    bool down = (state == WL_POINTER_BUTTON_STATE_PRESSED);
     WaylandClient *client = nullptr;
     for (auto option : m_clients) {
         if (option->pointInside({ m_env->cursor.x, m_env->cursor.y })) {
@@ -168,7 +170,9 @@ void WaylandEnvironment::pointerButton(uint32_t button, uint32_t state) {
         }
     }
     if (client == nullptr) {
-        std::cerr << "warning: found no client at this point?" << std::endl;
+        if (down) {
+            std::cerr << "warning: found no client at this point?" << std::endl;
+        }
         return;
     }
     pointerButton(client, button, state);
@@ -186,8 +190,9 @@ void WaylandEnvironment::updateRegion() {
     }
     else if (!m_regionValid) {
         if (m_activeDragTarget != nullptr) {
-            wl_region_add(m_layerRegion, 0, 0, m_output->width(),
-                m_output->height());
+            wl_region_add(m_layerRegion, 0, 0,
+                m_output->logicalWidth() * m_scaleFactor,
+                m_output->logicalHeight() * m_scaleFactor);
         }
         else {
             for (auto client : m_clients) {
