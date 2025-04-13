@@ -64,6 +64,32 @@ private:
         uint32_t time,
         uint32_t button,
         uint32_t state);
+    friend void MascotBackendWayland_pointer_axis(void *data,
+        struct wl_pointer *wl_pointer,
+        uint32_t time,
+        uint32_t axis,
+        wl_fixed_t value);
+    friend void MascotBackendWayland_pointer_frame(void *data,
+        struct wl_pointer *wl_pointer);
+    friend void MascotBackendWayland_pointer_axis_source(void *data,
+        struct wl_pointer *wl_pointer,
+        uint32_t axis_source);
+    friend void MascotBackendWayland_pointer_axis_stop(void *data,
+        struct wl_pointer *wl_pointer,
+        uint32_t time,
+        uint32_t axis);
+    friend void MascotBackendWayland_pointer_axis_discrete(void *data,
+        struct wl_pointer *wl_pointer,
+        uint32_t axis,
+        int32_t discrete);
+    friend void MascotBackendWayland_pointer_axis_value120(void *data,
+        struct wl_pointer *wl_pointer,
+        uint32_t axis,
+        int32_t value120);
+    friend void MascotBackendWayland_pointer_axis_relative_direction(void *data,
+        struct wl_pointer *wl_pointer,
+        uint32_t axis,
+        uint32_t direction);
     ::wl_display *m_display = NULL;
     ::wl_registry *m_registry = NULL;
     ::wl_shm *m_shm = NULL;

@@ -162,6 +162,67 @@ void MascotBackendWayland_pointer_motion(void *data,
     }
 }
 
+void MascotBackendWayland_pointer_axis(void *data,
+    struct wl_pointer *wl_pointer,
+    uint32_t time,
+    uint32_t axis,
+    wl_fixed_t value)
+{
+    // Stub
+    (void)data; (void)wl_pointer; (void)time; (void)axis; (void)value;
+}
+
+void MascotBackendWayland_pointer_frame(void *data,
+    struct wl_pointer *wl_pointer)
+{
+    // Stub
+    (void)data; (void)wl_pointer;
+}
+
+void MascotBackendWayland_pointer_axis_source(void *data,
+    struct wl_pointer *wl_pointer,
+    uint32_t axis_source)
+{
+    // Stub
+    (void)data; (void)wl_pointer; (void)axis_source;
+}
+
+void MascotBackendWayland_pointer_axis_stop(void *data,
+    struct wl_pointer *wl_pointer,
+    uint32_t time,
+    uint32_t axis)
+{
+    // Stub
+    (void)data; (void)wl_pointer; (void)time; (void)axis;
+}
+
+void MascotBackendWayland_pointer_axis_discrete(void *data,
+    struct wl_pointer *wl_pointer,
+    uint32_t axis,
+    int32_t discrete)
+{
+    // Stub
+    (void)data; (void)wl_pointer; (void)axis; (void)discrete;
+}
+
+void MascotBackendWayland_pointer_axis_value120(void *data,
+    struct wl_pointer *wl_pointer,
+    uint32_t axis,
+    int32_t value120)
+{
+    // Stub
+    (void)data; (void)wl_pointer; (void)axis; (void)value120;
+}
+
+void MascotBackendWayland_pointer_axis_relative_direction(void *data,
+    struct wl_pointer *wl_pointer,
+    uint32_t axis,
+    uint32_t direction)
+{
+    // Stub
+    (void)data; (void)wl_pointer; (void)axis; (void)direction;
+}
+
 std::shared_ptr<WaylandEnvironment> MascotBackendWayland::environmentAt(QPoint point) {
     for (auto &pair : m_env) {
         auto output = pair.first;
@@ -276,10 +337,21 @@ MascotBackendWayland::MascotBackendWayland(ShijimaManager *manager):
         MascotBackendWayland_pointer_leave,
         MascotBackendWayland_pointer_motion,
         MascotBackendWayland_pointer_button,
-        NULL, NULL, NULL,
-        NULL, NULL, NULL,
-        NULL
+        MascotBackendWayland_pointer_axis,
+        #ifdef WL_POINTER_FRAME_SINCE_VERSION
+        MascotBackendWayland_pointer_frame,
+        MascotBackendWayland_pointer_axis_source,
+        MascotBackendWayland_pointer_axis_stop,
+        MascotBackendWayland_pointer_axis_discrete,
+        #endif
+        #ifdef WL_POINTER_AXIS_VALUE120_SINCE_VERSION
+        MascotBackendWayland_pointer_axis_value120,
+        #endif
+        #ifdef WL_POINTER_AXIS_RELATIVE_DIRECTION_SINCE_VERSION
+        MascotBackendWayland_pointer_axis_relative_direction,
+        #endif
     };
+    
     m_pointer = wl_seat_get_pointer(m_seat);
     wl_pointer_add_listener(m_pointer, &pointer_listener, this);
     m_pointerSurface = wl_compositor_create_surface(m_compositor);
