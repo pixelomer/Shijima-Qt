@@ -360,6 +360,7 @@ MascotBackendWayland::MascotBackendWayland(ShijimaManager *manager):
 }
 
 void MascotBackendWayland::preTick() {
+    wl_display_dispatch_pending(m_display);
     for (auto &pair : m_env) {
         pair.second->preTick();
     }
@@ -369,6 +370,7 @@ void MascotBackendWayland::postTick() {
     for (auto &pair : m_env) {
         pair.second->postTick();
     }
+    wl_display_roundtrip(m_display);
 }
 
 void MascotBackendWayland::updateEnvironments(

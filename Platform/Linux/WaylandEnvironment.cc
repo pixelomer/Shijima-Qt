@@ -203,13 +203,11 @@ void WaylandEnvironment::updateRegion() {
     }
     wl_surface_set_input_region(m_surface, m_layerRegion);
     wl_surface_commit(m_surface);
-    wl_display_roundtrip(m_backend->display());
-    wl_display_dispatch_pending(m_backend->display());
 }
 
 void WaylandEnvironment::postTick() {
-    updateRegion();
     finalizeEnvironment();
+    updateRegion();
 }
 
 void WaylandEnvironment::addClient(WaylandClient *client) {
