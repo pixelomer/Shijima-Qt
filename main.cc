@@ -28,7 +28,14 @@
 #include <httplib.h>
 
 int main(int argc, char **argv) {
-    if (argc > 1) {
+    bool headless = false;
+    for (int i = 1; i < argc; ++i) {
+        if (QString(argv[i]) == "--headless") {
+            headless = true;
+            break;
+        }
+    }
+    if (argc > 1 && !headless) {
         return shijimaRunCli(argc, argv);
     }
     Platform::initialize(argc, argv);
@@ -46,7 +53,9 @@ int main(int argc, char **argv) {
         if (pingResult != nullptr) {
             throw std::runtime_error("Shijima-Qt is already running!");
         }
-        ShijimaManager::defaultManager()->show();
+        if (!headless) {
+            ShijimaManager::defaultManager()->show();
+        }
     }
     catch (std::exception &ex) {
         QMessageBox *msg = new QMessageBox {};
