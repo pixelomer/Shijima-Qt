@@ -15,7 +15,7 @@ SOURCES = $(PROTOCOL_SOURCES) Platform.cc ActiveWindowObserver.cc KWin.cc \
 	KDEWindowObserverBackend.cc ExtensionFile.cc MascotBackendWayland.cc \
 	WaylandShimeji.cc WaylandBuffer.cc WaylandOutput.cc WaylandEnvironment.cc
 QT_LIBS := Core DBus Widgets
-CXXFLAGS += -I../../libshijima
+CXXFLAGS += -I../../libshijima -I../../libshijima/pugixml/src
 PKG_LIBS := x11 wayland-client wayland-cursor
 
 define bin2c
