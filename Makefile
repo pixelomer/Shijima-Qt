@@ -37,7 +37,7 @@ LICENSE_FILES := Shijima-Qt.LICENSE.txt \
 	unarr.LICENSE.txt \
 	unarr.AUTHORS.txt \
 	Qt.LICENSE.txt \
-	rapidxml.LICENSE.txt
+	pugixml.LICENSE.txt
 
 LICENSE_FILES := $(addprefix licenses/,$(LICENSE_FILES))
 
