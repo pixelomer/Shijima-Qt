@@ -152,8 +152,10 @@ else
 SOURCES_FILTERED = $(SOURCES)
 endif
 
+ifneq ($(PLATFORM),macOS)
 # https://github.com/USCiLab/cereal/issues/811
 PLATFORM_CMAKE_CXX_FLAGS := -Wno-dangling-reference $(PLATFORM_CMAKE_CXX_FLAGS)
+endif
 
 OBJECTS = $(patsubst %.rc,%.o,$(patsubst %.c,%.o,$(patsubst %.mm,%.o,$(patsubst %.cc,%.o,$(SOURCES_FILTERED)))))
 D_FILES = $(patsubst %.o,%.d,$(OBJECTS))
