@@ -152,6 +152,9 @@ else
 SOURCES_FILTERED = $(SOURCES)
 endif
 
+# https://github.com/USCiLab/cereal/issues/811
+PLATFORM_CMAKE_CXX_FLAGS := -Wno-dangling-reference $(PLATFORM_CMAKE_CXX_FLAGS)
+
 OBJECTS = $(patsubst %.rc,%.o,$(patsubst %.c,%.o,$(patsubst %.mm,%.o,$(patsubst %.cc,%.o,$(SOURCES_FILTERED)))))
 D_FILES = $(patsubst %.o,%.d,$(OBJECTS))
 CFLAGS = $(STD_CFLAGS) $(CONFIG_CFLAGS) $(PLATFORM_CFLAGS) $(QT_CFLAGS) $(PKG_CFLAGS)
