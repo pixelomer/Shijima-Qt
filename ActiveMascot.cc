@@ -39,6 +39,16 @@
 
 using namespace shijima;
 
+static void flattenImagePath(std::string &path) {
+    size_t i;
+    for (i=0; i<path.size(); ++i)
+        if (path[i] != '/') break;
+    if (i != 0)
+        path = path.substr(i);
+    for (i=0; i<path.size(); ++i)
+        if (path[i] == '/') path[i] = '_';
+}
+
 ActiveMascot::ActiveMascot(MascotData *mascotData,
     std::unique_ptr<shijima::mascot::manager> mascot,
     int mascotId):
@@ -74,6 +84,7 @@ Asset const& ActiveMascot::getActiveAsset() {
     auto &name = m_mascot->state->active_frame.get_name(
         m_mascot->state->looking_right);
     auto lowerName = shimejifinder::to_lower(name);
+    flattenImagePath(lowerName);
     auto imagePath = QDir::cleanPath(m_data->imgRoot()
         + QDir::separator() + QString::fromStdString(lowerName));
     return AssetLoader::defaultLoader()->loadAsset(imagePath);
