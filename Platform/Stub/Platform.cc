@@ -25,5 +25,7 @@ void showOnAllDesktops(QWidget *widget) {}
 bool useWindowMasks() {
     return false;
 }
+void registerBackends(std::map<std::string,
+    std::function<MascotBackend *(ShijimaManager *)>> &backends) {}
 
 }
