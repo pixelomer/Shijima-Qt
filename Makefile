@@ -29,6 +29,7 @@ DEFAULT_MASCOT_FILES := $(addsuffix .png,$(addprefix DefaultMascot/img/shime,$(s
 	DefaultMascot/behaviors.xml DefaultMascot/actions.xml
 
 LICENSE_FILES := Shijima-Qt.LICENSE.txt \
+	cereal.LICENSE.txt \
 	duktape.LICENSE.txt \
 	duktape.AUTHORS.rst \
 	libarchive.LICENSE.txt \
