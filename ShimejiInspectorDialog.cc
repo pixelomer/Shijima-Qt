@@ -65,8 +65,9 @@ static std::string areaToString(shijima::mascot::environment::darea const& area)
         ", dy: " + doubleToString(area.dy);
 }
 
-ShimejiInspectorDialog::ShimejiInspectorDialog(ShijimaWidget *parent):
-    QDialog(parent), m_formLayout(new QFormLayout)
+ShimejiInspectorDialog::ShimejiInspectorDialog(ActiveMascot *mascot,
+    QWidget *parent):
+    QDialog(parent), m_mascot(mascot), m_formLayout(new QFormLayout)
 {
     setWindowFlags((windowFlags() | Qt::CustomizeWindowHint |
         Qt::WindowCloseButtonHint) &
@@ -75,8 +76,8 @@ ShimejiInspectorDialog::ShimejiInspectorDialog(ShijimaWidget *parent):
     m_formLayout->setFormAlignment(Qt::AlignLeft);
     m_formLayout->setLabelAlignment(Qt::AlignRight);
 
-    addRow("Window", [this](shijima::mascot::manager &mascot){
-        return vecToString(shijimaParent()->pos());
+    addRow("Window", [this](shijima::mascot::manager &){
+        return vecToString(m_mascot->container().topLeft());
     });
     addRow("Anchor", [](shijima::mascot::manager &mascot){
         return vecToString(mascot.state->anchor);
@@ -113,14 +114,10 @@ void ShimejiInspectorDialog::addRow(QString const& label,
     labelWidget->setStyleSheet("font-weight: bold;");
     auto dataWidget = new QLabel {};
     m_tickCallbacks.push_back([this, dataWidget, tick](){
-        auto newText = tick(shijimaParent()->mascot());
+        auto newText = tick(m_mascot->mascot());
         dataWidget->setText(QString::fromStdString(newText));
     });
     m_formLayout->addRow(labelWidget, dataWidget);
-}
-
-ShijimaWidget *ShimejiInspectorDialog::shijimaParent() {
-    return static_cast<ShijimaWidget *>(parent());
 }
 
 void ShimejiInspectorDialog::showEvent(QShowEvent *event) {

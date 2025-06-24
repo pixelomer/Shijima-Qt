@@ -35,6 +35,7 @@ int main(int argc, char **argv) {
     #ifdef SHIJIMA_LOGGING_ENABLED
         shijima::set_log_level(SHIJIMA_LOG_PARSER | SHIJIMA_LOG_WARNINGS);
     #endif
+    ShijimaManager::registerBackends();
     QApplication app(argc, argv);
     app.setApplicationName("Shijima-Qt");
     app.setApplicationDisplayName("Shijima-Qt");

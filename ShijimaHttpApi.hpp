@@ -41,5 +41,6 @@ public:
     int port();
     std::string const& host();
     ShijimaHttpApi(ShijimaManager *manager);
+    ShijimaHttpApi(ShijimaHttpApi const&) = delete;
     ~ShijimaHttpApi();
 };
