@@ -553,7 +553,7 @@ void ShijimaManager::refreshListWidget() {
 }
 
 void ShijimaManager::loadAllMascots() {
-    QDirIterator iter { m_mascotsPath, QDir::Dirs | QDir::NoDotAndDotDot,
+    QDirIterator iter { m_mascotsPath, QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden,
         QDirIterator::NoIteratorFlags };
     while (iter.hasNext()) {
         auto name = iter.nextFileInfo().fileName();
