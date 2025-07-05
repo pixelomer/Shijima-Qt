@@ -37,8 +37,6 @@ void MascotBackendWayland_Output_geometry(void *data,
     output->m_subpixel = subpixel;
     output->m_make = make;
     output->m_model = model;
-    printf("output %p: x=%d, y=%d, pw=%d, ph=%d, subpixel=%d, make=%s\n",
-        (void *)wl_output, x, y, physical_width, physical_height, subpixel, make);
 }
 
 void MascotBackendWayland_Output_mode(void *data,
@@ -54,8 +52,6 @@ void MascotBackendWayland_Output_mode(void *data,
     output->m_width = width;
     output->m_height = height;
     output->m_refresh = refresh;
-    printf("output %p: w=%d, h=%d, r=%d\n",
-        (void *)wl_output, width, height, refresh);
 }
 
 void MascotBackendWayland_Output_done(void *data,
@@ -79,7 +75,6 @@ void MascotBackendWayland_Output_scale(void *data,
     auto *output = (WaylandOutput *)data;
     //output->ready = false;
     output->m_factor = factor;
-    printf("output %p: f=%d\n", (void *)wl_output, factor);
 }
 
 void MascotBackendWayland_Output_name(void *data,
@@ -89,7 +84,6 @@ void MascotBackendWayland_Output_name(void *data,
     auto *output = (WaylandOutput *)data;
     //output->ready = false;
     output->m_name = name;
-    printf("output %p: n=%s\n", (void *)wl_output, name);
 }
 
 void MascotBackendWayland_Output_description(void *data,
@@ -99,7 +93,6 @@ void MascotBackendWayland_Output_description(void *data,
     auto *output = (WaylandOutput *)data;
     //output->ready = false;
     output->m_name = description;
-    printf("output %p: d=%s\n", (void *)wl_output, description);
 }
 
 void MascotBackendWayland_Output_logical_position(void *data,

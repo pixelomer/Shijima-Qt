@@ -24,8 +24,6 @@ void WaylandEnvironment_layer_surface_configure(void *data,
     uint32_t height)
 {
     (void)data;
-    printf("layer-surface width=%u height=%u\n",
-        width, height);
     zwlr_layer_surface_v1_ack_configure(zwlr_layer_surface_v1, serial);
 }
 
@@ -33,7 +31,6 @@ void WaylandEnvironment_layer_surface_closed(void *data,
     struct zwlr_layer_surface_v1 *zwlr_layer_surface_v1)
 {
     (void)data; (void)zwlr_layer_surface_v1;
-    printf("layer-surface closed\n");
 }
 
 WaylandEnvironment::WaylandEnvironment(MascotBackendWayland *backend,
@@ -82,12 +79,6 @@ WaylandEnvironment::WaylandEnvironment(MascotBackendWayland *backend,
 
     m_layerBuffer = m_backend->createBuffer(output->logicalWidth(),
         output->logicalHeight());
-    for (size_t i=0; i<m_layerBuffer.size(); i+=4) {
-        m_layerBuffer[i] = 0x30;
-        m_layerBuffer[i+1] = 0x00;
-        m_layerBuffer[i+2] = 0x00;
-        m_layerBuffer[i+3] = 0x08;
-    }
 
     wl_surface_attach(m_surface, m_layerBuffer, 0, 0);
     wl_surface_commit(m_surface);

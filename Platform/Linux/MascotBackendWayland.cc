@@ -50,7 +50,6 @@ void MascotBackendWayland_register_global(void *data,
     uint32_t version)
 {
     MascotBackendWayland *backend = static_cast<MascotBackendWayland *>(data);
-    printf("interface: '%s', version: %u, name: %u\n", interface, version, name);
     if (strcmp(interface, wl_compositor_interface.name) == 0 &&
         version >= 4)
     {
