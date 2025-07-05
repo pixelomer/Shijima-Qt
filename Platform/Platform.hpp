@@ -20,13 +20,19 @@
 
 #include "ActiveWindow.hpp"
 #include "ActiveWindowObserver.hpp"
+#include <map>
+#include <functional>
 
 class QWidget;
+class ShijimaManager;
+class MascotBackend;
 
 namespace Platform {
 
 void initialize(int argc, char **argv);
 void showOnAllDesktops(QWidget *widget);
 bool useWindowMasks();
+void registerBackends(std::map<std::string,
+    std::function<MascotBackend *(ShijimaManager *)>> &backends);
 
 }

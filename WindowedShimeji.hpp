@@ -21,11 +21,8 @@
 #include <QWidget>
 #include <memory>
 #include <QRegion>
-#include "Asset.hpp"
-#include "SoundEffectManager.hpp"
 #include <shijima/mascot/manager.hpp>
 #include <shijima/mascot/environment.hpp>
-#include "PlatformWidget.hpp"
 #include "MascotData.hpp"
 #include "ActiveMascot.hpp"
 
@@ -35,20 +32,20 @@ class QMouseEvent;
 class QCloseEvent;
 class ShijimaContextMenu;
 class ShimejiInspectorDialog;
-class MascotBackendWidgets;
+class MascotBackendWindowed;
 
-class ShijimaWidget : public PlatformWidget<QWidget>, public ActiveMascot
+class WindowedShimeji : public QWidget, public ActiveMascot
 {
 public:
     friend class ShijimaContextMenu;
-    explicit ShijimaWidget(MascotBackendWidgets *backend,
+    explicit WindowedShimeji(MascotBackendWindowed *backend,
         MascotData *mascotData,
         std::unique_ptr<shijima::mascot::manager> mascot,
         int mascotId, QWidget *parent = nullptr);
-    explicit ShijimaWidget(MascotBackendWidgets *backend,
+    explicit WindowedShimeji(MascotBackendWindowed *backend,
         ActiveMascot &old, QWidget *parent = nullptr);
     virtual bool tick() override;
-    virtual ~ShijimaWidget();
+    virtual ~WindowedShimeji();
     virtual bool mascotClosed() override;
     virtual bool updateOffsets() override;
     virtual void show() override;
@@ -58,8 +55,5 @@ protected:
     void mouseReleaseEvent(QMouseEvent *) override;
 private:
     void widgetSetup();
-    MascotBackendWidgets *m_backend;
-#ifdef __linux__
-    QRegion m_windowMask;
-#endif
+    MascotBackendWindowed *m_backend;
 };

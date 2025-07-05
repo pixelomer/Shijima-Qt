@@ -1,9 +1,22 @@
 include ../../common.mk
 
-SOURCES = Platform.cc ActiveWindowObserver.cc KWin.cc PrivateActiveWindowObserver.cc \
-	DBus.cc GNOME.cc GNOMEWindowObserverBackend.cc KDEWindowObserverBackend.cc \
-	ExtensionFile.cc
-QT_LIBS = Core DBus Widgets
+
+WAYLAND_PROTOCOLS_DIR ?= $(shell pkg-config wayland-protocols --variable=pkgdatadir)
+WAYLAND_SCANNER = $(shell pkg-config --variable=wayland_scanner wayland-scanner)
+PROTOCOL_SOURCES := wayland-protocols/fractional-scale-v1.c \
+	wayland-protocols/xdg-output-unstable-v1.c \
+	wayland-protocols/wlr-layer-shell-unstable-v1.c \
+	wayland-protocols/xdg-shell.c
+PROTOCOL_HEADERS := $(patsubst %.c,%.h,$(PROTOCOL_SOURCES))
+PROTOCOL_OBJECTS := $(patsubst %.c,%.o,$(PROTOCOL_SOURCES))
+WL_PROTO_DIR = wayland-protocols
+SOURCES = $(PROTOCOL_SOURCES) Platform.cc ActiveWindowObserver.cc KWin.cc \
+	PrivateActiveWindowObserver.cc DBus.cc GNOME.cc GNOMEWindowObserverBackend.cc \
+	KDEWindowObserverBackend.cc ExtensionFile.cc MascotBackendWayland.cc \
+	WaylandShimeji.cc WaylandBuffer.cc WaylandOutput.cc WaylandEnvironment.cc
+QT_LIBS := Core DBus Widgets
+CXXFLAGS += -I../../libshijima -I../../libshijima/pugixml/src
+PKG_LIBS := x11 wayland-client wayland-cursor
 
 define bin2c
 echo "#include <stddef.h>" > $(2)
@@ -29,6 +42,18 @@ Linux.a: $(OBJECTS)
 		yarn add --modules-folder node_modules minify; \
 		[ -f node_modules/.bin/minify ]; \
 	fi
+
+wayland-protocols/xdg-shell.c: $(WAYLAND_PROTOCOLS_DIR)/stable/xdg-shell/xdg-shell.xml
+	mkdir -p wayland-protocols
+	target="$@"; $(WAYLAND_SCANNER) client-header $^ "$${target%.*}.h"
+	$(WAYLAND_SCANNER) private-code $^ $@
+
+wayland-protocols/%.c: %.xml
+	mkdir -p wayland-protocols
+	target="$@"; $(WAYLAND_SCANNER) client-header $^ "$${target%.*}.h"
+	$(WAYLAND_SCANNER) private-code $^ $@
+
+protocols-autogen: $(PROTOCOL_SOURCES)
 
 gnome_script.zip: .work/gnome_script
 	zip -jr $@ $</*
@@ -56,7 +81,9 @@ KDEWindowObserverBackend.cc: kwin_script.c
 	$(call bin2c,$<,$@)
 
 clean::
-	rm -rf .work/gnome_script
 	rm -f $(OBJECTS) Linux.a gnome_script.zip kwin_script.c \
 		kwin_script_minified.js gnome_script/extension_minified.js \
 		gnome_script.c
+	rm -f $(PROTOCOL_SOURCES) $(PROTOCOL_HEADERS)
+	rm -rf .work/gnome_script
+	rm -fd wayland-protocols

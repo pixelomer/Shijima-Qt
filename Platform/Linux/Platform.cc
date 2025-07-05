@@ -28,12 +28,13 @@
 #include <stdlib.h>
 #include <QWidget>
 #include <QApplication>
-#include <X11/Xlib.h>
 #include <iostream>
-#include <X11/Xatom.h>
 #include <unistd.h>
 #include <signal.h>
 #include <sys/socket.h>
+#include "MascotBackendWayland.hpp"
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
 
 namespace Platform {
 
@@ -122,14 +123,19 @@ void initialize(int argc, char **argv) {
     sigaction(SIGHUP, &action, NULL);
 
     // Wayland does not allow windows to reposition themselves.
-    // Set WAYLAND_DISPLAY to an invalid value to prevent its use.
-    setenv("WAYLAND_DISPLAY", "", 1);
+    setenv("QT_QPA_PLATFORM", "xcb", 0);
 }
 
 void showOnAllDesktops(QWidget *widget) {
     unsigned long data = 0xFFFFFFFF;
     QNativeInterface::QX11Application *x11App = qApp->nativeInterface<QNativeInterface::QX11Application>();
+    if (x11App == nullptr) {
+        return;
+    }
     Display *displayID = x11App->display();
+    if (displayID == nullptr) {
+        return;
+    }
     WId windowID = widget->winId();
     XChangeProperty(displayID, windowID,
         XInternAtom(displayID, "_NET_WM_DESKTOP", False),
@@ -160,6 +166,14 @@ void showOnAllDesktops(QWidget *widget) {
 
 bool useWindowMasks() {
     return windowMasksEnabled;
+}
+
+void registerBackends(std::map<std::string,
+    std::function<MascotBackend *(ShijimaManager *)>> &backends)
+{
+    backends["Wayland"] = [](ShijimaManager *manager){
+        return new MascotBackendWayland { manager };
+    };
 }
 
 }

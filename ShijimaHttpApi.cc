@@ -18,6 +18,7 @@
 
 #include "ShijimaHttpApi.hpp"
 #include <httplib.h>
+#include "ActiveMascot.hpp"
 #include "ShijimaManager.hpp"
 #include <thread>
 #include <iostream>
@@ -36,7 +37,7 @@ static QJsonObject vecToObject(shijima::math::vec2 vec) {
     return obj;
 }
 
-static QJsonObject mascotToObject(ShijimaWidget *widget) {
+static QJsonObject mascotToObject(ActiveMascot *widget) {
     QJsonObject obj;
     obj["id"] = widget->mascotId();
     obj["data_id"] = widget->mascotData()->id();
@@ -73,7 +74,7 @@ static shijima::math::vec2 valueToVec(QJsonValue const& value) {
     return vec;
 }
 
-static void applyObjectToWidget(QJsonObject &object, ShijimaWidget *widget) {
+static void applyObjectToWidget(QJsonObject &object, ActiveMascot *widget) {
     if (auto anchor = valueToVec(object.take("anchor"));
         !std::isnan(anchor.x))
     {
@@ -123,7 +124,7 @@ static void badRequest(Request const&, Response &res) {
     sendJson(res, obj);
 }
 
-static bool selectorEval(ShijimaWidget *mascot, std::string const& selector) {
+static bool selectorEval(ActiveMascot *mascot, std::string const& selector) {
     if (selector.empty()) {
         return true;
     }

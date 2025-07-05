@@ -26,10 +26,10 @@ class QActionEvent;
 
 class ShijimaContextMenu : public QMenu {
 public:
-    ShijimaWidget *shijimaParent() {
-        return static_cast<ShijimaWidget *>(parent());
-    }
-    explicit ShijimaContextMenu(ShijimaWidget *parent);
+    explicit ShijimaContextMenu(ActiveMascot *mascot,
+        QWidget *parent = nullptr);
+    ActiveMascot *mascot() { return m_mascot; }
 protected:
     void closeEvent(QCloseEvent *) override;
+    ActiveMascot *m_mascot;
 };

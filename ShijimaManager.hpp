@@ -22,17 +22,18 @@
 #include <QString>
 #include <shijima/mascot/manager.hpp>
 #include <shijima/mascot/factory.hpp>
-#include <vector>
 #include <QMap>
 #include <QListWidgetItem>
 #include <QListWidget>
 #include <QSettings>
 #include <QScreen>
+#include "ActiveMascot.hpp"
 #include "PlatformWidget.hpp"
 #include "MascotData.hpp"
 #include <set>
 #include <list>
 #include <mutex>
+#include <map>
 #include "Platform/ActiveWindowObserver.hpp"
 #include "ShijimaWidget.hpp"
 #include "ShijimaHttpApi.hpp"
@@ -40,29 +41,35 @@
 
 class QVBoxLayout;
 class QWidget;
+class MascotBackend;
 
 class ShijimaManager : public PlatformWidget<QMainWindow>
 {
 public:
     static ShijimaManager *defaultManager();
     static void finalize();
-    void updateEnvironment();
-    void updateEnvironment(QScreen *);
     QString const& mascotsPath();
-    ShijimaWidget *spawn(std::string const& name);
+    ActiveMascot *spawn(std::string const& name);
     void killAll();
     void killAll(QString const& name);
-    void killAllButOne(ShijimaWidget *widget);
+    void killAllButOne(ActiveMascot *widget);
     void killAllButOne(QString const& name);
     void setManagerVisible(bool visible);
     void importOnShow(QString const& path);
+    bool changeBackend(std::function<MascotBackend *()> backendProvider);
     QMap<QString, MascotData *> const& loadedMascots();
     QMap<int, MascotData *> const& loadedMascotsById();
-    std::list<ShijimaWidget *> const& mascots();
-    std::map<int, ShijimaWidget *> const& mascotsById();
-    ShijimaWidget *hitTest(QPoint const& screenPos);
+    std::list<ActiveMascot *> const& mascots();
+    std::map<int, ActiveMascot *> const& mascotsById();
+    ActiveMascot *hitTest(QPoint const& screenPos);
     void onTickSync(std::function<void(ShijimaManager *)> callback);
     ~ShijimaManager();
+    Platform::ActiveWindow const& previousActiveWindow();
+    Platform::ActiveWindow const& currentActiveWindow();
+    void applyActiveIE(shijima::mascot::environment &env);
+    double userScale();
+    static void registerBackends();
+    int subtickCount();
 protected:
     void timerEvent(QTimerEvent *event) override;
     void showEvent(QShowEvent *event) override;
@@ -71,6 +78,9 @@ protected:
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
 private:
+    static std::map<std::string,
+        std::function<MascotBackend *(ShijimaManager *)>> m_backends;
+    static std::string m_defaultBackendName;
     explicit ShijimaManager(QWidget *parent = nullptr);
     static std::string imgRootForTemplatePath(std::string const& path);
     std::unique_lock<std::mutex> acquireLock();
@@ -87,18 +97,12 @@ private:
     void importAction();
     void deleteAction();
     void updateSandboxBackground();
-    bool windowedMode();
     QWidget *mascotParent();
-    void setWindowedMode(bool windowedMode);
-    void screenAdded(QScreen *);
-    void screenRemoved(QScreen *);
     void quitAction();
     std::set<std::string> import(QString const& path) noexcept;
     void importWithDialog(QList<QString> const& paths);
     void tick();
-    QScreen *mascotScreen();
     QColor m_sandboxBackground;
-    QAction *m_windowedModeAction;
     QWidget *m_sandboxWidget;
     QSettings m_settings;
     Platform::ActiveWindow m_previousWindow;
@@ -114,12 +118,10 @@ private:
     QMap<QString, MascotData *> m_loadedMascots;
     QMap<int, MascotData *> m_loadedMascotsById;
     QSet<QString> m_listItemsToRefresh;
-    QMap<QScreen *, std::shared_ptr<shijima::mascot::environment>> m_env;
-    QMap<shijima::mascot::environment *, QScreen *> m_reverseEnv;
     shijima::mascot::factory m_factory;
     QString m_importOnShowPath;
-    std::list<ShijimaWidget *> m_mascots;
-    std::map<int, ShijimaWidget *> m_mascotsById;
+    std::list<ActiveMascot *> m_mascots;
+    std::map<int, ActiveMascot *> m_mascotsById;
     QString m_mascotsPath;
     QListWidget m_listWidget;
     ShijimaHttpApi m_httpApi;
@@ -127,4 +129,5 @@ private:
     std::mutex m_mutex;
     std::condition_variable m_tickCallbackCompletion;
     std::list<std::function<void(ShijimaManager *)>> m_tickCallbacks;
+    MascotBackend *m_backend;
 };
