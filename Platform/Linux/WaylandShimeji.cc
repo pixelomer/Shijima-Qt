@@ -93,7 +93,7 @@ void WaylandShimeji::redraw() {
 
 bool WaylandShimeji::tick() {
     if (!m_env->valid()) {
-        mascot().state->dragging = false;
+        mascot().get_state()->dragging = false;
         m_env->backend()->reassignEnvironment(this);
     }
     if (markedForDeletion()) {
@@ -135,8 +135,8 @@ bool WaylandShimeji::mascotClosed() {
 }
 
 void WaylandShimeji::mouseDown(Qt::MouseButton button) {
-    QPoint global = { ((int)mascot().state->env->cursor.x + m_env->output()->logicalX()) * m_env->scaleFactor(),
-        ((int)mascot().state->env->cursor.y + m_env->output()->logicalY()) * m_env->scaleFactor() };
+    QPoint global = { ((int)mascot().get_state()->env->cursor.x + m_env->output()->logicalX()) * m_env->scaleFactor(),
+        ((int)mascot().get_state()->env->cursor.y + m_env->output()->logicalY()) * m_env->scaleFactor() };
     ActiveMascot::mousePressEvent(button, global);
 }
 
@@ -145,8 +145,8 @@ void WaylandShimeji::mouseUp(Qt::MouseButton button) {
 }
 
 void WaylandShimeji::mouseMove() {
-    auto cursor = mascot().state->env->cursor;
-    if (mascot().state->dragging &&
+    auto cursor = mascot().get_state()->env->cursor;
+    if (mascot().get_state()->dragging &&
         (cursor.x < 0 || cursor.x >= m_env->env()->screen.right ||
         cursor.y < 0 || cursor.y >= m_env->env()->screen.bottom))
     {

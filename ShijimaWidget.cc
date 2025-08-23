@@ -118,21 +118,21 @@ bool ShijimaWidget::tick() {
         return false;
     }
     auto &reverseEnv = m_backend->reverseEnv();
-    if (!reverseEnv.contains(mascot().state->env.get())) {
-        mascot().state->env = m_backend->env()[m_backend->spawnScreen()];
+    if (!reverseEnv.contains(mascot().get_state()->env.get())) {
+        mascot().get_state()->env = m_backend->env()[m_backend->spawnScreen()];
     }
     if (ActiveMascot::tick()) {
         repaint();
         update();
 
-        if (mascot().state->dragging) {
+        if (mascot().get_state()->dragging) {
             auto &reverseEnv = m_backend->reverseEnv();
             auto &env = m_backend->env();
-            auto oldScreen = reverseEnv[mascot().state->env.get()];
+            auto oldScreen = reverseEnv[mascot().get_state()->env.get()];
             auto newScreen = QGuiApplication::screenAt(QPoint {
-                (int)mascot().state->anchor.x, (int)mascot().state->anchor.y });
+                (int)mascot().get_state()->anchor.x, (int)mascot().get_state()->anchor.y });
             if (newScreen != nullptr && oldScreen != newScreen) {
-                mascot().state->env = env[newScreen];
+                mascot().get_state()->env = env[newScreen];
             }
         }
         return true;

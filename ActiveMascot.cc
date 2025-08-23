@@ -71,8 +71,8 @@ bool ActiveMascot::inspectorVisible() {
 }
 
 Asset const& ActiveMascot::getActiveAsset() {
-    auto &name = m_mascot->state->active_frame.get_name(
-        m_mascot->state->looking_right);
+    auto &name = m_mascot->get_state()->active_frame.get_name(
+        m_mascot->get_state()->looking_right);
     auto lowerName = shimejifinder::normalize_filename(name);
     auto imagePath = QDir::cleanPath(m_data->imgRoot()
         + QDir::separator() + QString::fromStdString(lowerName));
@@ -80,23 +80,23 @@ Asset const& ActiveMascot::getActiveAsset() {
 }
 
 bool ActiveMascot::isMirroredRender() const {
-    return m_mascot->state->active_frame.right_name.empty() &&
-        m_mascot->state->looking_right;
+    return m_mascot->get_state()->active_frame.right_name.empty() &&
+        m_mascot->get_state()->looking_right;
 }
 
 bool ActiveMascot::updateOffsets() {
     bool needsRepaint = false;
-    auto &frame = m_mascot->state->active_frame;
+    auto &frame = m_mascot->get_state()->active_frame;
     auto &asset = getActiveAsset();
     
     // Does the image go outside of the minimum boundary? If so,
     // extend the window boundary
     int originalWidth = asset.originalSize().width();
     int originalHeight = asset.originalSize().height();
-    double scale = m_mascot->state->env->get_scale();
-    int screenWidth = (int)(m_mascot->state->env->screen.width()
+    double scale = m_mascot->get_state()->env->get_scale();
+    int screenWidth = (int)(m_mascot->get_state()->env->screen.width()
         / scale);
-    int screenHeight = (int)(m_mascot->state->env->screen.height()
+    int screenHeight = (int)(m_mascot->get_state()->env->screen.height()
         / scale);
     int windowWidth = (int)(originalWidth / scale);
     int windowHeight = (int)(originalHeight / scale);
@@ -122,9 +122,9 @@ bool ActiveMascot::updateOffsets() {
     // Detemine draw offsets and window positions
     QPoint drawOffset;
     m_visible = true;
-    int winX = (int)m_mascot->state->anchor.x - m_anchorInWindow.x()
+    int winX = (int)m_mascot->get_state()->anchor.x - m_anchorInWindow.x()
         - (int)env()->screen.left;
-    int winY = (int)m_mascot->state->anchor.y - m_anchorInWindow.y()
+    int winY = (int)m_mascot->get_state()->anchor.y - m_anchorInWindow.y()
         - (int)env()->screen.top;
     if (winX < 0) {
         drawOffset.setX(winX);
@@ -198,27 +198,27 @@ bool ActiveMascot::tick() {
     }
 
     // Tick
-    auto prev_frame = m_mascot->state->active_frame;
+    auto prev_frame = m_mascot->get_state()->active_frame;
     m_mascot->tick();
-    auto &new_frame = m_mascot->state->active_frame;
-    auto &new_sound = m_mascot->state->active_sound;
+    auto &new_frame = m_mascot->get_state()->active_frame;
+    auto &new_sound = m_mascot->get_state()->active_sound;
     bool forceRepaint = prev_frame.name != new_frame.name;
     bool offsetsChanged = updateOffsets();
-    if (m_mascot->state->dead) {
+    if (m_mascot->get_state()->dead) {
         forceRepaint = true;
         new_frame.name = "";
         new_sound = "";
-        m_mascot->state->active_sound_changed = true;
+        m_mascot->get_state()->active_sound_changed = true;
         markForDeletion();
     }
-    if (m_mascot->state->active_sound_changed) {
+    if (m_mascot->get_state()->active_sound_changed) {
         m_sounds.stop();
         if (!new_sound.empty()) {
             m_sounds.play(QString::fromStdString(new_sound));
         }
     }
     else if (!m_sounds.playing()) {
-        m_mascot->state->active_sound.clear();
+        m_mascot->get_state()->active_sound.clear();
     }
 
     // Update inspector
@@ -278,11 +278,11 @@ void ActiveMascot::setDragTarget(ActiveMascot *target) {
 
 bool ActiveMascot::mousePressEvent(Qt::MouseButton button, QPoint global) {
     if (m_dragTarget != nullptr) {
-        m_dragTarget->m_mascot->state->dragging = false;
+        m_dragTarget->m_mascot->get_state()->dragging = false;
     }
     setDragTarget(this);
     if (button == Qt::MouseButton::LeftButton) {
-        m_dragTarget->m_mascot->state->dragging = true;
+        m_dragTarget->m_mascot->get_state()->dragging = true;
     }
     else if (button == Qt::MouseButton::RightButton) {
         m_dragTarget->showContextMenu(global);
@@ -295,7 +295,7 @@ bool ActiveMascot::mousePressEvent(Qt::MouseButton button, QPoint local,
     QPoint global)
 {
     if (m_dragTarget != nullptr) {
-        m_dragTarget->m_mascot->state->dragging = false;
+        m_dragTarget->m_mascot->get_state()->dragging = false;
     }
     if (pointInside(local)) {
         setDragTarget(this);
@@ -308,7 +308,7 @@ bool ActiveMascot::mousePressEvent(Qt::MouseButton button, QPoint local,
         }
     }
     if (button == Qt::MouseButton::LeftButton) {
-        m_dragTarget->m_mascot->state->dragging = true;
+        m_dragTarget->m_mascot->get_state()->dragging = true;
     }
     else if (button == Qt::MouseButton::RightButton) {
         m_dragTarget->showContextMenu(global);
@@ -322,7 +322,7 @@ void ActiveMascot::mouseReleaseEvent(Qt::MouseButton button) {
         return;
     }
     if (button == Qt::MouseButton::LeftButton) {
-        m_dragTarget->m_mascot->state->dragging = false;
+        m_dragTarget->m_mascot->get_state()->dragging = false;
         setDragTarget(nullptr);
     }
 }

@@ -24,7 +24,7 @@ ActiveMascot *MascotBackendWindowed::spawn(MascotData *mascotData,
     std::unique_ptr<shijima::mascot::manager> mascot,
     ActiveMascot *parent, int mascotId, bool resetPosition)
 {
-    mascot->state->env = m_env;
+    mascot->get_state()->env = m_env;
     if (resetPosition) {
         preTick();
         mascot->reset_position();
@@ -37,7 +37,7 @@ ActiveMascot *MascotBackendWindowed::spawn(MascotData *mascotData,
 }
 
 ActiveMascot *MascotBackendWindowed::migrate(ActiveMascot &old) {
-    old.mascot().state->env = m_env;
+    old.mascot().get_state()->env = m_env;
     preTick();
     old.mascot().reset_position();
     postTick();

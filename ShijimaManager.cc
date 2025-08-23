@@ -987,7 +987,7 @@ void ShijimaManager::tick() {
         }
         shimeji->tick();
         auto &mascot = shimeji->mascot();
-        auto &breedRequest = mascot.state->breed_request;
+        auto &breedRequest = mascot.get_state()->breed_request;
         if (breedRequest.available) {
             if (breedRequest.name == "") {
                 breedRequest.name = shimeji->mascotName().toStdString();

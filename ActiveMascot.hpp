@@ -53,10 +53,10 @@ public:
         return *m_mascot;
     }
     void setEnv(std::shared_ptr<shijima::mascot::environment> env) {
-        m_mascot->state->env = env;
+        m_mascot->get_state()->env = env;
     }
     std::shared_ptr<shijima::mascot::environment> env() {
-        return m_mascot->state->env; 
+        return m_mascot->get_state()->env; 
     }
     MascotData *mascotData() {
         return m_data;

@@ -422,7 +422,7 @@ ActiveMascot *MascotBackendWayland::spawn(MascotData *mascotData,
     else {
         env = spawnEnvironment();
     }
-    mascot->state->env = env->env();
+    mascot->get_state()->env = env->env();
     if (resetPosition) {
         env->preTick();
         mascot->reset_position();
@@ -436,7 +436,7 @@ ActiveMascot *MascotBackendWayland::spawn(MascotData *mascotData,
 ActiveMascot *MascotBackendWayland::migrate(ActiveMascot &old) {
     auto env = spawnEnvironment();
     env->preTick();
-    old.mascot().state->env = env->env();
+    old.mascot().get_state()->env = env->env();
     old.mascot().reset_position();
     env->postTick();
     auto shimeji = new WaylandShimeji(old, env);
@@ -445,9 +445,9 @@ ActiveMascot *MascotBackendWayland::migrate(ActiveMascot &old) {
 
 bool MascotBackendWayland::reassignEnvironment(WaylandShimeji *shimeji) {
     auto &mascot = shimeji->mascot();
-    if (mascot.state->dragging) {
+    if (mascot.get_state()->dragging) {
         // move to monitor with cursor
-        auto cursor = mascot.state->env->cursor;
+        auto cursor = mascot.get_state()->env->cursor;
         auto oldEnv = shimeji->waylandEnv();
         cursor.x += oldEnv->output()->logicalX();
         cursor.y += oldEnv->output()->logicalY();

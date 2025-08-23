@@ -80,26 +80,26 @@ ShimejiInspectorDialog::ShimejiInspectorDialog(ActiveMascot *mascot,
         return vecToString(m_mascot->container().topLeft());
     });
     addRow("Anchor", [](shijima::mascot::manager &mascot){
-        return vecToString(mascot.state->anchor);
+        return vecToString(mascot.get_state()->anchor);
     });
     addRow("Cursor", [](shijima::mascot::manager &mascot){
-        return vecToString(mascot.state->get_cursor());
+        return vecToString(mascot.get_state()->get_cursor());
     });
     addRow("Behavior", [](shijima::mascot::manager &mascot){
         return mascot.active_behavior()->name;
     });
     addRow("Image", [](shijima::mascot::manager &mascot){
-        return mascot.state->active_frame.get_name(mascot.state->looking_right);
+        return mascot.get_state()->active_frame.get_name(mascot.get_state()->looking_right);
     });
     addRow("Screen", [](shijima::mascot::manager &mascot){
-        return areaToString(mascot.state->env->screen);
+        return areaToString(mascot.get_state()->env->screen);
     });
     addRow("Work Area", [](shijima::mascot::manager &mascot){
-        return areaToString(mascot.state->env->work_area);
+        return areaToString(mascot.get_state()->env->work_area);
     });
     addRow("Active IE", [](shijima::mascot::manager &mascot){
-        if (mascot.state->env->active_ie.visible()) {
-            return areaToString(mascot.state->env->active_ie);
+        if (mascot.get_state()->env->active_ie.visible()) {
+            return areaToString(mascot.get_state()->env->active_ie);
         }
         else {
             return std::string { "not visible" };

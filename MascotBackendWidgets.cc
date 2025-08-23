@@ -36,7 +36,7 @@ ActiveMascot *MascotBackendWidgets::spawn(MascotData *mascotData,
         screen = spawnScreen();
     }
     auto &env = m_env[screen];
-    mascot->state->env = env;
+    mascot->get_state()->env = env;
     if (resetPosition) {
         updateEnvironment(screen);
         mascot->reset_position();
@@ -53,9 +53,9 @@ std::shared_ptr<shijima::mascot::environment> MascotBackendWidgets::spawnEnv() {
 ActiveMascot *MascotBackendWidgets::migrate(ActiveMascot &old) {
     QScreen *screen = spawnScreen();
     updateEnvironment(screen);
-    old.mascot().state->env = spawnEnv();
+    old.mascot().get_state()->env = spawnEnv();
     old.mascot().reset_position();
-    old.mascot().state->env->reset_scale();
+    old.mascot().get_state()->env->reset_scale();
     auto shimeji = new ShijimaWidget(this, old, manager());
     return shimeji;
 }
