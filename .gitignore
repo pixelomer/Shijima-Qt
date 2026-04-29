@@ -68,3 +68,4 @@ DefaultMascot.cc
 !/.images/
 !/.images/*.jpg
 !/.images/*.png
+!/Platform/Linux/*.xml

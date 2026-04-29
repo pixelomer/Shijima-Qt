@@ -18,6 +18,7 @@
 
 #include "ShijimaHttpApi.hpp"
 #include <httplib.h>
+#include "ActiveMascot.hpp"
 #include "ShijimaManager.hpp"
 #include <thread>
 #include <iostream>
@@ -36,12 +37,12 @@ static QJsonObject vecToObject(shijima::math::vec2 vec) {
     return obj;
 }
 
-static QJsonObject mascotToObject(ShijimaWidget *widget) {
+static QJsonObject mascotToObject(ActiveMascot *widget) {
     QJsonObject obj;
     obj["id"] = widget->mascotId();
     obj["data_id"] = widget->mascotData()->id();
     obj["name"] = widget->mascotData()->name();
-    obj["anchor"] = vecToObject(widget->mascot().state->anchor);
+    obj["anchor"] = vecToObject(widget->mascot().get_state()->anchor);
     auto activeBehavior = widget->mascot().active_behavior();
     if (activeBehavior != nullptr) {
         obj["active_behavior"] = QString::fromStdString(activeBehavior->name);
@@ -73,11 +74,11 @@ static shijima::math::vec2 valueToVec(QJsonValue const& value) {
     return vec;
 }
 
-static void applyObjectToWidget(QJsonObject &object, ShijimaWidget *widget) {
+static void applyObjectToWidget(QJsonObject &object, ActiveMascot *widget) {
     if (auto anchor = valueToVec(object.take("anchor"));
         !std::isnan(anchor.x))
     {
-        widget->mascot().state->anchor = anchor;
+        widget->mascot().get_state()->anchor = anchor;
     }
     if (auto value = object.take("behavior"); value.isString()) {
         auto str = value.toString().toStdString();
@@ -123,14 +124,14 @@ static void badRequest(Request const&, Response &res) {
     sendJson(res, obj);
 }
 
-static bool selectorEval(ShijimaWidget *mascot, std::string const& selector) {
+static bool selectorEval(ActiveMascot *mascot, std::string const& selector) {
     if (selector.empty()) {
         return true;
     }
     bool eval;
     try {
-        mascot->mascot().script_ctx->state = mascot->mascot().state;
-        eval = mascot->mascot().script_ctx->eval_bool(selector);
+        mascot->mascot().get_script_ctx()->state = mascot->mascot().get_state();
+        eval = mascot->mascot().get_script_ctx()->eval_bool(selector);
     }
     catch (std::exception &ex) {
         std::cerr << "selector eval failed: " << ex.what() << std::endl;

@@ -24,12 +24,15 @@
 #include <QDir>
 #include <iostream>
 #include <QSoundEffect>
+#include <shimejifinder/utils.hpp>
 
 void SoundEffectManager::play(QString const& name) {
     if (!m_loadedEffects.contains(name)) {
         QUrl url;
         for (QString &searchPath : searchPaths) {
-            QString file = QDir::cleanPath(searchPath + QDir::separator() + name);
+            QString normalized = QString::fromStdString(
+                shimejifinder::to_lower(name.toStdString()));
+            QString file = QDir::cleanPath(searchPath + QDir::separator() + normalized);
             if (QFile::exists(file)) {
                 url = QUrl::fromLocalFile(file);
                 break;

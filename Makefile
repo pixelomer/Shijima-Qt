@@ -18,12 +18,18 @@ SOURCES = main.cc \
 	DefaultMascot.cc \
 	ShijimaHttpApi.cc \
 	cli.cc \
-	resources.rc
+	resources.rc \
+	MascotBackend.cc \
+	MascotBackendWidgets.cc \
+	ActiveMascot.cc \
+	MascotBackendWindowed.cc \
+	WindowedShimeji.cc
 
 DEFAULT_MASCOT_FILES := $(addsuffix .png,$(addprefix DefaultMascot/img/shime,$(shell seq -s ' ' 1 1 46))) \
 	DefaultMascot/behaviors.xml DefaultMascot/actions.xml
 
 LICENSE_FILES := Shijima-Qt.LICENSE.txt \
+	cereal.LICENSE.txt \
 	duktape.LICENSE.txt \
 	duktape.AUTHORS.rst \
 	libarchive.LICENSE.txt \
@@ -32,7 +38,7 @@ LICENSE_FILES := Shijima-Qt.LICENSE.txt \
 	unarr.LICENSE.txt \
 	unarr.AUTHORS.txt \
 	Qt.LICENSE.txt \
-	rapidxml.LICENSE.txt
+	pugixml.LICENSE.txt
 
 LICENSE_FILES := $(addprefix licenses/,$(LICENSE_FILES))
 
@@ -42,12 +48,17 @@ TARGET_LDFLAGS := -Llibshimejifinder/build/unarr -lunarr
 
 ifeq ($(PLATFORM),Linux)
 QT_LIBS += DBus
-PKG_LIBS := x11
+PKG_LIBS := x11 wayland-client wayland-cursor
 TARGET_LDFLAGS += -Wl,-R -Wl,$(shell pwd)/publish/Linux/$(CONFIG)
 endif
 
 ifeq ($(PLATFORM),Windows)
 TARGET_LDFLAGS += -lws2_32
+endif
+
+#FIXME: pugixml is compiled and linked twice
+ifneq ($(PLATFORM),macOS)
+TARGET_LDFLAGS += -Wl,-allow-multiple-definition
 endif
 
 ifeq ($(SHIJIMA_USE_QTMULTIMEDIA),1)
@@ -57,7 +68,7 @@ else
 CXXFLAGS += -DSHIJIMA_USE_QTMULTIMEDIA=0
 endif
 
-CXXFLAGS += -Ilibshijima -Ilibshimejifinder -Icpp-httplib
+CXXFLAGS += -Ilibshijima -Ilibshimejifinder -Icpp-httplib -Ilibshijima/pugixml/src
 PKG_LIBS += libarchive
 PUBLISH_DLL = $(addprefix Qt6,$(QT_LIBS))
 
@@ -71,6 +82,7 @@ if [ "$${uname_m}" = "$(1)" -o "$${uname_m}" = "$(2)" ]; then \
 	touch "$${name}"; \
 	chmod +x "$${name}"; \
 	name2="$${name%-$(2).AppImage}.AppImage"; \
+	rm -f "$${name2}"; \
 	ln -s "$${name}" "$${name2}"; \
 fi
 endef
@@ -140,8 +152,8 @@ macapp: publish/macOS/$(CONFIG)/Shijima-Qt.app
 
 shijima-qt$(EXE): Platform/Platform.a libshimejifinder/build/libshimejifinder.a \
 	libshijima/build/libshijima.a shijima-qt.a
-	$(CXX) -o $@ $(LD_COPY_NEEDED) $(LD_WHOLE_ARCHIVE) $^ $(LD_NO_WHOLE_ARCHIVE) \
-		$(TARGET_LDFLAGS) $(LDFLAGS)
+	$(CXX) -o $@ $(LD_COPY_NEEDED) $(LD_WHOLE_ARCHIVE) libshijima/build/pugixml/libpugixml.a \
+		libshimejifinder/build/pugixml/libpugixml.a $^ $(LD_NO_WHOLE_ARCHIVE) $(TARGET_LDFLAGS) $(LDFLAGS)
 	if [ $(CONFIG) = "release" ]; then $(STRIP) $@; fi
 
 libshijima/build/libshijima.a: libshijima/build/Makefile
