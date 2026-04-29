@@ -4,6 +4,7 @@ Version=1.0
 Name=Shijima-Qt
 Comment=Shimeji desktop pet runner
 Exec=shijima-qt
+StartupWMClass=Shijima-Qt
 Icon=com.pixelomer.ShijimaQt
 Terminal=false
 Categories=Game
