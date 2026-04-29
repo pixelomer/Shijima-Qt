@@ -1,5 +1,8 @@
 # Shijima-Qt
 
+> [!IMPORTANT]
+> Shijima-Qt was discontinued and archived due to lack of maintenance and the project's current state. The latest recommended/stable build has been v0.1.0 for over a year now and it is missing important fixes and improvements from libshijima/libshimejifinder. Furthermore, the feature/wayland-layer-shell branch has deviated so much from the main branch that it has become very hard to merge back. I now believe that Qt was not the right framework for this project, and the amount of hacks I had to use to make it work with Qt has turned this project into an unmanageable mess. Therefore, I don't think it's a good idea to continue working on this project further. I may work on a new, more optimized desktop version of Shijima that does not use Qt in the future. In the meantime, please check out the other, more current versions of Shijima: [Shijima-iOS](https://havoc.app/package/shijima), [Shijima-Android](https://play.google.com/store/apps/details?id=com.pixelomer.shijima), [Shijima-Web](https://pixelomer.github.io/Shijima-Web/)
+
 ![Shijima-Qt running on Fedora 41](.images/Shijima-Qt-Fedora.jpg)
 
 Cross-platform shimeji desktop pet simulator. Built with Qt6. Supports macOS, Linux and Windows.
